@@ -1,6 +1,6 @@
 *.DS_Store
 flare_splunk_integration.tar.gz
-/.venv
+venv
 flare_splunk_integration/local
 flare_splunk_integration/metadata/local.meta
 __pycache__/
