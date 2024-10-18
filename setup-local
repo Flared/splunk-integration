@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+
+#####################################################################################
+############################## Setup local environment ##############################
+#####################################################################################
+## This script is used to generate a symlink between the app and Splunk Enterprise ##
+## and download the dependencies                                                   ##
+#####################################################################################
+
+usage() {
+  echo "Usage: $(basename "$0")"
+  exit 1
+}
+
+SPLUNK_ENTERPRISE_FOLDER="/Applications/Splunk/etc/apps"
+SYMLINK_SPLUNK_APP_FOLDER="${SPLUNK_ENTERPRISE_FOLDER}/flare_splunk_integration"
+SPLUNK_APP_FOLDER="$(pwd)/flare_splunk_integration"
+
+log() {
+    local MESSAGE=$1
+    local GREEN='\e[32m'
+    local NO_COLOR='\e[0m'
+    echo -e "${GREEN}${MESSAGE}${NO_COLOR}"
+}
+
+errorlog() {
+    local MESSAGE=$1
+    local RED='\033[0;31m'
+    local NO_COLOR='\033[0m'
+    echo -e "${RED}${MESSAGE}${NO_COLOR}"
+}
+
+log "Create symlink from app to Splunk Enterprise"
+if [ ! -d ${SPLUNK_ENTERPRISE_FOLDER} ]; then
+    errorlog "Splunk Enterprise isn't installed"
+    exit 1
+fi
+
+unlink "${SYMLINK_SPLUNK_APP_FOLDER}"
+ln -s "${SPLUNK_APP_FOLDER}" "${SYMLINK_SPLUNK_APP_FOLDER}"
+
+log "Generate dependencies for the application"
+sh ./generate-dependencies --local

@@ -1,0 +1,12 @@
+<dashboard isDashboard="false" version="1.1"
+           script="javascript/setupPage.js"
+           stylesheet="styles/setupPage.css">
+      <label>Flare Integration Setup Page</label>
+    <row>
+        <panel>
+            <html>
+                <div id="app"></div>
+            </html>
+        </panel>
+    </row>
+</dashboard>
