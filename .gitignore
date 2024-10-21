@@ -1,11 +1,10 @@
 *.DS_Store
 flare_splunk_integration.tar.gz
-/venv
+/.venv
 flare_splunk_integration/local
 flare_splunk_integration/metadata/local.meta
 __pycache__/
 dependencies_temp
 
-#We don't want the symlinks in the bin folder and we won't often add new files here
-#If we do, just do git add -f <path>
 flare_splunk_integration/bin/*
+!flare_splunk_integration/bin/*.py

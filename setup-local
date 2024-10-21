@@ -12,6 +12,7 @@ usage() {
   exit 1
 }
 
+VENV_FOLDER=".venv"
 SPLUNK_ENTERPRISE_FOLDER="/Applications/Splunk/etc/apps"
 SYMLINK_SPLUNK_APP_FOLDER="${SPLUNK_ENTERPRISE_FOLDER}/flare_splunk_integration"
 SPLUNK_APP_FOLDER="$(pwd)/flare_splunk_integration"
@@ -29,6 +30,44 @@ errorlog() {
     local NO_COLOR='\e[0m'
     echo -e "${RED}${MESSAGE}${NO_COLOR}"
 }
+
+
+if ! command -v pyenv &> /dev/null; then
+    log "pyenv command is not available. Please install command to generate venv"
+    exit 1
+fi
+
+if ! command -v python3 &> /dev/null; then
+    log "python3 command is not available. Please install command to generate venv"
+    exit 1
+fi
+
+PYTHON_VERSION=$(pyenv local)
+
+if ! pyenv versions --bare | grep -q "^${PYTHON_VERSION}$"; then
+    log "Installing python version ${PYTHON_VERSION}"
+    pyenv install $PYTHON_VERSION
+fi
+
+pyenv local $PYTHON_VERSION
+
+
+if [ -d "${VENV_FOLDER}" ]; then
+    log "venv is present, making sure python version is the one required"
+    source "${VENV_FOLDER}/bin/activate"
+    VENV_PYTHON_VERSION=$(python --version | awk '{print $2}')
+    echo "Local python version=${PYTHON_VERSION}, venv python version=${VENV_PYTHON_VERSION}"
+    if [ "${PYTHON_VERSION}" != "${VENV_PYTHON_VERSION}" ]; then
+        log "Delete current venv since required python version is different"
+        rm -rf venv
+    fi
+fi
+
+if [ ! -d "${VENV_FOLDER}" ]; then
+    log "Generating venv"
+    pyenv exec python -m venv "${VENV_FOLDER}"
+    source "${VENV_FOLDER}/bin/activate"
+fi
 
 log "Create symlink from app to Splunk Enterprise"
 if [ ! -d ${SPLUNK_ENTERPRISE_FOLDER} ]; then
