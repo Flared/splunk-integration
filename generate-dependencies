@@ -22,8 +22,6 @@ usage() {
 
 GENERATION_TYPE=""
 WORKING_FOLDER="dependencies_temp"
-INTEGRATIONS_RESOLVE_REQUIREMENTS_PATH="../../pants/resolves/python-integrations/requirements.txt"
-REQUIREMENTS_PATH="${WORKING_FOLDER}/requirements.txt"
 TEMP_VENDOR_FOLDER="${WORKING_FOLDER}/vendor"
 SPLUNK_BIN_FOLDER="flare_splunk_integration/bin"
 
@@ -89,34 +87,9 @@ if [ "$GENERATION_TYPE" = "cleanup" ]; then
     exit 0
 fi
 
-log "Reading dependencies"
-DEPENDENCIES=$(../../bin/pants dependencies flare_splunk_integration/bin::)
-DEPENDENCIES_READ_RESULT=$?
-if [[ "${DEPENDENCIES_READ_RESULT}" -ne 0 ]]; then
-    errorlog "Error while infering dependencies with pants, exiting"
-    exit $DEPENDENCIES_READ_RESULT
-fi
-
-REQUIREMENTS_PREFIX="pants/resolves/python-integrations:reqs"
-RESOLVED_DEPENDENCIES=$(echo "$DEPENDENCIES" | grep "^$REQUIREMENTS_PREFIX" | cut -d'#' -f2-)
-
-log "Generating requirements.txt"
-touch $REQUIREMENTS_PATH
-for dependency_name in "${RESOLVED_DEPENDENCIES[@]}"; do
-    echo "Find version for ${dependency_name}"
-    while IFS= read -r line; do
-        IFS='==' read -ra parts <<< "$line"
-        if [ "${parts[0]}" = "$dependency_name" ]; then
-            version="${parts[2]}"
-            echo "Found version ${version}"
-            echo "${dependency_name}==${version}" >> ${REQUIREMENTS_PATH}
-        fi
-    done < "${INTEGRATIONS_RESOLVE_REQUIREMENTS_PATH}"
-done
-
 log "Download dependencies in the bin folder of Splunk"
 mkdir ${TEMP_VENDOR_FOLDER}
-pip install --target ${TEMP_VENDOR_FOLDER} -r ${REQUIREMENTS_PATH}
+pip install --target ${TEMP_VENDOR_FOLDER} -r requirements.txt
 
 log "Deleting the dist-info, bin and __pycache__ folders"
 find ${TEMP_VENDOR_FOLDER} -type d -name "*.dist-info" -exec rm -r {} +
