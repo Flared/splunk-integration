@@ -1,11 +1,9 @@
 import json
-from requests import Request, Session
 import sys
+from typing import Optional
 import splunklib.client as client
 
-from transport import FlareAuthenticationHandler, HTTPMessage # pants: no-infer-dep
-import urllib3
-from urllib.error import HTTPError
+from flare import FlareAPI
 
 APP_NAME = "flare_splunk_integration"
 HOST = "localhost"
@@ -27,57 +25,37 @@ def main():
         raise Exception(str(e))
 
     app: client.Application = splunk_service.apps[APP_NAME]
-    auth_handler = FlareAuthenticationHandler(app=app)
+    flare_api = FlareAPI(app=app)
 
-    _from = None
+    from_ = get_from_value(app=app)
+    event_feed = flare_api.retrieve_feed(from_=from_)
+    set_from_value(app=app, next=event_feed["next"])
+
+    if event_feed["items"]:
+        for item in event_feed['items']:
+            print(json.dumps(item))
+
+def get_from_value(app: client.Application) -> Optional[str]:
+    from_ : Optional[str] = None
     if KV_COLLECTION_NAME in app.service.kvstore:
         data = app.service.kvstore[KV_COLLECTION_NAME].data.query()
         if len(data) > 1:
-            _from = data[0]["value"]
+            from_ = data[0]["value"]
         else:
             app.service.kvstore.delete(KV_COLLECTION_NAME)
 
-    request = Request(
-        method='POST',
-        json={"lite": "true", "from": _from},
-        headers={
-            "Content-type": "application/json",
-            "Accept": "application/json",
-        },
-        url=app.service.confs["flare"]["endpoints"]["me_feed_endpoint"],
-    )
+    return from_
 
-    prepared_request = auth_handler.authorize(request=request)
-    session = Session()
-    response = session.send(request=prepared_request)
-
-    if response.status_code != 200:
-       # This is a bit of a hack in order to see the error message within Splunk search.
-       print(response.text, file=sys.stderr)
-       headers = HTTPMessage()
-       for key, value in response.headers.items():
-           headers.add_header(key, value)
-       raise HTTPError(
-           url=app.service.confs["flare"]["endpoints"]["me_feed_endpoint"],
-           code=response.status_code,
-           msg=response.text,
-           hdrs=headers,
-           fp=None,
-        )
-
-    data = response.json()
-
+def set_from_value(app: client.Application, next: Optional[str]):
     if KV_COLLECTION_NAME not in app.service.kvstore:
         # Create the collection
         app.service.kvstore.create(name=KV_COLLECTION_NAME, fields={"_key": "string", "value": "string"})
         # Insert
-        app.service.kvstore[KV_COLLECTION_NAME].data.insert(json.dumps({"_key": "next", "value": data["next"]}))
+        app.service.kvstore[KV_COLLECTION_NAME].data.insert(json.dumps({"_key": "next", "value": next}))
+    elif not next:
+        app.service.kvstore[KV_COLLECTION_NAME].data.delete(id="next")
     else:
-        app.service.kvstore[KV_COLLECTION_NAME].data.update(id="next", data=json.dumps({"value": data["next"]}))
-
-    if data["items"]:
-        for item in data['items']:
-            print(json.dumps(item))
+        app.service.kvstore[KV_COLLECTION_NAME].data.update(id="next", data=json.dumps({"value": next}))
 
 if __name__ == '__main__':
     main()

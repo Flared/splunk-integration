@@ -32,7 +32,7 @@ define(["react", "splunkjs/splunk"], function(react, splunkSdk){
           e("form", { onSubmit: this.handleSubmit }, [
             e("label", null, [
               "Server API Key ",
-              e("input", { type: "text", name: "serverKey", value: this.state.serverKey, onChange: this.handleChange })
+              e("input", { type: "password", name: "serverKey", value: this.state.serverKey, onChange: this.handleChange })
             ]),
             e("label", null, [
               "Tenant ID ",
