@@ -21,13 +21,13 @@ async function updateConfigurationFile(
   configurations = await promisify(configurations.fetch)();
 
   // Check for the existence of the configuration file
-  var doesConfigurationExist = doesConfigurationExist(
+  var doesExist = doesConfigurationExist(
       configurations,
       configurationFilename,
   );
 
   // If the configuration file doesn't exist, create it
-  if (!doesConfigurationExist) {
+  if (!doesExist) {
       await createConfigurationFile(
           configurations,
           configurationFilename,
