@@ -1,7 +1,10 @@
 import json
 import sys
+import os
 from typing import Optional
-import splunklib.client as client
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'vendor'))
+import vendor.splunklib.client as client
 
 from flare import FlareAPI
 

@@ -3,10 +3,10 @@ from typing import Optional
 from typing import Any
 import sys
 
-from requests.auth import AuthBase
+from vendor.requests.auth import AuthBase
 
 from urllib.error import HTTPError
-from flareio import FlareApiClient
+from vendor.flareio import FlareApiClient
 
 APP_NAME = 'flare_splunk_integration'
 
