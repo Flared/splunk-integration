@@ -46,10 +46,10 @@ PYTHON_VERSION=$(pyenv local)
 
 if ! pyenv versions --bare | grep -q "^${PYTHON_VERSION}$"; then
     log "Installing python version ${PYTHON_VERSION}"
-    pyenv install $PYTHON_VERSION
+    pyenv install "${PYTHON_VERSION}"
 fi
 
-pyenv local $PYTHON_VERSION
+pyenv local "${PYTHON_VERSION}"
 
 
 if [ -d "${VENV_FOLDER}" ]; then
@@ -79,4 +79,4 @@ unlink "${SYMLINK_SPLUNK_APP_FOLDER}"
 ln -s "${SPLUNK_APP_FOLDER}" "${SYMLINK_SPLUNK_APP_FOLDER}"
 
 log "Generate dependencies for the application"
-bash ./generate-dependencies --local
+bash ./generate-dependencies
