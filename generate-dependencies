@@ -13,36 +13,24 @@ shopt -s inherit_errexit
 #####################################################################################
 
 usage() {
-  echo "Usage: $(basename "$0") [-l|-h|-c] [--local|production|cleanup]"
+  echo "Usage: $(basename "$0") [-c] [--cleanup]"
   echo "    -l, --local: generate symlinks to the dependencies"
   echo "    -c, --cleanup: deletes the symlinks and the temp folders"
   echo "    -p, --production: move the download dependencies inside the bin folder of the application"
   exit 1
 }
 
-GENERATION_TYPE=""
-WORKING_FOLDER="dependencies_temp"
-TEMP_VENDOR_FOLDER="${WORKING_FOLDER}/vendor"
-SPLUNK_BIN_FOLDER="flare_splunk_integration/bin"
+CLEAN_UP=0
+SPLUNK_VENDOR_FOLDER="flare_splunk_integration/bin/vendor"
 
 while [[ $# -gt 0 ]]; do
   case $1 in
     -h|--help)
       usage
       ;;
-    -l|--local)
-      shift
-      GENERATION_TYPE="local"
-      break
-      ;;
     -c|--cleanup)
       shift
-      GENERATION_TYPE="cleanup"
-      break
-      ;;
-    -p|--production)
-      shift
-      GENERATION_TYPE="production"
+      CLEAN_UP=1
       break
       ;;
     *)
@@ -69,40 +57,21 @@ errorlog() {
 
 cleanup() {
     log "Cleaning old env"
-    find $SPLUNK_BIN_FOLDER -type l -exec rm {} +
-    rm -rf $WORKING_FOLDER
-    mkdir $WORKING_FOLDER
+    rm -rf "${SPLUNK_VENDOR_FOLDER}"
+    mkdir "${SPLUNK_VENDOR_FOLDER}"
 }
-
-if [ -z "$GENERATION_TYPE" ]; then
-    echo "Bad Usage"
-    echo "Use ---help to see the available options"
-    exit 1
-fi
 
 cleanup
 
-if [ "$GENERATION_TYPE" = "cleanup" ]; then
+if [ "$CLEAN_UP" = "1" ]; then
     log "All done!"
     exit 0
 fi
 
 log "Download dependencies in the bin folder of Splunk"
-mkdir ${TEMP_VENDOR_FOLDER}
-pip install --target ${TEMP_VENDOR_FOLDER} -r requirements.txt
+pip install --target "${SPLUNK_VENDOR_FOLDER}" -r requirements.txt
 
 log "Deleting the dist-info, bin and __pycache__ folders"
-find ${TEMP_VENDOR_FOLDER} -type d -name "*.dist-info" -exec rm -r {} +
-rm -rf "${TEMP_VENDOR_FOLDER:?}/bin"
-rm -rf "${TEMP_VENDOR_FOLDER:?}/__pycache__"
-
-if [ "${GENERATION_TYPE}" = "local" ]; then
-    log "Generate symlinks between the bin folder and this folder"
-    for subfolder in "${TEMP_VENDOR_FOLDER}"/*/; do
-        dependency_name=$(basename "${subfolder}")
-        ln -s "$(pwd)/${subfolder}" "${SPLUNK_BIN_FOLDER}/${dependency_name}"
-    done
-elif [ "${GENERATION_TYPE}" = "production" ]; then
-    log "Replace the Splunk vendor folder with the new libraries"
-    mv ${TEMP_VENDOR_FOLDER}/* ${SPLUNK_BIN_FOLDER}
-fi
+find "${SPLUNK_VENDOR_FOLDER}" -type d -name "*.dist-info" -exec rm -r {} +
+rm -rf "${SPLUNK_VENDOR_FOLDER:?}/bin"
+rm -rf "${SPLUNK_VENDOR_FOLDER}/__pycache__"

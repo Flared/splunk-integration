@@ -6,5 +6,4 @@ flare_splunk_integration/metadata/local.meta
 __pycache__/
 dependencies_temp
 
-flare_splunk_integration/bin/*
-!flare_splunk_integration/bin/*.py
+flare_splunk_integration/bin/vendor/*
