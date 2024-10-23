@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
-set -e
+set -eo pipefail
+shopt -s inherit_errexit
 
 FOLDER_NAME="flare_splunk_integration"
 

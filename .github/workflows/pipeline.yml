@@ -1,0 +1,52 @@
+name: Splunk Integration Build
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout codebase
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+            python-version: '3.9'
+
+      - name: Install Application Dependencies
+        run: |
+          make venv
+          ls -la venv/bin
+          ./generate-dependencies
+
+      # SEE https://github.com/actions/upload-artifact?tab=readme-ov-file#permission-loss
+      - name: Tar files (only way to preserve perms)
+        run: tar -cvf artifact.tar .
+
+      - name: Store Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: splunk-app
+          path: artifact.tar
+
+  test:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Download Build Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: splunk-app
+
+      - name: Unpack Tar Artifact
+        run: tar -xvf artifact.tar
+
+      - name: Lint
+        run: make lint
+
+      - name: Splunk AppInspect
+        run: make validate
+
+      - name: Test
+        run: make test
