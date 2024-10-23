@@ -16,9 +16,7 @@ jobs:
 
       - name: Install Application Dependencies
         run: |
-          make venv
-          ls -la venv/bin
-          ./generate-dependencies
+          make build
 
       # SEE https://github.com/actions/upload-artifact?tab=readme-ov-file#permission-loss
       - name: Tar files (only way to preserve perms)
