@@ -30,9 +30,12 @@ clean:
 .PHONY: package
 package:
 	-@rm flare_splunk_integration.tar.gz
-	@echo "Packaging app..."
-	@package
-	@echo "Done."
+	COPYFILE_DISABLE=1 tar --format ustar -cvzf "flare_splunk_integration.tar.gz" "flare_splunk_integration"
+
+# This will not work until we get an APPID - need to submit in Splunkbase UI first.
+.PHONY: publish
+publish: flare_splunk_integration.tar.gz
+	curl -u flaresystems --request POST https://splunkbase.splunk.com/api/v1/app/<APPID>/new_release/ -F "files[]=@./flare_splunk_integration.tar.gz" -F "filename=flare_splunk_integration.tar.gz" -F "cim_versions=4.9,4.7" -F "splunk_versions=9.3" -F "visibility=true"
 
 # A manual review from the Splunk team will be required to know if we need to fix any of these tag warnings.
 .PHONY: validate

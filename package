@@ -1,8 +1,0 @@
-#!/usr/bin/env bash
-
-set -eo pipefail
-shopt -s inherit_errexit
-
-FOLDER_NAME="flare_splunk_integration"
-
-COPYFILE_DISABLE=1 tar --format ustar -cvzf "${FOLDER_NAME}.tar.gz" "${FOLDER_NAME}"
