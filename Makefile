@@ -25,6 +25,7 @@ clean:
 	@rm -rf venv
 	@rm -rf venv-tools
 	@rm -rf flare_splunk_integration/bin/vendor
+	@unlink "/Applications/Splunk/etc/apps/flare_splunk_integration" || true
 	@echo "Done."
 
 .PHONY: package
@@ -79,7 +80,7 @@ mypy: venv-tools
 	venv-tools/bin/mypy flare_splunk_integration
 
 .PHONY: splunk-local
-splunk-local:
+splunk-local: venv
 	@echo "Create symlink from app to Splunk Enterprise"
 	@if [ ! -d "/Applications/Splunk/etc/apps" ]; then \
 		echo "Splunk Enterprise isn't installed"; \
