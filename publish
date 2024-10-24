@@ -1,7 +1,0 @@
-#!/usr/bin/env bash
-
-set -eo pipefail
-shopt -s inherit_errexit
-
-echo "Publish tar ball to Splunkbase..."
-#curl -u <user> --request POST https://splunkbase.splunk.com/api/v1/app/<APPID>/new_release/ -F "files[]=@<file path>" -F "filename=flare_splunk_integration.tar.gz" -F "cim_versions=4.9,4.7" -F "splunk_versions=9.3" -F "visibility=true"
