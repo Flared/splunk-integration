@@ -15,6 +15,6 @@ require([
     "react",
     "ReactDOM",
     "app",
-], function(react, ReactDOM, app) {
+], function (react, ReactDOM, app) {
     ReactDOM.render(app, document.getElementById('app'));
 });
