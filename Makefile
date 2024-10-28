@@ -29,9 +29,16 @@ clean:
 	@echo "Done."
 
 .PHONY: package
-package:
+package: flare_splunk_integration/bin/vendor
 	-@rm flare_splunk_integration.tar.gz
-	COPYFILE_DISABLE=1 tar --format ustar -cvzf "flare_splunk_integration.tar.gz" "flare_splunk_integration"
+	@find flare_splunk_integration/bin -type d -name "__pycache__" -exec rm -r {} +
+	COPYFILE_DISABLE=1 tar \
+		--exclude='flare_splunk_integration/local' \
+		--exclude='flare_splunk_integration/metadata/local.meta' \
+		--format ustar \
+		-cvzf \
+		"flare_splunk_integration.tar.gz" \
+		"flare_splunk_integration"
 
 # This will not work until we get an APPID - need to submit in Splunkbase UI first.
 .PHONY: publish
