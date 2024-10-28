@@ -6,12 +6,12 @@ build:
 venv: requirements.txt
 	python -m venv venv
 	venv/bin/pip install --upgrade pip
-	venv/bin/pip install --target flare_splunk_integration/bin/vendor -r requirements.txt
-	@find flare_splunk_integration/bin/vendor -type d -name "*.dist-info" -exec rm -r {} +
-	@find flare_splunk_integration/bin/vendor -type d -name "__pycache__" -exec rm -r {} +
-	@rm -rf flare_splunk_integration/bin/vendor/bin
-	@rm -rf flare_splunk_integration/bin/vendor/packaging
-	@rm -rf flare_splunk_integration/bin/vendor/*-stubs
+	venv/bin/pip install --target flare/bin/vendor -r requirements.txt
+	@find flare/bin/vendor -type d -name "*.dist-info" -exec rm -r {} +
+	@find flare/bin/vendor -type d -name "__pycache__" -exec rm -r {} +
+	@rm -rf flare/bin/vendor/bin
+	@rm -rf flare/bin/vendor/packaging
+	@rm -rf flare/bin/vendor/*-stubs
 
 venv-tools: requirements.tools.txt venv
 	rm -rf venv-tools
@@ -24,33 +24,33 @@ clean:
 	@echo "Removing venv and venv-tools."
 	@rm -rf venv
 	@rm -rf venv-tools
-	@rm -rf flare_splunk_integration/bin/vendor
-	@unlink "/Applications/Splunk/etc/apps/flare_splunk_integration" || true
+	@rm -rf flare/bin/vendor
+	@unlink "/Applications/Splunk/etc/apps/flare" || true
 	@echo "Done."
 
 .PHONY: package
-package: flare_splunk_integration/bin/vendor
-	-@rm flare_splunk_integration.tar.gz
-	@find flare_splunk_integration/bin -type d -name "__pycache__" -exec rm -r {} +
+package: flare/bin/vendor
+	-@rm flare.tar.gz
+	@find flare/bin -type d -name "__pycache__" -exec rm -r {} +
 	COPYFILE_DISABLE=1 tar \
-		--exclude='flare_splunk_integration/local' \
-		--exclude='flare_splunk_integration/metadata/local.meta' \
+		--exclude='flare/local' \
+		--exclude='flare/metadata/local.meta' \
 		--format ustar \
 		-cvzf \
-		"flare_splunk_integration.tar.gz" \
-		"flare_splunk_integration"
+		"flare.tar.gz" \
+		"flare"
 
 # This will not work until we get an APPID - need to submit in Splunkbase UI first.
 .PHONY: publish
-publish: flare_splunk_integration.tar.gz
-	curl -u flaresystems --request POST https://splunkbase.splunk.com/api/v1/app/<APPID>/new_release/ -F "files[]=@./flare_splunk_integration.tar.gz" -F "filename=flare_splunk_integration.tar.gz" -F "cim_versions=4.9,4.7" -F "splunk_versions=9.3" -F "visibility=true"
+publish: flare.tar.gz
+	curl -u flaresystems --request POST https://splunkbase.splunk.com/api/v1/app/<APPID>/new_release/ -F "files[]=@./flare.tar.gz" -F "filename=flare.tar.gz" -F "cim_versions=4.9,4.7" -F "splunk_versions=9.3" -F "visibility=true"
 
 # A manual review from the Splunk team will be required to know if we need to fix any of these tag warnings.
 .PHONY: validate
 validate: venv-tools
 	@echo "Running Splunk AppInspect..."
 	@echo "If you get an error about \"libmagic\", run \"brew install libmagic\""
-	@venv-tools/bin/splunk-appinspect inspect --ci "flare_splunk_integration" || \
+	@venv-tools/bin/splunk-appinspect inspect --ci "flare" || \
 	if test  "$$?" -eq "102" || "$$?" -eq "103" ; then \
 		exit 0 ; \
 	else \
@@ -63,7 +63,7 @@ TAGS = advanced_xml alert_actions_conf ast bias cloud csv custom_search_commands
 inspect-tags:
 	@for TAG in $(TAGS); do \
 		echo "Tag: $$TAG" ; \
-		venv-tools/bin/splunk-appinspect inspect --ci --included-tags $$TAG "flare_splunk_integration" ; \
+		venv-tools/bin/splunk-appinspect inspect --ci --included-tags $$TAG "flare" ; \
 	done
 
 .PHONY: test
@@ -87,7 +87,7 @@ lint: mypy format-check
 
 .PHONY: mypy
 mypy: venv-tools
-	venv-tools/bin/mypy flare_splunk_integration
+	venv-tools/bin/mypy flare
 
 .PHONY: splunk-local
 splunk-local: venv
@@ -97,5 +97,5 @@ splunk-local: venv
 		exit 1; \
 	fi
 
-	@unlink "/Applications/Splunk/etc/apps/flare_splunk_integration" || true
-	@ln -s "$(CURDIR)/flare_splunk_integration" "/Applications/Splunk/etc/apps/flare_splunk_integration"
+	@unlink "/Applications/Splunk/etc/apps/flare" || true
+	@ln -s "$(CURDIR)/flare" "/Applications/Splunk/etc/apps/flare"
