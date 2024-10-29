@@ -8,7 +8,7 @@ import vendor.splunklib.client as client
 
 from flare import FlareAPI
 
-APP_NAME = "flare_splunk_integration"
+APP_NAME = "flare"
 HOST = "localhost"
 SPLUNK_PORT = 8089
 REALM = APP_NAME + "_realm"

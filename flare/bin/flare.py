@@ -8,7 +8,7 @@ from vendor.requests.auth import AuthBase
 from urllib.error import HTTPError
 from vendor.flareio import FlareApiClient
 
-APP_NAME = "flare_splunk_integration"
+APP_NAME = "flare"
 
 
 class FlareAPI(AuthBase):
