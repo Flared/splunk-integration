@@ -2,16 +2,20 @@
 build:
 	$(MAKE) clean
 	$(MAKE) venv
+	$(MAKE) setup-web
+
+setup-web: venv yarn.lock
+	yarn run setup
 
 venv: requirements.txt
 	python -m venv venv
 	venv/bin/pip install --upgrade pip
-	venv/bin/pip install --target flare/bin/vendor -r requirements.txt
-	@find flare/bin/vendor -type d -name "*.dist-info" -exec rm -r {} +
-	@find flare/bin/vendor -type d -name "__pycache__" -exec rm -r {} +
-	@rm -rf flare/bin/vendor/bin
-	@rm -rf flare/bin/vendor/packaging
-	@rm -rf flare/bin/vendor/*-stubs
+	venv/bin/pip install --target packages/flare/python/vendor -r requirements.txt
+	@find packages/flare/python/vendor -type d -name "*.dist-info" -exec rm -r {} +
+	@find packages/flare/python/vendor -type d -name "__pycache__" -exec rm -r {} +
+	@rm -rf packages/flare/python/vendor/bin
+	@rm -rf packages/flare/python/vendor/packaging
+	@rm -rf packages/flare/python/vendor/*-stubs
 
 venv-tools: requirements.tools.txt venv
 	rm -rf venv-tools
@@ -22,35 +26,39 @@ venv-tools: requirements.tools.txt venv
 .PHONY: clean
 clean:
 	@echo "Removing venv and venv-tools."
-	@rm -rf venv
-	@rm -rf venv-tools
-	@rm -rf flare/bin/vendor
+	rm -rf venv
+	rm -rf venv-tools
+	rm -rf packages/flare/python/vendor
 	@unlink "/Applications/Splunk/etc/apps/flare" || true
+	@find . -type d -name "node_modules" -exec rm -rf {} +
+	rm -rf packages/flare/flare
+	@rm -f flare.tar.gz
 	@echo "Done."
 
 .PHONY: package
-package: flare/bin/vendor
+package: packages/flare/python/vendor
 	-@rm flare.tar.gz
-	@find flare/bin -type d -name "__pycache__" -exec rm -r {} +
+	@find packages/flare/python -type d -name "__pycache__" -exec rm -r {} +
 	COPYFILE_DISABLE=1 tar \
-		--exclude='flare/local' \
-		--exclude='flare/metadata/local.meta' \
+		--exclude='packages/flare/flare/local' \
+		--exclude='packages/flare/flare/metadata/local.meta' \
 		--format ustar \
+		-C packages/flare \
 		-cvzf \
 		"flare.tar.gz" \
 		"flare"
 
 # This will not work until we get an APPID - need to submit in Splunkbase UI first.
 .PHONY: publish
-publish: flare.tar.gz
-	curl -u flaresystems --request POST https://splunkbase.splunk.com/api/v1/app/<APPID>/new_release/ -F "files[]=@./flare.tar.gz" -F "filename=flare.tar.gz" -F "cim_versions=4.9,4.7" -F "splunk_versions=9.3" -F "visibility=true"
+publish: packages/flare.tar.gz
+	curl -u flaresystems --request POST https://splunkbase.splunk.com/api/v1/app/<APPID>/new_release/ -F "files[]=@./packages/flare.tar.gz" -F "filename=packages/flare.tar.gz" -F "cim_versions=4.9,4.7" -F "splunk_versions=9.3" -F "visibility=true"
 
 # A manual review from the Splunk team will be required to know if we need to fix any of these tag warnings.
 .PHONY: validate
 validate: venv-tools
 	@echo "Running Splunk AppInspect..."
 	@echo "If you get an error about \"libmagic\", run \"brew install libmagic\""
-	@venv-tools/bin/splunk-appinspect inspect --ci "flare" || \
+	@venv-tools/bin/splunk-appinspect inspect --ci "packages/flare/flare" || \
 	if test  "$$?" -eq "102" || "$$?" -eq "103" ; then \
 		exit 0 ; \
 	else \
@@ -63,7 +71,7 @@ TAGS = advanced_xml alert_actions_conf ast bias cloud csv custom_search_commands
 inspect-tags:
 	@for TAG in $(TAGS); do \
 		echo "Tag: $$TAG" ; \
-		venv-tools/bin/splunk-appinspect inspect --ci --included-tags $$TAG "flare" ; \
+		venv-tools/bin/splunk-appinspect inspect --ci --included-tags $$TAG "packages/flare/flare" ; \
 	done
 
 .PHONY: test
@@ -72,30 +80,28 @@ test: venv-tools
 		then venv-tools/bin/pytest ./**/*.py -vv ; \
 	fi
 
-.PHONY: format
+.PHONY: format setup-web
 format: venv-tools
 	venv-tools/bin/ruff check --fix --unsafe-fixes
 	venv-tools/bin/ruff format
+	yarn run format
 
 .PHONY: format-check
 format-check: venv-tools
 	venv-tools/bin/ruff check
 	venv-tools/bin/ruff format --check
+	yarn run format:verify
 
 .PHONY: lint
-lint: mypy format-check
+lint: setup-web venv-tools mypy format-check
+	yarn run lint
 
 .PHONY: mypy
 mypy: venv-tools
-	venv-tools/bin/mypy flare
+	venv-tools/bin/mypy packages/flare
 
 .PHONY: splunk-local
-splunk-local: venv
-	@echo "Create symlink from app to Splunk Enterprise"
-	@if [ ! -d "/Applications/Splunk/etc/apps" ]; then \
-		echo "Splunk Enterprise isn't installed"; \
-		exit 1; \
-	fi
-
-	@unlink "/Applications/Splunk/etc/apps/flare" || true
-	@ln -s "$(CURDIR)/flare" "/Applications/Splunk/etc/apps/flare"
+splunk-local: venv setup-web
+	@echo "Create symlink from app to Splunk Enterprise and start watching files"
+	SPLUNK_HOME="/Applications/Splunk" yarn run link
+	yarn run start

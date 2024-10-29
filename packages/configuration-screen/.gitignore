@@ -1,0 +1,5 @@
+/*.js
+!/.babelrc.js
+!/.eslintrc.js
+!/jest.config.js
+!/*.config.js
