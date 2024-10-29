@@ -1,10 +1,10 @@
 *.DS_Store
-flare_splunk_integration.tar.gz
+flare.tar.gz
 venv
 venv-tools
-flare_splunk_integration/local
-flare_splunk_integration/metadata/local.meta
+flare/local
+flare/metadata/local.meta
 __pycache__/
 .vscode/
 
-flare_splunk_integration/bin/vendor/*
+flare/bin/vendor/*

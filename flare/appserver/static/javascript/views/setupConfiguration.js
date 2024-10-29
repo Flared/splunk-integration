@@ -1,7 +1,7 @@
 import { promisify } from './util.js'
 import * as SplunkHelpers from './configurationFileHelper.js'
 
-const appName = "flare_splunk_integration";
+const appName = "flare";
 const storageRealm = "flare_integration_realm";
 const applicationNameSpace = {
     owner: "nobody",

@@ -1,6 +1,6 @@
 "use strict";
 
-var appName = "flare_splunk_integration";
+var appName = "flare";
 
 require.config({
     paths: {
