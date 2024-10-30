@@ -54,12 +54,12 @@ function createService(applicationNamespace: SplunkApplicationNamespace): Splunk
 }
 
 function retrieveUserTenants(
-    serverKey: string,
+    apiKey: string,
     successCallback: (userTenants: Array<Tenant>) => void,
     errorCallback: (errorMessage: string) => void
 ): void {
     const service = createService(applicationNameSpace);
-    const data = { serverKey };
+    const data = { apiKey };
     service.post('/services/retrieve_user_tenants', data, (err, response) => {
         if (err) {
             errorCallback(err.data);
@@ -97,12 +97,12 @@ async function savePassword(
     });
 }
 
-async function saveConfiguration(serverKey: string, tenantId: number) {
+async function saveConfiguration(apiKey: string, tenantId: number) {
     const service = createService(applicationNameSpace);
 
     const storagePasswords = await promisify(service.storagePasswords().fetch)();
-    await savePassword(storagePasswords, 'serverkey', serverKey);
-    await savePassword(storagePasswords, 'tenantid', `${tenantId}`);
+    await savePassword(storagePasswords, 'api_key', apiKey);
+    await savePassword(storagePasswords, 'tenant_id', `${tenantId}`);
 
     await completeSetup(service);
     await reloadApp(service);
@@ -123,12 +123,12 @@ async function retrievePassword(passwordKey: string): Promise<string> {
     return '';
 }
 
-async function retrieveServerKey(): Promise<string> {
-    return retrievePassword('serverkey');
+async function retrieveApiKey(): Promise<string> {
+    return retrievePassword('api_key');
 }
 
 async function retrieveTenantId(): Promise<number> {
-    return retrievePassword('tenantid').then((tenantId) => {
+    return retrievePassword('tenant_id').then((tenantId) => {
         if (tenantId !== '') {
             return parseInt(tenantId, 10);
         }
@@ -137,4 +137,4 @@ async function retrieveTenantId(): Promise<number> {
     });
 }
 
-export { saveConfiguration, retrieveUserTenants, retrieveServerKey, retrieveTenantId };
+export { saveConfiguration, retrieveUserTenants, retrieveApiKey, retrieveTenantId };
