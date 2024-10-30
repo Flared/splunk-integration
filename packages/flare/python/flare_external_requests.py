@@ -20,7 +20,7 @@ class FlareUserTenants(splunk.rest.BaseRestHandler):
     def handle_POST(self):
         payload = self.request["payload"]
         params = parseParams(payload)
-        self.flare_client = FlareApiClient(api_key=params["serverKey"])
+        self.flare_client = FlareApiClient(api_key=params["apiKey"])
         user_tenants_response = self.flare_client.get("firework/v2/me/tenants")
         self.response.setHeader("Content-Type", "application/json")
         self.response.write(json.dumps(user_tenants_response.json()))
