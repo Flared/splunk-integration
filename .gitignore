@@ -2,9 +2,20 @@
 flare.tar.gz
 venv
 venv-tools
-flare/local
-flare/metadata/local.meta
+packages/flare/local
+packages/flare/metadata/local.meta
 __pycache__/
 .vscode/
 
-flare/bin/vendor/*
+packages/flare/python/vendor/*
+.DS_Store
+.idea/
+lerna-debug.log
+node_modules
+npm-debug.log
+test-reports
+coverage_report
+yarn-error.log
+licenses.json
+functional-temp
+splunktional-temp

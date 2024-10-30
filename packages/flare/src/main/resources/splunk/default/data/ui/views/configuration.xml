@@ -1,0 +1,4 @@
+<?xml version="1.0"?>
+<view template="flare:/templates/configuration.html" type="html">
+	<label>Configuration</label>
+</view>
