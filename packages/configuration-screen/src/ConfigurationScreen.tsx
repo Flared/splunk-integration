@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import Button from '@splunk/react-ui/Button';
 import {
-    retrieveServerKey,
+    retrieveApiKey,
     retrieveTenantId,
     retrieveUserTenants,
     saveConfiguration,
@@ -10,16 +10,16 @@ import { StyledContainer, StyledError } from './ConfigurationScreenStyles';
 import { Tenant } from './models/flare';
 
 const ConfigurationScreen = () => {
-    const [serverKey, setServerKey] = useState('');
+    const [apiKey, setApiKey] = useState('');
     const [tenantId, setTenantId] = useState(-1);
     const [errorMessage, setErrorMessage] = useState('');
     const [tenants, setUserTenants] = useState<Tenant[]>([]);
     const [isLoading, setIsLoading] = useState(false);
 
-    function handleSubmitServerKey() {
+    function handleSubmitApiKey() {
         setIsLoading(true);
         retrieveUserTenants(
-            serverKey,
+            apiKey,
             (userTenants) => {
                 if (tenantId === -1 && userTenants.length > 0) {
                     setTenantId(userTenants[0].id);
@@ -37,13 +37,13 @@ const ConfigurationScreen = () => {
 
     async function handleSubmitTenant() {
         setIsLoading(true);
-        await saveConfiguration(serverKey, tenantId);
+        await saveConfiguration(apiKey, tenantId);
     }
 
     useEffect(() => {
         setIsLoading(true);
-        retrieveServerKey().then((key) => {
-            setServerKey(key);
+        retrieveApiKey().then((key) => {
+            setApiKey(key);
             retrieveTenantId().then((id) => {
                 setTenantId(id);
                 setIsLoading(false);
@@ -54,7 +54,7 @@ const ConfigurationScreen = () => {
     if (isLoading) {
         return <div>Loading...</div>;
     }
-    if (tenants.length === 0 || serverKey === '') {
+    if (tenants.length === 0 || apiKey === '') {
         return (
             <StyledContainer>
                 <h2>Enter your API Key</h2>
@@ -64,13 +64,13 @@ const ConfigurationScreen = () => {
                 <br />
                 <input
                     type="password"
-                    name="serverKey"
-                    value={serverKey}
-                    onChange={(e) => setServerKey(e.target.value)}
+                    name="apiKey"
+                    value={apiKey}
+                    onChange={(e) => setApiKey(e.target.value)}
                 />
                 <br />
                 <br />
-                <Button onClick={() => handleSubmitServerKey()}>Next Step</Button>
+                <Button onClick={() => handleSubmitApiKey()}>Next Step</Button>
             </StyledContainer>
         );
     }
