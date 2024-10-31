@@ -1,12 +1,11 @@
-from http.client import HTTPMessage
+import requests
 import typing as t
-import sys
+import vendor.splunklib.client as client
 
+from datetime import date
+from vendor.flareio import FlareApiClient
 from vendor.requests.auth import AuthBase
 
-from urllib.error import HTTPError
-from vendor.flareio import FlareApiClient
-import vendor.splunklib.client as client
 
 APP_NAME = "flare"
 
@@ -36,25 +35,9 @@ def get_flare_api_client(
 
 
 class FlareAPI(AuthBase):
-    def __init__(self, *, app: client.Application) -> None:
-        # Should be able to use app.service.storage_passwords.get(),
-        # but I can't seem to get that to work. list() works.
-        api_key: t.Optional[str] = None
-        tenant_id: t.Optional[int] = None
-        for item in app.service.storage_passwords.list():
-            if item.content.username == "api_key":
-                api_key = item.clear_password
-
-            if item.content.username == "tenant_id":
-                tenant_id = (
-                    int(item.clear_password)
-                    if item.clear_password is not None
-                    else None
-                )
-
-        if not api_key:
-            raise Exception("API key not found")
-
+    def __init__(
+        self, *, app: client.Application, api_key: str, tenant_id: int
+    ) -> None:
         self.flare_endpoints = app.service.confs["flare"]["endpoints"]
 
         self.flare_client = get_flare_api_client(
@@ -62,29 +45,21 @@ class FlareAPI(AuthBase):
             tenant_id=tenant_id,
         )
 
-    def retrieve_feed(self, *, from_: t.Optional[str] = None) -> dict[str, t.Any]:
+    def retrieve_feed(
+        self, *, next: t.Optional[str] = None, start_date: t.Optional[str] = None
+    ) -> t.Iterator[requests.Response]:
         url = self.flare_endpoints["me_feed_endpoint"]
-        response = self.flare_client.post(
+        params: t.Dict[str, t.Any] = {
+            "lite": True,
+            "size": 50,
+            "from": next if next else None,
+        }
+        if not next:
+            params["time"] = "{}@".format(
+                start_date if start_date else date.today().isoformat()
+            )
+        return self.flare_client.scroll(
+            method="GET",
             url=url,
-            json={"lite": "true", "from": from_},
-            headers={
-                "Content-type": "application/json",
-                "Accept": "application/json",
-            },
+            params=params,
         )
-
-        if response.status_code != 200:
-            # This is a bit of a hack in order to see the error message within Splunk search.
-            print(response.text, file=sys.stderr)
-            headers = HTTPMessage()
-            for key, value in response.headers.items():
-                headers.add_header(key, value)
-                raise HTTPError(
-                    url=url,
-                    code=response.status_code,
-                    msg=response.text,
-                    hdrs=headers,
-                    fp=None,
-                )
-
-        return response.json()
