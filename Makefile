@@ -98,7 +98,7 @@ lint: setup-web venv-tools mypy format-check
 
 .PHONY: mypy
 mypy: venv-tools
-	venv-tools/bin/mypy packages/flare
+	venv-tools/bin/mypy --config-file mypy.ini packages/flare
 
 .PHONY: splunk-local
 splunk-local: venv setup-web

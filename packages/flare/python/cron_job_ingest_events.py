@@ -1,23 +1,44 @@
 import json
-import sys
 import os
+import sys
+import time
+
+from datetime import date
+from datetime import datetime
+from datetime import timedelta
+from enum import Enum
+from typing import Any
 from typing import Optional
+
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "vendor"))
 import vendor.splunklib.client as client
 
 from flare import FlareAPI
 
+
 APP_NAME = "flare"
 HOST = "localhost"
 SPLUNK_PORT = 8089
 REALM = APP_NAME + "_realm"
-KV_COLLECTION_NAME = "feednext"
+KV_COLLECTION_NAME = "event_ingestion_collection"
+CRON_JOB_THRESHOLD_SINCE_LAST_FETCH = timedelta(minutes=10)
 
 
-def main():
+class PasswordKeys(Enum):
+    API_KEY = "api_key"
+    TENANT_ID = "tenant_id"
+
+
+class CollectionKeys(Enum):
+    CURRENT_TENANT_ID = "current_tenant_id"
+    START_DATE = "start_date"
+    NEXT_TOKEN = "next_"
+    TIMESTAMP_LAST_FETCH = "timestamp_last_fetch"
+
+
+def main() -> None:
     try:
-        # Example using a token
         splunk_service = client.connect(
             host=HOST,
             port=SPLUNK_PORT,
@@ -29,44 +50,163 @@ def main():
         raise Exception(str(e))
 
     app: client.Application = splunk_service.apps[APP_NAME]
-    flare_api = FlareAPI(app=app)
+    create_collection(app=app)
 
-    from_ = get_from_value(app=app)
-    event_feed = flare_api.retrieve_feed(from_=from_)
-    set_from_value(app=app, next=event_feed["next"])
+    # To avoid cron jobs from doing the same work at the same time, exit new cron jobs if a cron job is already doing work
+    last_fetched_timestamp = get_last_fetched(app)
+    if last_fetched_timestamp and last_fetched_timestamp < (
+        datetime.now() - CRON_JOB_THRESHOLD_SINCE_LAST_FETCH
+    ):
+        return
 
-    if event_feed["items"]:
-        for item in event_feed["items"]:
-            print(json.dumps(item))
+    api_key: Optional[str] = None
+    tenant_id: Optional[int] = None
+    for item in app.service.storage_passwords.list():
+        if item.content.username == PasswordKeys.API_KEY.value:
+            api_key = item.clear_password
+
+        if item.content.username == PasswordKeys.TENANT_ID.value:
+            tenant_id = (
+                int(item.clear_password) if item.clear_password is not None else None
+            )
+
+    if not api_key:
+        raise Exception("API key not found")
+
+    if not tenant_id:
+        raise Exception("Tenant ID not found")
+
+    try:
+        flare_api = FlareAPI(app=app, api_key=api_key, tenant_id=tenant_id)
+
+        next = get_next(app=app, tenant_id=tenant_id)
+        start_date = get_start_date(app=app)
+        for response in flare_api.retrieve_feed(next=next, start_date=start_date):
+            save_last_fetched(app=app)
+
+            # Rate limiting.
+            time.sleep(1)
+
+            if response.status_code != 200:
+                print(response.text, file=sys.stderr)
+                return
+
+            event_feed = response.json()
+            save_start_date(app=app, tenant_id=tenant_id)
+            save_next(app=app, tenant_id=tenant_id, next=event_feed["next"])
+
+            if event_feed["items"]:
+                for item in event_feed["items"]:
+                    print(json.dumps(item))
+    except Exception as e:
+        print("Exception={}".format(e))
 
 
-def get_from_value(app: client.Application) -> Optional[str]:
-    from_: Optional[str] = None
-    if KV_COLLECTION_NAME in app.service.kvstore:
-        data = app.service.kvstore[KV_COLLECTION_NAME].data.query()
-        if len(data) > 1:
-            from_ = data[0]["value"]
-        else:
-            app.service.kvstore.delete(KV_COLLECTION_NAME)
-
-    return from_
+def get_next(app: client.Application, tenant_id: int) -> Optional[str]:
+    return get_collection_value(
+        app=app, key="{}{}".format(CollectionKeys.NEXT_TOKEN.value, tenant_id)
+    )
 
 
-def set_from_value(app: client.Application, next: Optional[str]):
+def get_start_date(app: client.Application) -> Optional[str]:
+    return get_collection_value(app=app, key=CollectionKeys.START_DATE.value)
+
+
+def get_current_tenant_id(app: client.Application) -> Optional[int]:
+    current_tenant_id = get_collection_value(
+        app=app, key=CollectionKeys.CURRENT_TENANT_ID.value
+    )
+    try:
+        return int(current_tenant_id) if current_tenant_id else None
+    except Exception:
+        pass
+    return None
+
+
+def get_last_fetched(app: client.Application) -> Optional[datetime]:
+    timestamp_last_fetched = get_collection_value(
+        app=app, key=CollectionKeys.TIMESTAMP_LAST_FETCH.value
+    )
+    if timestamp_last_fetched:
+        try:
+            return datetime.fromisoformat(timestamp_last_fetched)
+        except Exception:
+            pass
+    return None
+
+
+def create_collection(app: client.Application) -> None:
     if KV_COLLECTION_NAME not in app.service.kvstore:
         # Create the collection
         app.service.kvstore.create(
             name=KV_COLLECTION_NAME, fields={"_key": "string", "value": "string"}
         )
-        # Insert
-        app.service.kvstore[KV_COLLECTION_NAME].data.insert(
-            json.dumps({"_key": "next", "value": next})
+
+
+def save_start_date(app: client.Application, tenant_id: int) -> None:
+    current_tenant_id = get_current_tenant_id(app=app)
+    # If this is the first request ever, insert today's date so that future requests will be based on that
+    if not get_start_date(app):
+        save_collection_value(
+            app=app,
+            key=CollectionKeys.START_DATE.value,
+            value=datetime.today().isoformat(),
         )
-    elif not next:
-        app.service.kvstore[KV_COLLECTION_NAME].data.delete(id="next")
+
+    # If the current tenant has changed, update the start date so that future requests will be based off today
+    # If you switch tenants, this will avoid the old tenant from ingesting all the events before today and the day
+    # that tenant was switched in the first place.
+    if current_tenant_id != tenant_id:
+        app.service.kvstore[KV_COLLECTION_NAME].data.update(
+            id=CollectionKeys.START_DATE.value,
+            data=json.dumps({"value": date.today().isoformat()}),
+        )
+
+
+def save_next(app: client.Application, tenant_id: int, next: Optional[str]) -> None:
+    # If we have a new next value, update the collection for that tenant to continue searching from that point
+    if not next:
+        return
+
+    save_collection_value(
+        app=app,
+        key="{}{}".format(CollectionKeys.NEXT_TOKEN.value, tenant_id),
+        value=next,
+    )
+
+
+def save_last_fetched(app: client.Application) -> None:
+    save_collection_value(
+        app=app,
+        key=CollectionKeys.TIMESTAMP_LAST_FETCH.value,
+        value=datetime.now().isoformat(),
+    )
+
+
+def get_collection_value(app: client.Application, key: str) -> Optional[str]:
+    if KV_COLLECTION_NAME in app.service.kvstore:
+        data = app.service.kvstore[KV_COLLECTION_NAME].data.query()
+        for entry in data:
+            if entry["_key"] == key:
+                return entry["value"]
+
+    return None
+
+
+def save_collection_value(app: client.Application, key: str, value: Any) -> None:
+    if not get_collection_value(app=app, key=key):
+        app.service.kvstore[KV_COLLECTION_NAME].data.insert(
+            json.dumps(
+                {
+                    "_key": key,
+                    "value": value,
+                }
+            )
+        )
     else:
         app.service.kvstore[KV_COLLECTION_NAME].data.update(
-            id="next", data=json.dumps({"value": next})
+            id=key,
+            data=json.dumps({"value": value}),
         )
 
 
