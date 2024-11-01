@@ -7,9 +7,6 @@ from vendor.flareio import FlareApiClient
 from vendor.requests.auth import AuthBase
 
 
-APP_NAME = "flare"
-
-
 def ensure_str(value: t.Union[str, bytes]) -> str:
     if isinstance(value, bytes):
         return value.decode("utf8")
