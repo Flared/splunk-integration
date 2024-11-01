@@ -52,9 +52,8 @@ class FlareAPI(AuthBase):
             "from": next if next else None,
         }
         if not next:
-            params["time"] = "{}@".format(
-                start_date if start_date else date.today().isoformat()
-            )
+            from_date = start_date if start_date else date.today().isoformat()
+            params["time"] = f"{from_date}@"
         return self.flare_client.scroll(
             method="GET",
             url=url,
