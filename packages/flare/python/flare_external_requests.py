@@ -1,8 +1,10 @@
-import sys
-import os
-import splunk  # type: ignore[import-not-found]
 import json
+import os
+import splunk
+import sys
+
 from typing import Any
+
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "vendor"))
 from flareio import FlareApiClient
@@ -17,7 +19,7 @@ def parseParams(payload: str) -> dict[str, Any]:
 
 
 class FlareUserTenants(splunk.rest.BaseRestHandler):
-    def handle_POST(self):
+    def handle_POST(self) -> None:
         payload = self.request["payload"]
         params = parseParams(payload)
         self.flare_client = FlareApiClient(api_key=params["apiKey"])

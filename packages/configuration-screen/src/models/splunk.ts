@@ -9,7 +9,6 @@ export interface SplunkApplicationNamespace {
 export interface SplunkPassword {
     name: string;
     _properties: {
-        // eslint-disable-next-line camelcase
         clear_password: string;
     };
 }

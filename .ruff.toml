@@ -1,0 +1,40 @@
+extend-select = [
+    "I",
+    "C411",
+    "C413",
+    "C414",
+    "C416",
+    "C417",
+    "C419",
+    "RUF015",
+    "E401",
+]
+extend-safe-fixes = [
+    "C411",
+    "C413",
+    "C414",
+    "C416",
+    "C417",
+    "C419",
+    "RUF015",
+    "E401",
+]
+ignore = [
+    "E722",
+    "F403",
+    "F405",
+]
+
+[isort]
+force-single-line = true
+no-sections = true
+lines-after-imports = 2
+lines-between-types = 1
+force-wrap-aliases = true
+combine-as-imports = true
+
+[format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
