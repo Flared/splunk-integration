@@ -5,8 +5,6 @@ import time
 
 from datetime import date
 from datetime import datetime
-from datetime import timedelta
-from enum import Enum
 from typing import Any
 from typing import Optional
 
@@ -14,30 +12,19 @@ from typing import Optional
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "vendor"))
 import vendor.splunklib.client as client
 
+from constants import APP_NAME
+from constants import CRON_JOB_THRESHOLD_SINCE_LAST_FETCH
+from constants import HOST
+from constants import KV_COLLECTION_NAME
+from constants import SPLUNK_PORT
+from constants import CollectionKeys
+from constants import PasswordKeys
 from flare import FlareAPI
-
-
-APP_NAME = "flare"
-HOST = "localhost"
-SPLUNK_PORT = 8089
-REALM = APP_NAME + "_realm"
-KV_COLLECTION_NAME = "event_ingestion_collection"
-CRON_JOB_THRESHOLD_SINCE_LAST_FETCH = timedelta(minutes=10)
-
-
-class PasswordKeys(Enum):
-    API_KEY = "api_key"
-    TENANT_ID = "tenant_id"
-
-
-class CollectionKeys(Enum):
-    CURRENT_TENANT_ID = "current_tenant_id"
-    START_DATE = "start_date"
-    NEXT_TOKEN = "next_"
-    TIMESTAMP_LAST_FETCH = "timestamp_last_fetch"
+from logger import Logger
 
 
 def main() -> None:
+    logger = Logger(class_name=__file__)
     try:
         splunk_service = client.connect(
             host=HOST,
@@ -46,7 +33,7 @@ def main() -> None:
             token=sys.stdin.readline().strip(),
         )
     except Exception as e:
-        print(str(e), file=sys.stderr)
+        logger.error(str(e))
         raise Exception(str(e))
 
     app: client.Application = splunk_service.apps[APP_NAME]
@@ -57,6 +44,11 @@ def main() -> None:
     if last_fetched_timestamp and last_fetched_timestamp < (
         datetime.now() - CRON_JOB_THRESHOLD_SINCE_LAST_FETCH
     ):
+        logger.debug(
+            "Fetched events less than {} minutes ago, exiting".format(
+                (CRON_JOB_THRESHOLD_SINCE_LAST_FETCH.seconds) / 60
+            )
+        )
         return
 
     api_key: Optional[str] = None
@@ -88,7 +80,7 @@ def main() -> None:
             time.sleep(1)
 
             if response.status_code != 200:
-                print(response.text, file=sys.stderr)
+                logger.error(response.text)
                 return
 
             event_feed = response.json()
@@ -99,7 +91,7 @@ def main() -> None:
                 for item in event_feed["items"]:
                     print(json.dumps(item))
     except Exception as e:
-        print("Exception={}".format(e))
+        logger.error("Exception={}".format(e))
 
 
 def get_next(app: client.Application, tenant_id: int) -> Optional[str]:
