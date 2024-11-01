@@ -14,17 +14,15 @@ class Logger:
         log_filepath = ""
         if SPLUNK_HOME:
             log_filepath = os.path.join(
-                SPLUNK_HOME, "var", "log", "splunk", "{}.log".format(APP_NAME)
+                SPLUNK_HOME, "var", "log", "splunk", f"{APP_NAME}.log"
             )
             APPLICATION_FOLDER = os.path.join(SPLUNK_HOME, "etc", "apps", APP_NAME)
             is_local_build = os.path.islink(APPLICATION_FOLDER)
         else:
-            log_filepath = os.path.join(
-                tempfile.gettempdir(), "{}.log".format(APP_NAME)
-            )
+            log_filepath = os.path.join(tempfile.gettempdir(), f"{APP_NAME}.log")
 
         self.tag_name = os.path.splitext(os.path.basename(class_name))[0]
-        self._logger = logging.getLogger("flare-{}".format(self.tag_name))
+        self._logger = logging.getLogger(f"flare-{self.tag_name}")
 
         if is_local_build:
             # If the application is a symlink, it's been installed locally
@@ -39,19 +37,19 @@ class Logger:
         self._logger.addHandler(handler)
 
     def debug(self, msg: Any) -> None:
-        self._logger.debug(msg="{}: {}".format(self.tag_name, msg))
+        self._logger.debug(msg=f"{self.tag_name}: {msg}")
 
     def info(self, msg: Any) -> None:
-        self._logger.info(msg="{}: {}".format(self.tag_name, msg))
+        self._logger.info(msg=f"{self.tag_name}: {msg}")
 
     def warning(self, msg: Any) -> None:
-        self._logger.warning(msg="{}: {}".format(self.tag_name, msg))
+        self._logger.warning(msg=f"{self.tag_name}: {msg}")
 
     def error(self, msg: Any) -> None:
-        self._logger.error(msg="{}: {}".format(self.tag_name, msg))
+        self._logger.error(msg=f"{self.tag_name}: {msg}")
 
     def exception(self, msg: Any) -> None:
-        self._logger.exception(msg="{}: {}".format(self.tag_name, msg))
+        self._logger.exception(msg=f"{self.tag_name}: {msg}")
 
     def critical(self, msg: Any) -> None:
-        self._logger.critical(msg="{}: {}".format(self.tag_name, msg))
+        self._logger.critical(msg=f"{self.tag_name}: {msg}")

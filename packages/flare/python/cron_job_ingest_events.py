@@ -41,13 +41,11 @@ def main() -> None:
 
     # To avoid cron jobs from doing the same work at the same time, exit new cron jobs if a cron job is already doing work
     last_fetched_timestamp = get_last_fetched(app)
-    if last_fetched_timestamp and last_fetched_timestamp < (
+    if last_fetched_timestamp and last_fetched_timestamp > (
         datetime.now() - CRON_JOB_THRESHOLD_SINCE_LAST_FETCH
     ):
         logger.debug(
-            "Fetched events less than {} minutes ago, exiting".format(
-                (CRON_JOB_THRESHOLD_SINCE_LAST_FETCH.seconds) / 60
-            )
+            f"Fetched events less than {int(CRON_JOB_THRESHOLD_SINCE_LAST_FETCH.seconds / 60)} minutes ago, exiting"
         )
         return
 
@@ -73,6 +71,8 @@ def main() -> None:
 
         next = get_next(app=app, tenant_id=tenant_id)
         start_date = get_start_date(app=app)
+        logger.debug(f"Fetching {tenant_id=}, {next=}, {start_date=}")
+        events_retrieved_count = 0
         for response in flare_api.retrieve_feed(next=next, start_date=start_date):
             save_last_fetched(app=app)
 
@@ -90,13 +90,17 @@ def main() -> None:
             if event_feed["items"]:
                 for item in event_feed["items"]:
                     print(json.dumps(item))
+
+                events_retrieved_count += len(event_feed["items"])
     except Exception as e:
-        logger.error("Exception={}".format(e))
+        logger.error(f"Exception={e}")
+
+    logger.debug(f"Retrieved {events_retrieved_count} events")
 
 
 def get_next(app: client.Application, tenant_id: int) -> Optional[str]:
     return get_collection_value(
-        app=app, key="{}{}".format(CollectionKeys.NEXT_TOKEN.value, tenant_id)
+        app=app, key=f"{CollectionKeys.NEXT_TOKEN.value}{tenant_id}"
     )
 
 
@@ -162,7 +166,7 @@ def save_next(app: client.Application, tenant_id: int, next: Optional[str]) -> N
 
     save_collection_value(
         app=app,
-        key="{}{}".format(CollectionKeys.NEXT_TOKEN.value, tenant_id),
+        key=f"{CollectionKeys.NEXT_TOKEN.value}{tenant_id}",
         value=next,
     )
 
