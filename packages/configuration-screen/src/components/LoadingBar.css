@@ -1,0 +1,9 @@
+.loading-bar {
+    background-color: var(--loading-bar-bg-color);
+    height: 1rem;
+}
+
+.loading-bar .value-loading-bar {
+    background-color: var(--button-bg-color);
+    height: 100%;
+}

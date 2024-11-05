@@ -6,7 +6,7 @@ import { getUserTheme } from '@splunk/splunk-utils/themes';
 
 getUserTheme()
     .then((theme) => {
-        layout(<ConfigurationScreen />, {
+        layout(<ConfigurationScreen theme={theme} />, {
             theme,
         });
     })

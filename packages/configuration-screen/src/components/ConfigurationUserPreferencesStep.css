@@ -1,0 +1,13 @@
+.note {
+    font-size: 0.75rem;
+    color: var(--secondary-text-color);
+    margin-top: 5px;
+}
+
+.switch-layout {
+    display: flex;
+    flex-direction: row;
+    gap: 0.5rem;
+    align-items: center;
+    margin-top: 1rem;
+}
