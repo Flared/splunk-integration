@@ -1,0 +1,39 @@
+#container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: auto;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    text-align: center;
+}
+
+.content {
+    display: flex;
+    flex-direction: row;
+    flex: content;
+    height: auto;
+    width: 800px;
+    margin: 2rem;
+    gap: 1.5rem;
+    align-self: center;
+}
+
+.content-step {
+    display: flex;
+    flex-direction: column;
+    flex: content;
+    align-items: flex-start;
+}
+
+.link {
+    display: flex;
+    flex-direction: row;
+    gap: 0.5rem;
+    width: 10rem;
+}
+
+#learn-more {
+    right: 0;
+    height: fit-content;
+}

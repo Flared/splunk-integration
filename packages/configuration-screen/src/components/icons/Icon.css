@@ -1,0 +1,5 @@
+.icon {
+    background-color: var(--icon-bg-color);
+    border-radius: 50%;
+    align-content: center;
+}
