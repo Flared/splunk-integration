@@ -21,22 +21,10 @@ from constants import CollectionKeys
 from constants import PasswordKeys
 from flare import FlareAPI
 from logger import Logger
+from vendor.splunklib.client import Service
 
 
-def main() -> None:
-    logger = Logger(class_name=__file__)
-    try:
-        splunk_service = client.connect(
-            host=HOST,
-            port=SPLUNK_PORT,
-            app=APP_NAME,
-            token=sys.stdin.readline().strip(),
-        )
-    except Exception as e:
-        logger.error(str(e))
-        raise Exception(str(e))
-
-    app: client.Application = splunk_service.apps[APP_NAME]
+def main(logger: Logger, app: client.Application) -> None:
     create_collection(app=app)
 
     # To avoid cron jobs from doing the same work at the same time, exit new cron jobs if a cron job is already doing work
@@ -49,6 +37,14 @@ def main() -> None:
         )
         return
 
+    api_key, tenant_id = get_api_credentials(app=app)
+
+    fetch_and_print_feed_results(
+        logger=logger, app=app, api_key=api_key, tenant_id=tenant_id
+    )
+
+
+def get_api_credentials(app: client.Application) -> tuple[str, int]:
     api_key: Optional[str] = None
     tenant_id: Optional[int] = None
     for item in app.service.storage_passwords.list():
@@ -66,36 +62,7 @@ def main() -> None:
     if not tenant_id:
         raise Exception("Tenant ID not found")
 
-    try:
-        flare_api = FlareAPI(app=app, api_key=api_key, tenant_id=tenant_id)
-
-        next = get_next(app=app, tenant_id=tenant_id)
-        start_date = get_start_date(app=app)
-        logger.debug(f"Fetching {tenant_id=}, {next=}, {start_date=}")
-        events_retrieved_count = 0
-        for response in flare_api.retrieve_feed(next=next, start_date=start_date):
-            save_last_fetched(app=app)
-
-            # Rate limiting.
-            time.sleep(1)
-
-            if response.status_code != 200:
-                logger.error(response.text)
-                return
-
-            event_feed = response.json()
-            save_start_date(app=app, tenant_id=tenant_id)
-            save_next(app=app, tenant_id=tenant_id, next=event_feed["next"])
-
-            if event_feed["items"]:
-                for item in event_feed["items"]:
-                    print(json.dumps(item))
-
-                events_retrieved_count += len(event_feed["items"])
-    except Exception as e:
-        logger.error(f"Exception={e}")
-
-    logger.debug(f"Retrieved {events_retrieved_count} events")
+    return api_key, tenant_id
 
 
 def get_next(app: client.Application, tenant_id: int) -> Optional[str]:
@@ -104,8 +71,14 @@ def get_next(app: client.Application, tenant_id: int) -> Optional[str]:
     )
 
 
-def get_start_date(app: client.Application) -> Optional[str]:
-    return get_collection_value(app=app, key=CollectionKeys.START_DATE.value)
+def get_start_date(app: client.Application) -> Optional[date]:
+    start_date = get_collection_value(app=app, key=CollectionKeys.START_DATE.value)
+    if start_date:
+        try:
+            return date.fromisoformat(start_date)
+        except Exception:
+            pass
+    return None
 
 
 def get_current_tenant_id(app: client.Application) -> Optional[int]:
@@ -146,7 +119,7 @@ def save_start_date(app: client.Application, tenant_id: int) -> None:
         save_collection_value(
             app=app,
             key=CollectionKeys.START_DATE.value,
-            value=datetime.today().isoformat(),
+            value=date.today().isoformat(),
         )
 
     # If the current tenant has changed, update the start date so that future requests will be based off today
@@ -206,5 +179,64 @@ def save_collection_value(app: client.Application, key: str, value: Any) -> None
         )
 
 
+def fetch_and_print_feed_results(
+    logger: Logger,
+    app: client.Application,
+    api_key: str,
+    tenant_id: int,
+) -> None:
+    try:
+        flare_api = FlareAPI(app=app, api_key=api_key, tenant_id=tenant_id)
+
+        next = get_next(app=app, tenant_id=tenant_id)
+        start_date = get_start_date(app=app)
+        logger.debug(f"Fetching {tenant_id=}, {next=}, {start_date=}")
+        events_retrieved_count = 0
+        for response in flare_api.retrieve_feed(next=next, start_date=start_date):
+            save_last_fetched(app=app)
+
+            # Rate limiting.
+            time.sleep(1)
+
+            if response.status_code != 200:
+                logger.error(response.text)
+                return
+
+            event_feed = response.json()
+            save_start_date(app=app, tenant_id=tenant_id)
+            save_next(app=app, tenant_id=tenant_id, next=event_feed["next"])
+
+            if event_feed["items"]:
+                for item in event_feed["items"]:
+                    print(json.dumps(item))
+
+                events_retrieved_count += len(event_feed["items"])
+    except Exception as e:
+        logger.error(f"Exception={e}")
+
+    logger.debug(f"Retrieved {events_retrieved_count} events")
+
+
+def get_splunk_service(logger: Logger) -> Service:
+    try:
+        splunk_service = client.connect(
+            host=HOST,
+            port=SPLUNK_PORT,
+            app=APP_NAME,
+            token=sys.stdin.readline().strip(),
+        )
+    except Exception as e:
+        logger.error(str(e))
+        raise Exception(str(e))
+
+    return splunk_service
+
+
 if __name__ == "__main__":
-    main()
+    logger = Logger(class_name=__file__)
+    splunk_service = get_splunk_service(logger=logger)
+
+    main(
+        logger=logger,
+        app=splunk_service.apps[APP_NAME],
+    )
