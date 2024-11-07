@@ -10,12 +10,12 @@ setup-web: venv yarn.lock
 venv: requirements.txt
 	python -m venv venv
 	venv/bin/pip install --upgrade pip
-	venv/bin/pip install --target packages/flare/python/vendor -r requirements.txt
-	@find packages/flare/python/vendor -type d -name "*.dist-info" -exec rm -r {} +
-	@find packages/flare/python/vendor -type d -name "__pycache__" -exec rm -r {} +
-	@rm -rf packages/flare/python/vendor/bin
-	@rm -rf packages/flare/python/vendor/packaging
-	@rm -rf packages/flare/python/vendor/*-stubs
+	venv/bin/pip install --target packages/flare/bin/vendor -r requirements.txt
+	@find packages/flare/bin/vendor -type d -name "*.dist-info" -exec rm -r {} +
+	@find packages/flare/bin -type d -name "__pycache__" -exec rm -r {} +
+	@rm -rf packages/flare/bin/vendor/bin
+	@rm -rf packages/flare/bin/vendor/packaging
+	@rm -rf packages/flare/bin/vendor/*-stubs
 
 venv-tools: requirements.tools.txt venv
 	rm -rf venv-tools
@@ -28,7 +28,7 @@ clean:
 	@echo "Removing venv and venv-tools."
 	rm -rf venv
 	rm -rf venv-tools
-	rm -rf packages/flare/python/vendor
+	rm -rf packages/flare/bin/vendor
 	@unlink "/Applications/Splunk/etc/apps/flare" || true
 	@find . -type d -name "node_modules" -exec rm -rf {} +
 	rm -rf packages/flare/flare
@@ -36,9 +36,9 @@ clean:
 	@echo "Done."
 
 .PHONY: package
-package: packages/flare/python/vendor
+package: packages/flare/bin/vendor
 	-@rm flare.tar.gz
-	@find packages/flare/python -type d -name "__pycache__" -exec rm -r {} +
+	@find packages/flare/bin -type d -name "__pycache__" -exec rm -r {} +
 	COPYFILE_DISABLE=1 tar \
 		--exclude='packages/flare/flare/local' \
 		--exclude='packages/flare/flare/metadata/local.meta' \
