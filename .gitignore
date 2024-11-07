@@ -7,7 +7,7 @@ packages/flare/metadata/local.meta
 __pycache__/
 .vscode/
 
-packages/flare/python/vendor/*
+packages/flare/bin/vendor/*
 .DS_Store
 .idea/
 lerna-debug.log

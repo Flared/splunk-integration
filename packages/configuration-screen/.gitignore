@@ -3,3 +3,4 @@
 !/.eslintrc.js
 !/jest.config.js
 !/*.config.js
+!/build.js
