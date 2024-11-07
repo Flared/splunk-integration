@@ -43,7 +43,7 @@ class FlareAPI(AuthBase):
         )
 
     def retrieve_feed(
-        self, *, next: t.Optional[str] = None, start_date: t.Optional[str] = None
+        self, *, next: t.Optional[str] = None, start_date: t.Optional[date] = None
     ) -> t.Iterator[requests.Response]:
         url = self.flare_endpoints["me_feed_endpoint"]
         params: t.Dict[str, t.Any] = {
@@ -52,7 +52,9 @@ class FlareAPI(AuthBase):
             "from": next if next else None,
         }
         if not next:
-            from_date = start_date if start_date else date.today().isoformat()
+            from_date = (
+                start_date.isoformat() if start_date else date.today().isoformat()
+            )
             params["time"] = f"{from_date}@"
         return self.flare_client.scroll(
             method="GET",
