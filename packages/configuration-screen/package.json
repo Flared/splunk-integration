@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "license": "UNLICENSED",
   "scripts": {
-    "build": "node bin/build.js build",
+    "build": "node build.js build",
     "eslint": "eslint src --ext \".js,.tsx,.ts\"",
     "eslint:fix": "eslint src --ext \".js,.tsx,.ts\" --fix",
     "lint": "yarn run eslint && yarn run stylelint",

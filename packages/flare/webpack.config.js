@@ -28,7 +28,7 @@ module.exports = webpackMerge(baseConfig, {
                     filter: (filepath) => { return !filepath.endsWith("README/splunk_create.spec.conf"); },
                 },
                 {
-                    from: path.join(__dirname, 'python'),
+                    from: path.join(__dirname, 'bin'),
                     to: path.join(__dirname, 'flare/bin'),
                 },
                 {
