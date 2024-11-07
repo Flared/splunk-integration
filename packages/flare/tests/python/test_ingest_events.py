@@ -13,7 +13,7 @@ from unittest.mock import PropertyMock
 from unittest.mock import patch
 
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../python"))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../bin"))
 from constants import CRON_JOB_THRESHOLD_SINCE_LAST_FETCH
 from constants import KV_COLLECTION_NAME
 from constants import CollectionKeys

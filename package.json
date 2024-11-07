@@ -9,8 +9,8 @@
     "lint": "lerna run lint --no-sort",
     "setup": "yarn && lerna run build",
     "start": "lerna run start --stream --no-sort --concurrency 100",
-    "unlink": "cd packages/flare && node bin/build.js unlink",
-    "link": "cd packages/flare && node bin/build.js unlink && node bin/build.js link"
+    "unlink": "cd packages/flare && node build.js unlink",
+    "link": "cd packages/flare && node build.js unlink && node build.js link"
   },
   "devDependencies": {
     "lerna": "^2.9.0",
