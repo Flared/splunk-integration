@@ -18,5 +18,8 @@ class PasswordKeys(Enum):
 class CollectionKeys(Enum):
     CURRENT_TENANT_ID = "current_tenant_id"
     START_DATE = "start_date"
-    NEXT_TOKEN = "next_"
     TIMESTAMP_LAST_FETCH = "timestamp_last_fetch"
+
+    @staticmethod
+    def get_next_token(tenantId: int) -> str:
+        return f"next_{tenantId}"
