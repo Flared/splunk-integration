@@ -8,7 +8,7 @@ At the time of this writing, Splunk Enterprise is at version 9.3.0. This version
 
 ## Installation
 
-For now, see (this confluence page)[https://flareio.atlassian.net/wiki/spaces/engineering/pages/384401447/Splunk+Enterprise] for instructions on how to install and configure this Splunk integration with your Splunk Enterprise instance.
+For now, see [(this confluence page)](https://flareio.atlassian.net/wiki/spaces/engineering/pages/384401447/Splunk+Enterprise) for instructions on how to install and configure this Splunk integration with your Splunk Enterprise instance.
 
 ## Architecture Overview
 
