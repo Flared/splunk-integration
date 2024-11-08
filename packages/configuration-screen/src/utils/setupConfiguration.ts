@@ -1,10 +1,11 @@
 import { updateConfigurationFile } from './configurationFileHelper';
-import { Tenant } from './models/flare';
+import { Tenant } from '../models/flare';
 import {
+    PasswordKeys,
     SplunkApplicationNamespace,
     SplunkService,
     SplunkStoragePasswordAccessors,
-} from './models/splunk';
+} from '../models/splunk';
 import { promisify } from './util';
 
 const appName: string = 'flare';
@@ -38,9 +39,12 @@ async function reloadApp(splunkService: SplunkService): Promise<void> {
     await promisify(currentApp.reload)();
 }
 
+function getRedirectUrl(): string {
+    return `/app/${appName}`;
+}
+
 function redirectToHomepage(): void {
-    const redirectUrl = `/app/${appName}`;
-    window.location.href = redirectUrl;
+    window.location.href = getRedirectUrl();
 }
 
 function createService(applicationNamespace: SplunkApplicationNamespace): SplunkService {
@@ -97,17 +101,24 @@ async function savePassword(
     });
 }
 
-async function saveConfiguration(apiKey: string, tenantId: number) {
+async function saveConfiguration(
+    apiKey: string,
+    tenantId: number,
+    isIngestingMetadataOnly: boolean
+) {
     const service = createService(applicationNameSpace);
 
     const storagePasswords = await promisify(service.storagePasswords().fetch)();
-    await savePassword(storagePasswords, 'api_key', apiKey);
-    await savePassword(storagePasswords, 'tenant_id', `${tenantId}`);
+    await savePassword(storagePasswords, PasswordKeys.API_KEY, apiKey);
+    await savePassword(storagePasswords, PasswordKeys.TENANT_ID, `${tenantId}`);
+    await savePassword(
+        storagePasswords,
+        PasswordKeys.INGEST_METADATA_ONLY,
+        `${isIngestingMetadataOnly}`
+    );
 
     await completeSetup(service);
     await reloadApp(service);
-
-    redirectToHomepage();
 }
 
 async function retrievePassword(passwordKey: string): Promise<string> {
@@ -124,11 +135,11 @@ async function retrievePassword(passwordKey: string): Promise<string> {
 }
 
 async function retrieveApiKey(): Promise<string> {
-    return retrievePassword('api_key');
+    return retrievePassword(PasswordKeys.API_KEY);
 }
 
 async function retrieveTenantId(): Promise<number> {
-    return retrievePassword('tenant_id').then((tenantId) => {
+    return retrievePassword(PasswordKeys.TENANT_ID).then((tenantId) => {
         if (tenantId !== '') {
             return parseInt(tenantId, 10);
         }
@@ -137,4 +148,22 @@ async function retrieveTenantId(): Promise<number> {
     });
 }
 
-export { saveConfiguration, retrieveUserTenants, retrieveApiKey, retrieveTenantId };
+async function retrieveIngestMetadataOnly(): Promise<boolean> {
+    return retrievePassword(PasswordKeys.INGEST_METADATA_ONLY).then((isIngestingMetadataOnly) => {
+        if (isIngestingMetadataOnly !== '') {
+            return isIngestingMetadataOnly === 'true';
+        }
+
+        return false;
+    });
+}
+
+export {
+    saveConfiguration,
+    retrieveUserTenants,
+    retrieveApiKey,
+    retrieveTenantId,
+    retrieveIngestMetadataOnly,
+    redirectToHomepage,
+    getRedirectUrl,
+};

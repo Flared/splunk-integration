@@ -1,22 +1,75 @@
-import React, { useEffect, useState } from 'react';
-import Button from '@splunk/react-ui/Button';
+import React, { useEffect, useState, FC } from 'react';
 import {
+    redirectToHomepage,
     retrieveApiKey,
+    retrieveIngestMetadataOnly,
     retrieveTenantId,
     retrieveUserTenants,
     saveConfiguration,
-} from './setupConfiguration';
-import { StyledContainer, StyledError } from './ConfigurationScreenStyles';
-import { Tenant } from './models/flare';
+} from './utils/setupConfiguration';
+import { ConfigurationSteps, Tenant } from './models/flare';
+import './global.css';
+import './ConfigurationScreen.css';
+import LoadingBar from './components/LoadingBar';
+import DoneIcon from './components/icons/DoneIcon';
+import ExternalLinkIcon from './components/icons/ExternalLinkIcon';
+import { toastManager } from './components/ToastManager';
+import ToolIcon from './components/icons/ToolIcon';
+import ConfigurationInitialStep from './components/ConfigurationInitialStep';
+import ConfigurationUserPreferencesStep from './components/ConfigurationUserPreferencesStep';
+import ConfigurationCompletedStep from './components/ConfigurationCompletedStep';
 
-const ConfigurationScreen = () => {
+const TOAST_API_KEY_ERROR = 'api_key_error';
+const TOAST_TENANT_SUCCESS = 'tenant_success';
+
+const ConfigurationScreen: FC<{ theme: string }> = ({ theme }) => {
     const [apiKey, setApiKey] = useState('');
     const [tenantId, setTenantId] = useState(-1);
     const [errorMessage, setErrorMessage] = useState('');
     const [tenants, setUserTenants] = useState<Tenant[]>([]);
+    const [isIngestingMetadataOnly, setIsIngestingMetadataOnly] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [isCompleted, setIsCompleted] = useState(false);
 
-    function handleSubmitApiKey() {
+    toastManager.setTheme(theme);
+
+    function reset() {
+        setApiKey('');
+        setTenantId(-1);
+        setUserTenants([]);
+        setIsLoading(false);
+        setIsCompleted(false);
+    }
+
+    function getCurrentConfigurationStep() {
+        if (tenants.length === 0) {
+            return ConfigurationSteps.Initial;
+        }
+        if (!isCompleted) {
+            return ConfigurationSteps.UserPreferences;
+        }
+
+        return ConfigurationSteps.Completed;
+    }
+
+    const handleApiKeyChange = (e) => setApiKey(e.target.value);
+    const handleTenantIdChange = (e) => setTenantId(parseInt(e.target.value, 10));
+    const handleIsIngestingMetadataChange = (e) => {
+        setIsIngestingMetadataOnly(e.target.checked);
+    };
+
+    const handleBackButton = () => {
+        const currentConfigurationStep = getCurrentConfigurationStep();
+        if (currentConfigurationStep === ConfigurationSteps.Initial) {
+            redirectToHomepage();
+        } else if (currentConfigurationStep === ConfigurationSteps.UserPreferences) {
+            setUserTenants([]);
+        } else if (currentConfigurationStep === ConfigurationSteps.Completed) {
+            reset();
+        }
+    };
+
+    const handleSubmitApiKey = () => {
         setIsLoading(true);
         retrieveUserTenants(
             apiKey,
@@ -31,65 +84,118 @@ const ConfigurationScreen = () => {
             (error) => {
                 setErrorMessage(error);
                 setIsLoading(false);
+                toastManager.show({
+                    id: TOAST_API_KEY_ERROR,
+                    isError: true,
+                    content: 'Something went wrong. Please review your form.',
+                });
             }
         );
-    }
+    };
 
-    async function handleSubmitTenant() {
+    const handleSubmitTenant = () => {
         setIsLoading(true);
-        await saveConfiguration(apiKey, tenantId);
+        saveConfiguration(apiKey, tenantId, isIngestingMetadataOnly)
+            .then(() => {
+                setIsLoading(false);
+                setIsCompleted(true);
+                toastManager.destroy(TOAST_API_KEY_ERROR);
+                toastManager.show({
+                    id: TOAST_TENANT_SUCCESS,
+                    content: 'Configured Flare Account',
+                });
+            })
+            .catch((e) => {
+                setIsLoading(false);
+                toastManager.show({
+                    id: TOAST_API_KEY_ERROR,
+                    isError: true,
+                    content: `Something went wrong. ${e.responseText}`,
+                });
+            });
+    };
+
+    function getSelectedTenantName() {
+        const filteredTenants = tenants.filter((p) => p.id === tenantId);
+        if (filteredTenants.length > 0) {
+            return filteredTenants[0].name;
+        }
+
+        return 'unknown';
     }
 
     useEffect(() => {
-        setIsLoading(true);
-        retrieveApiKey().then((key) => {
-            setApiKey(key);
-            retrieveTenantId().then((id) => {
-                setTenantId(id);
-                setIsLoading(false);
-            });
-        });
-    }, []);
-
-    if (isLoading) {
-        return <div>Loading...</div>;
-    }
-    if (tenants.length === 0 || apiKey === '') {
-        return (
-            <StyledContainer>
-                <h2>Enter your API Key</h2>
-                <p>A new API Key can be generated by going on your profile page in Flare</p>
-                <StyledError hidden={errorMessage.length === 0}>{errorMessage}</StyledError>
-                <span>Server API Key</span>
-                <br />
-                <input
-                    type="password"
-                    name="apiKey"
-                    value={apiKey}
-                    onChange={(e) => setApiKey(e.target.value)}
-                />
-                <br />
-                <br />
-                <Button onClick={() => handleSubmitApiKey()}>Next Step</Button>
-            </StyledContainer>
+        if (isCompleted) {
+            return;
+        }
+        retrieveApiKey().then((key) => setApiKey(key));
+        retrieveTenantId().then((id) => setTenantId(id));
+        retrieveIngestMetadataOnly().then((ingestMetadataOnly) =>
+            setIsIngestingMetadataOnly(ingestMetadataOnly)
         );
-    }
+    }, [isCompleted]);
+
+    useEffect(() => {
+        const container = document.getElementById('container') as HTMLDivElement;
+        const parentContainer = container.parentElement?.parentElement ?? undefined;
+        if (parentContainer) {
+            parentContainer.className = `parent-container ${theme === 'dark' ? 'dark' : ''}`;
+        }
+    }, [theme]);
+
+    const currentConfigurationStep = getCurrentConfigurationStep();
+
     return (
-        <StyledContainer>
-            <h2>Please select the Tenant you want to ingest events from</h2>
-            <StyledError hidden={errorMessage.length === 0}>{errorMessage}</StyledError>
-            <select onChange={(e) => setTenantId(parseInt(e.target.value, 10))} value={tenantId}>
-                {tenants.map((tenant) => {
-                    return (
-                        <option key={tenants.indexOf(tenant)} value={tenant.id}>
-                            {tenant.name}
-                        </option>
-                    );
-                })}
-            </select>
-            <br />
-            <Button onClick={() => handleSubmitTenant()}>Submit</Button>
-        </StyledContainer>
+        <div id="container" className={theme === 'dark' ? 'dark' : ''}>
+            <LoadingBar
+                max={Object.keys(ConfigurationSteps).length / 2}
+                value={currentConfigurationStep}
+            />
+            <div className="content">
+                <ToolIcon
+                    remSize={6}
+                    hidden={currentConfigurationStep === ConfigurationSteps.Completed}
+                />
+                <DoneIcon
+                    remSize={6}
+                    hidden={currentConfigurationStep !== ConfigurationSteps.Completed}
+                />
+                <div className="content-step">
+                    <h2>Configure your Flare Account</h2>
+                    <ConfigurationInitialStep
+                        show={currentConfigurationStep === ConfigurationSteps.Initial}
+                        apiKey={apiKey}
+                        errorMessage={errorMessage}
+                        isLoading={isLoading}
+                        onBackClicked={handleBackButton}
+                        onNextClicked={handleSubmitApiKey}
+                        onApiKeyChanged={handleApiKeyChange}
+                    />
+                    <ConfigurationUserPreferencesStep
+                        show={currentConfigurationStep === ConfigurationSteps.UserPreferences}
+                        selectedTenantId={tenantId}
+                        tenants={tenants}
+                        isLoading={isLoading}
+                        isIngestingMetadataOnly={isIngestingMetadataOnly}
+                        onBackClicked={handleBackButton}
+                        onNextClicked={handleSubmitTenant}
+                        onTenantIdChanged={handleTenantIdChange}
+                        onIngestingMetadataChanged={handleIsIngestingMetadataChange}
+                    />
+                    <ConfigurationCompletedStep
+                        show={currentConfigurationStep === ConfigurationSteps.Completed}
+                        tenantName={getSelectedTenantName()}
+                        onBackClicked={handleBackButton}
+                    />
+                </div>
+                <div id="learn-more" className="link">
+                    <a target="_blank" href="https://docs.flare.io/splunk-cloud-integration">
+                        Learn More
+                    </a>
+                    <ExternalLinkIcon remSize={1} />
+                </div>
+            </div>
+        </div>
     );
 };
 

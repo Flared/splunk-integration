@@ -1,0 +1,23 @@
+.error-container {
+    display: flex;
+    flex-direction: row;
+    margin-top: 0.5rem;
+    gap: 0.5rem;
+    align-items: center;
+    color: var(--error);
+}
+
+.error-container[hidden] {
+    display: none;
+}
+
+.border-error {
+    border: 1px solid var(--error);
+}
+
+.label-tooltip {
+    display: flex;
+    flex-direction: row;
+    gap: 0.5rem;
+    align-items: center;
+}

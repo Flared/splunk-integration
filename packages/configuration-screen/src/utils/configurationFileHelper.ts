@@ -3,7 +3,7 @@ import {
     ConfigurationsAccessor,
     ConfigurationStanzaAccessor,
     SplunkService,
-} from './models/splunk';
+} from '../models/splunk';
 import { promisify } from './util';
 
 // ----------------------------------
