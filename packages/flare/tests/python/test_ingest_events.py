@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../bin"))
 from constants import CRON_JOB_THRESHOLD_SINCE_LAST_FETCH
 from constants import KV_COLLECTION_NAME
 from constants import CollectionKeys
-from cron_job_ingest_events import fetch_and_print_feed_results
+from cron_job_ingest_events import fetch_feed
 from cron_job_ingest_events import get_api_credentials
 from cron_job_ingest_events import get_collection_value
 from cron_job_ingest_events import get_current_tenant_id
@@ -189,52 +189,18 @@ def test_save_start_date_expect_save_collection_value_not_called_and_tenant_id_c
     )
 
 
-def test_fetch_and_print_feed_results_expect_exception() -> None:
+def test_fetch_feed_expect_exception() -> None:
     logger = MagicMock()
     app = MagicMock()
-    with patch.object(
-        app.service,
-        "confs",
-        {"flare": {"endpoints": {"me_feed_endpoint": "/firework/v2/me/feed"}}},
-    ):
-        fetch_and_print_feed_results(
-            logger=logger, app=app, api_key="some_key", tenant_id=11111
-        )
+    for _ in fetch_feed(logger=logger, app=app, api_key="some_key", tenant_id=11111):
+        pass
 
     logger.error.assert_called_once_with("Exception=Failed to fetch API Token")
 
 
 @patch("cron_job_ingest_events.FlareAPI")
 @patch("time.sleep", return_value=None)
-def test_fetch_and_print_feed_results_expect_non_200_response(
-    sleep: Any,
-    flare_api_mock: MagicMock,
-) -> None:
-    logger = MagicMock()
-    app = MagicMock()
-
-    response_mock = Mock()
-    type(response_mock).status_code = PropertyMock(return_value=400)
-    type(response_mock).text = PropertyMock(return_value="Bad Request")
-
-    flare_api_mock_instance = flare_api_mock.return_value
-    flare_api_mock_instance.retrieve_feed.return_value = [response_mock]
-
-    with patch.object(
-        app.service,
-        "confs",
-        {"flare": {"endpoints": {"me_feed_endpoint": "/firework/v2/me/feed"}}},
-    ):
-        fetch_and_print_feed_results(
-            logger=logger, app=app, api_key="some_key", tenant_id=11111
-        )
-
-    logger.error.assert_called_once_with("Bad Request")
-
-
-@patch("cron_job_ingest_events.FlareAPI")
-@patch("time.sleep", return_value=None)
-def test_fetch_and_print_feed_results_expect_feed_response(
+def test_fetch_feed_expect_feed_response(
     sleep: Any, flare_api_mock: MagicMock, capfd: Any
 ) -> None:
     logger = MagicMock()
@@ -242,7 +208,7 @@ def test_fetch_and_print_feed_results_expect_feed_response(
 
     response_mock = Mock()
     type(response_mock).status_code = PropertyMock(return_value=200)
-    response_mock.json.return_value = {
+    expected_return_value = {
         "next": "some_next_value",
         "items": [
             {
@@ -253,20 +219,15 @@ def test_fetch_and_print_feed_results_expect_feed_response(
             },
         ],
     }
+    response_mock.json.return_value = expected_return_value
 
     flare_api_mock_instance = flare_api_mock.return_value
     flare_api_mock_instance.retrieve_feed.return_value = [response_mock]
 
-    with patch.object(
-        app.service,
-        "confs",
-        {"flare": {"endpoints": {"me_feed_endpoint": "/firework/v2/me/feed"}}},
+    for feed_event in fetch_feed(
+        logger=logger, app=app, api_key="some_key", tenant_id=11111
     ):
-        fetch_and_print_feed_results(
-            logger=logger, app=app, api_key="some_key", tenant_id=11111
-        )
-        captured = capfd.readouterr()
-        assert captured.out == '{"actor": "this guy"}\n{"actor": "some other guy"}\n'
+        assert feed_event == expected_return_value
 
 
 @patch(
@@ -278,12 +239,12 @@ def test_main_expect_early_return(get_last_fetched_mock: MagicMock) -> None:
     app = MagicMock()
 
     main(logger=logger, app=app)
-    logger.debug.assert_called_once_with(
+    logger.info.assert_called_once_with(
         f"Fetched events less than {int(CRON_JOB_THRESHOLD_SINCE_LAST_FETCH.seconds / 60)} minutes ago, exiting"
     )
 
 
-@patch("cron_job_ingest_events.fetch_and_print_feed_results")
+@patch("cron_job_ingest_events.fetch_feed")
 @patch(
     "cron_job_ingest_events.get_api_credentials",
     return_value=("some_api_key", "some_tenant_id"),
@@ -295,13 +256,13 @@ def test_main_expect_early_return(get_last_fetched_mock: MagicMock) -> None:
 def test_main_expect_normal_run(
     get_last_fetched_mock: MagicMock,
     get_api_credentials_mock: MagicMock,
-    fetch_and_print_feed_results_mock: MagicMock,
+    fetch_feed_mock: MagicMock,
 ) -> None:
     logger = MagicMock()
     app = MagicMock()
 
     main(logger=logger, app=app)
-    fetch_and_print_feed_results_mock.assert_called_once_with(
+    fetch_feed_mock.assert_called_once_with(
         logger=logger,
         app=app,
         api_key="some_api_key",

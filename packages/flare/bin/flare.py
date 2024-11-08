@@ -1,13 +1,16 @@
 import requests
-import typing as t
-import vendor.splunklib.client as client
 
 from datetime import date
+from typing import Any
+from typing import Dict
+from typing import Iterator
+from typing import Optional
+from typing import Union
 from vendor.flareio import FlareApiClient
 from vendor.requests.auth import AuthBase
 
 
-def ensure_str(value: t.Union[str, bytes]) -> str:
+def ensure_str(value: Union[str, bytes]) -> str:
     if isinstance(value, bytes):
         return value.decode("utf8")
     return value
@@ -16,7 +19,7 @@ def ensure_str(value: t.Union[str, bytes]) -> str:
 def get_flare_api_client(
     *,
     api_key: str,
-    tenant_id: t.Union[int, None],
+    tenant_id: Union[int, None],
 ) -> FlareApiClient:
     api_client = FlareApiClient(
         api_key=api_key,
@@ -32,32 +35,30 @@ def get_flare_api_client(
 
 
 class FlareAPI(AuthBase):
-    def __init__(
-        self, *, app: client.Application, api_key: str, tenant_id: int
-    ) -> None:
-        self.flare_endpoints = app.service.confs["flare"]["endpoints"]
-
+    def __init__(self, *, api_key: str, tenant_id: Optional[int] = None) -> None:
         self.flare_client = get_flare_api_client(
             api_key=api_key,
             tenant_id=tenant_id,
         )
 
     def retrieve_feed(
-        self, *, next: t.Optional[str] = None, start_date: t.Optional[date] = None
-    ) -> t.Iterator[requests.Response]:
-        url = self.flare_endpoints["me_feed_endpoint"]
-        params: t.Dict[str, t.Any] = {
+        self, *, next: Optional[str] = None, start_date: Optional[date] = None
+    ) -> Iterator[requests.Response]:
+        params: Dict[str, Any] = {
             "lite": True,
             "size": 50,
             "from": next if next else None,
         }
-        if not next:
-            from_date = (
-                start_date.isoformat() if start_date else date.today().isoformat()
-            )
-            params["time"] = f"{from_date}@"
+        from_date = start_date.isoformat() if start_date else date.today().isoformat()
+        params["time"] = f"{from_date}@"
+
         return self.flare_client.scroll(
             method="GET",
-            url=url,
+            url="/firework/v2/me/feed",
             params=params,
+        )
+
+    def retrieve_tenants(self) -> requests.Response:
+        return self.flare_client.get(
+            url="/firework/v2/me/tenants",
         )
