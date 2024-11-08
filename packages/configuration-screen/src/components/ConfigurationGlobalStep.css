@@ -1,0 +1,44 @@
+.button-group {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 2.5rem;
+    gap: 1rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    align-items: flex-start;
+    margin-top: 1rem;
+}
+
+.progress-bar-container {
+    justify-content: center;
+    align-items: center;
+    height: auto;
+}
+
+.progress-bar-svg {
+    transform-origin: 50% 50%;
+    animation: rotate 1s linear infinite;
+}
+
+.progress-bar-circle {
+    stroke: var(--button-disabled-text-color);
+    stroke-dasharray: 100, 150;
+    stroke-dashoffset: 0;
+    fill: none;
+    stroke-linecap: round;
+    stroke-width: 8;
+    transform-origin: 50% 50%;
+}
+
+/* Animations */
+@keyframes rotate {
+    100% {
+        transform: rotate(360deg);
+    }
+}
