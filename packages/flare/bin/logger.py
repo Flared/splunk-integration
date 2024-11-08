@@ -9,15 +9,15 @@ from typing import Any
 
 class Logger:
     def __init__(self, *, class_name: str) -> None:
-        SPLUNK_HOME = os.environ.get("SPLUNK_HOME")
+        splunk_home = os.environ.get("SPLUNK_HOME")
         is_local_build = False
         log_filepath = ""
-        if SPLUNK_HOME:
+        if splunk_home:
             log_filepath = os.path.join(
-                SPLUNK_HOME, "var", "log", "splunk", f"{APP_NAME}.log"
+                splunk_home, "var", "log", "splunk", f"{APP_NAME}.log"
             )
-            APPLICATION_FOLDER = os.path.join(SPLUNK_HOME, "etc", "apps", APP_NAME)
-            is_local_build = os.path.islink(APPLICATION_FOLDER)
+            application_folder = os.path.join(splunk_home, "etc", "apps", APP_NAME)
+            is_local_build = os.path.islink(application_folder)
         else:
             log_filepath = os.path.join(tempfile.gettempdir(), f"{APP_NAME}.log")
 
@@ -26,7 +26,7 @@ class Logger:
 
         if is_local_build:
             # If the application is a symlink, it's been installed locally
-            self._logger.setLevel(logging.DEBUG)
+            self._logger.setLevel(logging.INFO)
         else:
             self._logger.setLevel(logging.ERROR)
         formatter = logging.Formatter("%(asctime)s %(levelname)-5s %(message)s")

@@ -6,6 +6,7 @@ import time
 from datetime import date
 from datetime import datetime
 from typing import Any
+from typing import Iterator
 from typing import Optional
 
 
@@ -32,16 +33,33 @@ def main(logger: Logger, app: client.Application) -> None:
     if last_fetched_timestamp and last_fetched_timestamp > (
         datetime.now() - CRON_JOB_THRESHOLD_SINCE_LAST_FETCH
     ):
-        logger.debug(
+        logger.info(
             f"Fetched events less than {int(CRON_JOB_THRESHOLD_SINCE_LAST_FETCH.seconds / 60)} minutes ago, exiting"
         )
         return
 
     api_key, tenant_id = get_api_credentials(app=app)
 
-    fetch_and_print_feed_results(
+    save_last_fetched(app=app)
+    events_retrieved_count = 0
+    for event_feed in fetch_feed(
         logger=logger, app=app, api_key=api_key, tenant_id=tenant_id
-    )
+    ):
+        save_last_fetched(app=app)
+
+        # Rate limiting.
+        time.sleep(1)
+
+        save_start_date(app=app, tenant_id=tenant_id)
+        save_next(app=app, tenant_id=tenant_id, next=event_feed["next"])
+
+        if event_feed["items"]:
+            for item in event_feed["items"]:
+                print(json.dumps(item), flush=True)
+
+            events_retrieved_count += len(event_feed["items"])
+
+    logger.info(f"Retrieved {events_retrieved_count} events")
 
 
 def get_api_credentials(app: client.Application) -> tuple[str, int]:
@@ -67,7 +85,7 @@ def get_api_credentials(app: client.Application) -> tuple[str, int]:
 
 def get_next(app: client.Application, tenant_id: int) -> Optional[str]:
     return get_collection_value(
-        app=app, key=f"{CollectionKeys.NEXT_TOKEN.value}{tenant_id}"
+        app=app, key=f"{CollectionKeys.get_next_token(tenantId=tenant_id)}"
     )
 
 
@@ -139,7 +157,7 @@ def save_next(app: client.Application, tenant_id: int, next: Optional[str]) -> N
 
     save_collection_value(
         app=app,
-        key=f"{CollectionKeys.NEXT_TOKEN.value}{tenant_id}",
+        key=f"{CollectionKeys.get_next_token(tenantId=tenant_id)}",
         value=next,
     )
 
@@ -179,42 +197,24 @@ def save_collection_value(app: client.Application, key: str, value: Any) -> None
         )
 
 
-def fetch_and_print_feed_results(
+def fetch_feed(
     logger: Logger,
     app: client.Application,
     api_key: str,
     tenant_id: int,
-) -> None:
+) -> Iterator[dict]:
     try:
-        flare_api = FlareAPI(app=app, api_key=api_key, tenant_id=tenant_id)
+        flare_api = FlareAPI(api_key=api_key, tenant_id=tenant_id)
 
         next = get_next(app=app, tenant_id=tenant_id)
         start_date = get_start_date(app=app)
-        logger.debug(f"Fetching {tenant_id=}, {next=}, {start_date=}")
-        events_retrieved_count = 0
+        logger.info(f"Fetching {tenant_id=}, {next=}, {start_date=}")
         for response in flare_api.retrieve_feed(next=next, start_date=start_date):
-            save_last_fetched(app=app)
-
-            # Rate limiting.
-            time.sleep(1)
-
-            if response.status_code != 200:
-                logger.error(response.text)
-                return
-
             event_feed = response.json()
-            save_start_date(app=app, tenant_id=tenant_id)
-            save_next(app=app, tenant_id=tenant_id, next=event_feed["next"])
-
-            if event_feed["items"]:
-                for item in event_feed["items"]:
-                    print(json.dumps(item))
-
-                events_retrieved_count += len(event_feed["items"])
+            logger.debug(event_feed)
+            yield event_feed
     except Exception as e:
         logger.error(f"Exception={e}")
-
-    logger.debug(f"Retrieved {events_retrieved_count} events")
 
 
 def get_splunk_service(logger: Logger) -> Service:
