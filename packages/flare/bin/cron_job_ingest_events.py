@@ -1,7 +1,6 @@
 import json
 import os
 import sys
-import time
 
 from datetime import date
 from datetime import datetime
@@ -38,49 +37,72 @@ def main(logger: Logger, app: client.Application) -> None:
         )
         return
 
-    api_key, tenant_id = get_api_credentials(app=app)
+    api_key = get_api_key(app=app)
+    tenant_id = get_tenant_id(app=app)
+    ingest_metadata_only = get_ingest_metadata_only(app=app)
 
     save_last_fetched(app=app)
     events_retrieved_count = 0
     for event_feed in fetch_feed(
-        logger=logger, app=app, api_key=api_key, tenant_id=tenant_id
+        logger=logger,
+        app=app,
+        api_key=api_key,
+        tenant_id=tenant_id,
+        ingest_metadata_only=ingest_metadata_only,
     ):
         save_last_fetched(app=app)
-
-        # Rate limiting.
-        time.sleep(1)
 
         save_start_date(app=app, tenant_id=tenant_id)
         save_next(app=app, tenant_id=tenant_id, next=event_feed["next"])
 
-        if event_feed["items"]:
-            for item in event_feed["items"]:
-                print(json.dumps(item), flush=True)
+        for item in event_feed["items"]:
+            print(json.dumps(item), flush=True)
 
-            events_retrieved_count += len(event_feed["items"])
+        events_retrieved_count += len(event_feed["items"])
 
     logger.info(f"Retrieved {events_retrieved_count} events")
 
 
-def get_api_credentials(app: client.Application) -> tuple[str, int]:
-    api_key: Optional[str] = None
-    tenant_id: Optional[int] = None
+def get_storage_password_value(
+    app: client.Application, password_key: str
+) -> Optional[str]:
     for item in app.service.storage_passwords.list():
-        if item.content.username == PasswordKeys.API_KEY.value:
-            api_key = item.clear_password
+        if item.content.username == password_key:
+            return item.clear_password
 
-        if item.content.username == PasswordKeys.TENANT_ID.value:
-            tenant_id = (
-                int(item.clear_password) if item.clear_password is not None else None
-            )
+    return None
 
+
+def get_api_key(app: client.Application) -> str:
+    api_key = get_storage_password_value(
+        app=app, password_key=PasswordKeys.API_KEY.value
+    )
     if not api_key:
         raise Exception("API key not found")
+    return api_key
+
+
+def get_tenant_id(app: client.Application) -> int:
+    stored_tenant_id = get_storage_password_value(
+        app=app, password_key=PasswordKeys.TENANT_ID.value
+    )
+    try:
+        tenant_id = int(stored_tenant_id) if stored_tenant_id is not None else None
+    except Exception:
+        pass
 
     if not tenant_id:
         raise Exception("Tenant ID not found")
+    return tenant_id
 
-    return api_key, tenant_id
+
+def get_ingest_metadata_only(app: client.Application) -> bool:
+    return (
+        get_storage_password_value(
+            app=app, password_key=PasswordKeys.INGEST_METADATA_ONLY.value
+        )
+        == "true"
+    )
 
 
 def get_next(app: client.Application, tenant_id: int) -> Optional[str]:
@@ -202,6 +224,7 @@ def fetch_feed(
     app: client.Application,
     api_key: str,
     tenant_id: int,
+    ingest_metadata_only: bool,
 ) -> Iterator[dict]:
     try:
         flare_api = FlareAPI(api_key=api_key, tenant_id=tenant_id)
@@ -209,9 +232,9 @@ def fetch_feed(
         next = get_next(app=app, tenant_id=tenant_id)
         start_date = get_start_date(app=app)
         logger.info(f"Fetching {tenant_id=}, {next=}, {start_date=}")
-        for response in flare_api.retrieve_feed(next=next, start_date=start_date):
-            event_feed = response.json()
-            logger.debug(event_feed)
+        for event_feed in flare_api.retrieve_feed(
+            next=next, start_date=start_date, ingest_metadata_only=ingest_metadata_only
+        ):
             yield event_feed
     except Exception as e:
         logger.error(f"Exception={e}")

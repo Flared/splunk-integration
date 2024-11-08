@@ -18,11 +18,12 @@ from constants import CRON_JOB_THRESHOLD_SINCE_LAST_FETCH
 from constants import KV_COLLECTION_NAME
 from constants import CollectionKeys
 from cron_job_ingest_events import fetch_feed
-from cron_job_ingest_events import get_api_credentials
+from cron_job_ingest_events import get_api_key
 from cron_job_ingest_events import get_collection_value
 from cron_job_ingest_events import get_current_tenant_id
 from cron_job_ingest_events import get_last_fetched
 from cron_job_ingest_events import get_start_date
+from cron_job_ingest_events import get_tenant_id
 from cron_job_ingest_events import main
 from cron_job_ingest_events import save_collection_value
 from cron_job_ingest_events import save_start_date
@@ -74,19 +75,14 @@ def test_save_collection_value_expect_update() -> None:
     )
 
 
-def test_get_api_credentials_expect_exception() -> None:
+def test_get_api_key_tenant_id_expect_exception() -> None:
     app = MagicMock()
 
     with pytest.raises(Exception, match="API key not found"):
-        get_api_credentials(app=app)
-
-    api_key_item = Mock()
-    type(api_key_item.content).username = PropertyMock(return_value="api_key")
-    type(api_key_item).clear_password = PropertyMock(return_value="some_api_key")
-    app.service.storage_passwords.list.return_value = [api_key_item]
+        get_api_key(app=app)
 
     with pytest.raises(Exception, match="Tenant ID not found"):
-        get_api_credentials(app=app)
+        get_tenant_id(app=app)
 
 
 def test_get_api_credentials_expect_api_key_and_tenant_id() -> None:
@@ -102,8 +98,9 @@ def test_get_api_credentials_expect_api_key_and_tenant_id() -> None:
 
     app.service.storage_passwords.list.return_value = [api_key_item, tenant_id_item]
 
-    api_key, tenant_id = get_api_credentials(app=app)
+    api_key = get_api_key(app=app)
     assert api_key == "some_api_key"
+    tenant_id = get_tenant_id(app=app)
     assert tenant_id == 11111
 
 
@@ -192,7 +189,13 @@ def test_save_start_date_expect_save_collection_value_not_called_and_tenant_id_c
 def test_fetch_feed_expect_exception() -> None:
     logger = MagicMock()
     app = MagicMock()
-    for _ in fetch_feed(logger=logger, app=app, api_key="some_key", tenant_id=11111):
+    for _ in fetch_feed(
+        logger=logger,
+        app=app,
+        api_key="some_key",
+        tenant_id=11111,
+        ingest_metadata_only=False,
+    ):
         pass
 
     logger.error.assert_called_once_with("Exception=Failed to fetch API Token")
@@ -206,8 +209,6 @@ def test_fetch_feed_expect_feed_response(
     logger = MagicMock()
     app = MagicMock()
 
-    response_mock = Mock()
-    type(response_mock).status_code = PropertyMock(return_value=200)
     expected_return_value = {
         "next": "some_next_value",
         "items": [
@@ -219,13 +220,16 @@ def test_fetch_feed_expect_feed_response(
             },
         ],
     }
-    response_mock.json.return_value = expected_return_value
 
     flare_api_mock_instance = flare_api_mock.return_value
-    flare_api_mock_instance.retrieve_feed.return_value = [response_mock]
+    flare_api_mock_instance.retrieve_feed.return_value = iter([expected_return_value])
 
     for feed_event in fetch_feed(
-        logger=logger, app=app, api_key="some_key", tenant_id=11111
+        logger=logger,
+        app=app,
+        api_key="some_key",
+        tenant_id=11111,
+        ingest_metadata_only=False,
     ):
         assert feed_event == expected_return_value
 
@@ -246,8 +250,16 @@ def test_main_expect_early_return(get_last_fetched_mock: MagicMock) -> None:
 
 @patch("cron_job_ingest_events.fetch_feed")
 @patch(
-    "cron_job_ingest_events.get_api_credentials",
-    return_value=("some_api_key", "some_tenant_id"),
+    "cron_job_ingest_events.get_ingest_metadata_only",
+    return_value=(False),
+)
+@patch(
+    "cron_job_ingest_events.get_tenant_id",
+    return_value=(111),
+)
+@patch(
+    "cron_job_ingest_events.get_api_key",
+    return_value=("some_api_key"),
 )
 @patch(
     "cron_job_ingest_events.get_last_fetched",
@@ -255,7 +267,9 @@ def test_main_expect_early_return(get_last_fetched_mock: MagicMock) -> None:
 )
 def test_main_expect_normal_run(
     get_last_fetched_mock: MagicMock,
-    get_api_credentials_mock: MagicMock,
+    get_api_key_mock: MagicMock,
+    get_tenant_id_mock: MagicMock,
+    get_ingest_metadata_only_mock: MagicMock,
     fetch_feed_mock: MagicMock,
 ) -> None:
     logger = MagicMock()
@@ -266,5 +280,6 @@ def test_main_expect_normal_run(
         logger=logger,
         app=app,
         api_key="some_api_key",
-        tenant_id="some_tenant_id",
+        tenant_id=111,
+        ingest_metadata_only=False,
     )
