@@ -44,34 +44,27 @@ class FlareAPI(AuthBase):
         )
         self.logger = Logger(class_name=__file__)
 
-    def retrieve_feed(
+    def retrieve_feed_events(
         self,
         *,
         next: Optional[str] = None,
         start_date: Optional[date] = None,
         ingest_metadata_only: bool,
-    ) -> Iterator[dict]:
+    ) -> Iterator[tuple[dict, str]]:
         for response in self._retrieve_event_feed_metadata(
             next=next,
             start_date=start_date,
         ):
             event_feed = response.json()
             self.logger.debug(event_feed)
-            if ingest_metadata_only:
-                yield event_feed
-            else:
-                full_event_feed = {"items": [], "next": event_feed["next"]}
-                for event in event_feed["items"]:
-                    try:
-                        full_event_feed["items"].append(
-                            self._enrich_event_from_metadata_uid(event=event)
-                        )
-                    except Exception as e:
-                        self.logger.error(f"Exception={e}")
-                        full_event_feed["items"].append(event)
-                    # Rate limiting.
+            next_token = event_feed["next"]
+            for event in event_feed["items"]:
+                if not ingest_metadata_only:
+                    event = self._retrieve_full_event_from_uid(
+                        uid=event["metadata"]["uid"]
+                    )
                     time.sleep(1)
-                yield full_event_feed
+                yield (event, next_token)
 
     def _retrieve_event_feed_metadata(
         self,
@@ -99,16 +92,11 @@ class FlareAPI(AuthBase):
             # Rate limiting.
             time.sleep(1)
 
-    def _enrich_event_from_metadata_uid(self, *, event: dict) -> dict:
-        if event["metadata"] and event["metadata"]["uid"]:
-            event_response = self.flare_client.get(
-                url=f"/firework/v2/activities/{event['metadata']['uid']}"
-            )
-            enriched_event = event_response.json()
-            self.logger.debug(enriched_event)
-            return enriched_event
-        else:
-            return event
+    def _retrieve_full_event_from_uid(self, *, uid: str) -> dict:
+        event_response = self.flare_client.get(url=f"/firework/v2/activities/{uid}")
+        event = event_response.json()["activity"]
+        self.logger.debug(event)
+        return event
 
     def retrieve_tenants(self) -> requests.Response:
         return self.flare_client.get(
