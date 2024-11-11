@@ -1,6 +1,6 @@
 <nav search_view="search" color="#272735">
-  <view name="home" default='true' />
-  <view name="search" />
+  <view name="search" default='true' />
   <view name="configuration" />
+  <a href="https://docs.flare.io/splunk-app-integration" target="_blank">Documentation</a>
   <a href="https://app.flare.io/" target="_blank">Flare Platform</a>
 </nav>
