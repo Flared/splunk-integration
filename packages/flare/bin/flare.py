@@ -1,6 +1,8 @@
 import requests
+import time
 
 from datetime import date
+from logger import Logger
 from typing import Any
 from typing import Dict
 from typing import Iterator
@@ -40,23 +42,73 @@ class FlareAPI(AuthBase):
             api_key=api_key,
             tenant_id=tenant_id,
         )
+        self.logger = Logger(class_name=__file__)
 
     def retrieve_feed(
-        self, *, next: Optional[str] = None, start_date: Optional[date] = None
-    ) -> Iterator[requests.Response]:
-        params: Dict[str, Any] = {
-            "lite": True,
-            "size": 50,
-            "from": next if next else None,
-        }
-        from_date = start_date.isoformat() if start_date else date.today().isoformat()
-        params["time"] = f"{from_date}@"
+        self,
+        *,
+        next: Optional[str] = None,
+        start_date: Optional[date] = None,
+        ingest_metadata_only: bool,
+    ) -> Iterator[dict]:
+        for response in self._retrieve_event_feed_metadata(
+            next=next,
+            start_date=start_date,
+        ):
+            event_feed = response.json()
+            self.logger.debug(event_feed)
+            if ingest_metadata_only:
+                yield event_feed
+            else:
+                full_event_feed = {"items": [], "next": event_feed["next"]}
+                for event in event_feed["items"]:
+                    try:
+                        full_event_feed["items"].append(
+                            self._enrich_event_from_metadata_uid(event=event)
+                        )
+                    except Exception as e:
+                        self.logger.error(f"Exception={e}")
+                        full_event_feed["items"].append(event)
+                    # Rate limiting.
+                    time.sleep(1)
+                yield full_event_feed
 
-        return self.flare_client.scroll(
-            method="GET",
-            url="/firework/v2/me/feed",
-            params=params,
-        )
+    def _retrieve_event_feed_metadata(
+        self,
+        *,
+        next: Optional[str] = None,
+        start_date: Optional[date] = None,
+    ) -> Iterator[requests.Response]:
+        data: Dict[str, Any] = {
+            "from": next if next else None,
+            "filters": {
+                "estimated_created_at": {
+                    "gte": start_date.isoformat()
+                    if start_date
+                    else date.today().isoformat()
+                }
+            },
+        }
+
+        for response in self.flare_client.scroll(
+            method="POST",
+            url="/firework/v4/events/tenant/_search",
+            json=data,
+        ):
+            yield response
+            # Rate limiting.
+            time.sleep(1)
+
+    def _enrich_event_from_metadata_uid(self, *, event: dict) -> dict:
+        if event["metadata"] and event["metadata"]["uid"]:
+            event_response = self.flare_client.get(
+                url=f"/firework/v2/activities/{event['metadata']['uid']}"
+            )
+            enriched_event = event_response.json()
+            self.logger.debug(enriched_event)
+            return enriched_event
+        else:
+            return event
 
     def retrieve_tenants(self) -> requests.Response:
         return self.flare_client.get(
