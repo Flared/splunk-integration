@@ -2,8 +2,8 @@
 .switch {
     position: relative;
     display: inline-block;
-    width: 50px;
-    height: 26px;
+    width: 2rem;
+    height: 1rem;
 }
 
 /* Hide the default checkbox */
@@ -22,7 +22,7 @@
     right: 0;
     bottom: 0;
     background-color: var(--switch-disabled-bg-color);
-    border-radius: 34px;
+    border-radius: 1.5rem;
     transition: 0.4s;
 }
 
@@ -33,10 +33,10 @@
 .slider:before {
     position: absolute;
     content: '';
-    height: 18px;
-    width: 18px;
-    left: 4px;
-    bottom: 4px;
+    height: 0.75rem;
+    width: 0.75rem;
+    left: 0.25rem;
+    bottom: 0.125rem;
     background-color: white;
     border-radius: 50%;
     transition: 0.4s;
@@ -51,5 +51,5 @@ input:checked + .slider:hover {
 }
 
 input:checked + .slider:before {
-    transform: translateX(24px);
+    transform: translateX(0.8rem);
 }
