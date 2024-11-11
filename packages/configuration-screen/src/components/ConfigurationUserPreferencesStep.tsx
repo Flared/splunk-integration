@@ -46,11 +46,7 @@ const ConfigurationUserPreferencesStep: FC<{
                 <small className="note">You can only monitor one tenant at a time.</small>
                 <div className="switch-layout">
                     <span>Only ingest the metadata of events</span>
-                    <Switch
-                        scale={0.75}
-                        value={isIngestingMetadataOnly}
-                        onChange={onIngestingMetadataChanged}
-                    />
+                    <Switch value={isIngestingMetadataOnly} onChange={onIngestingMetadataChanged} />
                 </div>
                 <div className="button-group">
                     <Button onClick={() => onBackClicked()} isSecondary>
