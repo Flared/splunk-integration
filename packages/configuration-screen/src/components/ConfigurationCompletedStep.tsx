@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import Button from './Button';
-import { getRedirectUrl } from '../utils/setupConfiguration';
+import { getFlareDataUrl } from '../utils/setupConfiguration';
 import ArrowRightIcon from './icons/ArrowRightIcon';
 
 import './ConfigurationGlobalStep.css';
@@ -23,7 +23,7 @@ const ConfigurationCompletedStep: FC<{
                         Edit Configuration
                     </Button>
                     <div className="link">
-                        <a href={getRedirectUrl()}>View Flare Data</a>
+                        <a href={getFlareDataUrl('main')}>View Flare Data</a>
                         <ArrowRightIcon remSize={1} />
                     </div>
                 </div>

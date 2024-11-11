@@ -151,6 +151,7 @@ const ConfigurationScreen: FC<{ theme: string }> = ({ theme }) => {
                 max={Object.keys(ConfigurationSteps).length / 2}
                 value={currentConfigurationStep}
             />
+            <div id="experimental">This is an experimental release</div>
             <div className="content">
                 <ToolIcon
                     remSize={6}
@@ -189,7 +190,7 @@ const ConfigurationScreen: FC<{ theme: string }> = ({ theme }) => {
                     />
                 </div>
                 <div id="learn-more" className="link">
-                    <a target="_blank" href="https://docs.flare.io/splunk-cloud-integration">
+                    <a target="_blank" href="https://docs.flare.io/splunk-app-integration">
                         Learn More
                     </a>
                     <ExternalLinkIcon remSize={1} />
