@@ -43,7 +43,7 @@ def main(logger: Logger, app: client.Application) -> None:
 
     save_last_fetched(app=app)
     events_retrieved_count = 0
-    for event_feed in fetch_feed(
+    for event, next_token in fetch_feed(
         logger=logger,
         app=app,
         api_key=api_key,
@@ -53,12 +53,11 @@ def main(logger: Logger, app: client.Application) -> None:
         save_last_fetched(app=app)
 
         save_start_date(app=app, tenant_id=tenant_id)
-        save_next(app=app, tenant_id=tenant_id, next=event_feed["next"])
+        save_next(app=app, tenant_id=tenant_id, next=next_token)
 
-        for item in event_feed["items"]:
-            print(json.dumps(item), flush=True)
+        print(json.dumps(event), flush=True)
 
-        events_retrieved_count += len(event_feed["items"])
+        events_retrieved_count += 1
 
     logger.info(f"Retrieved {events_retrieved_count} events")
 
@@ -225,17 +224,17 @@ def fetch_feed(
     api_key: str,
     tenant_id: int,
     ingest_metadata_only: bool,
-) -> Iterator[dict]:
+) -> Iterator[tuple[dict, str]]:
     try:
         flare_api = FlareAPI(api_key=api_key, tenant_id=tenant_id)
 
         next = get_next(app=app, tenant_id=tenant_id)
         start_date = get_start_date(app=app)
         logger.info(f"Fetching {tenant_id=}, {next=}, {start_date=}")
-        for event_feed in flare_api.retrieve_feed(
+        for event_next in flare_api.retrieve_feed_events(
             next=next, start_date=start_date, ingest_metadata_only=ingest_metadata_only
         ):
-            yield event_feed
+            yield event_next
     except Exception as e:
         logger.error(f"Exception={e}")
 

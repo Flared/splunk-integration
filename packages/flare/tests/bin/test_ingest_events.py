@@ -209,29 +209,32 @@ def test_fetch_feed_expect_feed_response(
     logger = MagicMock()
     app = MagicMock()
 
-    expected_return_value = {
-        "next": "some_next_value",
-        "items": [
-            {
-                "actor": "this guy",
-            },
-            {
-                "actor": "some other guy",
-            },
-        ],
+    next = "some_next_value"
+    first_item = {
+        "actor": "this guy",
     }
-
+    second_item = {
+        "actor": "some other guy",
+    }
+    expected_items = [first_item, second_item]
     flare_api_mock_instance = flare_api_mock.return_value
-    flare_api_mock_instance.retrieve_feed.return_value = iter([expected_return_value])
+    flare_api_mock_instance.retrieve_feed_events.return_value = iter(
+        [(first_item, next), (second_item, next)]
+    )
 
-    for feed_event in fetch_feed(
+    events: list[dict] = []
+    for event, next_token in fetch_feed(
         logger=logger,
         app=app,
         api_key="some_key",
         tenant_id=11111,
         ingest_metadata_only=False,
     ):
-        assert feed_event == expected_return_value
+        assert next_token == next
+        events.append(event)
+
+    for i in range(len(events)):
+        assert events[i] == expected_items[i]
 
 
 @patch(

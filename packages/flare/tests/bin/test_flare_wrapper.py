@@ -1,4 +1,5 @@
 import os
+import pytest
 import sys
 
 from unittest.mock import MagicMock
@@ -12,11 +13,11 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../bin/vendor"))
 from flare import FlareAPI
 
 
-@patch("flare.FlareAPI._enrich_event_from_metadata_uid")
+@patch("flare.FlareAPI._retrieve_full_event_from_uid")
 @patch("flare.FlareAPI._retrieve_event_feed_metadata")
 def test_flare_full_data_without_metadata(
     retrieve_event_feed_metadata_mock: MagicMock,
-    enrich_event_from_metadata_uid_mock: MagicMock,
+    retrieve_full_event_from_uid_mock: MagicMock,
 ) -> None:
     expected_return_value = {
         "next": "some_next_value",
@@ -37,30 +38,35 @@ def test_flare_full_data_without_metadata(
 
     flare_api = FlareAPI(api_key="some_key", tenant_id=111)
 
-    for feed in flare_api.retrieve_feed(
+    events: list[dict] = []
+    for event, next_token in flare_api.retrieve_feed_events(
         next=None, start_date=None, ingest_metadata_only=True
     ):
-        assert feed == expected_return_value
+        assert next_token == expected_return_value["next"]
+        events.append(event)
 
-    enrich_event_from_metadata_uid_mock.assert_not_called()
+    for i in range(len(events)):
+        assert events[i] == expected_return_value["items"][i]
+
+    retrieve_full_event_from_uid_mock.assert_not_called()
 
 
-@patch("flare.FlareAPI._enrich_event_from_metadata_uid")
+@patch("flare.FlareAPI._retrieve_full_event_from_uid")
 @patch("flare.FlareAPI._retrieve_event_feed_metadata")
 def test_flare_full_data_with_metadata(
     retrieve_event_feed_metadata_mock: MagicMock,
-    enrich_event_from_metadata_uid_mock: MagicMock,
+    retrieve_full_event_from_uid_mock: MagicMock,
 ) -> None:
     expected_return_value = {
         "next": "some_next_value",
         "items": [
             {
                 "metadata": {"uid": "some_uid"},
-                "bad_data": "foo",
+                "data": "foo",
             },
             {
                 "metadata": {"uid": "some_other_uid"},
-                "bad_data": "bar",
+                "data": "bar",
             },
         ],
     }
@@ -87,31 +93,32 @@ def test_flare_full_data_with_metadata(
     retrieve_event_feed_metadata_mock.return_value = iter([response_mock])
     flare_api = FlareAPI(api_key="some_key", tenant_id=111)
 
-    enrich_event_from_metadata_uid_mock.return_value = expected_full_data_value
+    retrieve_full_event_from_uid_mock.return_value = expected_full_data_value
 
-    for feed in flare_api.retrieve_feed(
+    events: list[dict] = []
+    for event, next_token in flare_api.retrieve_feed_events(
         next=None, start_date=None, ingest_metadata_only=False
     ):
-        assert feed == {
-            "items": [expected_full_data_value, expected_full_data_value],
-            "next": "some_next_value",
-        }
+        assert next_token == expected_return_value["next"]
+        events.append(event)
+
+    for i in range(len(events)):
+        assert events[i] == expected_full_data_value
 
     retrieve_event_feed_metadata_mock.assert_called_once()
 
 
-@patch("flare.FlareAPI._enrich_event_from_metadata_uid", side_effect=Exception)
+@patch("flare.FlareAPI._retrieve_full_event_from_uid", side_effect=Exception)
 @patch("flare.FlareAPI._retrieve_event_feed_metadata")
 def test_flare_full_data_with_metadata_and_exception(
     retrieve_event_feed_metadata_mock: MagicMock,
-    enrich_event_from_metadata_uid_mock: MagicMock,
+    retrieve_full_event_from_uid_mock: MagicMock,
 ) -> None:
     expected_return_value = {
         "next": "some_next_value",
         "items": [
             {
-                "metadata": {"uid": "some_uid"},
-                "bad_data": "foo",
+                "not_metadata": {"uid": "some_uid"},
             },
             {
                 "metadata": {"uid": "some_other_uid"},
@@ -127,9 +134,10 @@ def test_flare_full_data_with_metadata_and_exception(
     retrieve_event_feed_metadata_mock.return_value = iter([response_mock])
     flare_api = FlareAPI(api_key="some_key", tenant_id=111)
 
-    for feed in flare_api.retrieve_feed(
-        next=None, start_date=None, ingest_metadata_only=False
-    ):
-        assert feed == expected_return_value
+    with pytest.raises(KeyError, match="metadata"):
+        for _, _ in flare_api.retrieve_feed_events(
+            next=None, start_date=None, ingest_metadata_only=False
+        ):
+            pass
 
     retrieve_event_feed_metadata_mock.assert_called_once()
