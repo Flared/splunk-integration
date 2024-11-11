@@ -43,6 +43,10 @@ function getRedirectUrl(): string {
     return `/app/${appName}`;
 }
 
+function getFlareDataUrl(indexName: string): string {
+    return `/app/${appName}/search?q=search%20index%3D"${indexName}"%20source%3D"flare"`;
+}
+
 function redirectToHomepage(): void {
     window.location.href = getRedirectUrl();
 }
@@ -166,4 +170,5 @@ export {
     retrieveIngestMetadataOnly,
     redirectToHomepage,
     getRedirectUrl,
+    getFlareDataUrl,
 };

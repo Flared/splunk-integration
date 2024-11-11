@@ -6,6 +6,7 @@
     background-color: var(--bg-color);
     color: var(--text-color);
     text-align: center;
+    gap: 2rem;
 }
 
 .content {
@@ -14,7 +15,6 @@
     flex: content;
     height: auto;
     width: 800px;
-    margin: 2rem;
     gap: 1.5rem;
     align-self: center;
 }
@@ -36,4 +36,11 @@
 #learn-more {
     right: 0;
     height: fit-content;
+}
+
+#experimental {
+    align-self: center;
+    text-align: left;
+    width: 800px;
+    font-style: italic;
 }
