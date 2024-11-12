@@ -100,6 +100,9 @@ lint: setup-web venv-tools mypy format-check
 mypy: venv-tools
 	venv-tools/bin/mypy --config-file mypy.ini packages/flare
 
+.PHONY: sl
+sl: splunk-local
+
 .PHONY: splunk-local
 splunk-local: venv setup-web
 	@echo "Create symlink from app to Splunk Enterprise and start watching files"

@@ -138,3 +138,29 @@ export async function updateConfigurationFile(
     // change the information of a property
     await updateStanzaProperties(configurationStanzaAccessor, properties);
 }
+
+export async function getCurrentIndexName(service: SplunkService): Promise<string> {
+    // Retrieve the accessor used to get a configuration file
+    let configurations = service.configurations({
+        // Name space information not provided
+    });
+    configurations = await promisify(configurations.fetch)();
+
+    // Retrieves the configuration file accessor
+    let configurationFileAccessor = getConfigurationFile(configurations, 'inputs');
+    configurationFileAccessor = await promisify(configurationFileAccessor.fetch)();
+
+    // Retrieves the configuration stanza accessor
+    let configurationStanzaAccessor = getConfigurationFileStanza(
+        configurationFileAccessor,
+        'script://$SPLUNK_HOME/etc/apps/flare/bin/cron_job_ingest_events.py'
+    );
+    configurationStanzaAccessor = await promisify(configurationStanzaAccessor.fetch)();
+
+    let currentIndex = 'main';
+    if ('index' in configurationStanzaAccessor._properties) {
+        currentIndex = configurationStanzaAccessor._properties.index;
+    }
+
+    return currentIndex;
+}
