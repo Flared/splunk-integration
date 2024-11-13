@@ -48,12 +48,10 @@ package: packages/flare/bin/vendor
 		"flare.tar.gz" \
 		"flare"
 
-# This will not work until we get an APPID - need to submit in Splunkbase UI first.
 .PHONY: publish
 publish: packages/flare.tar.gz
-	curl -u   --request POST https://splunkbase.splunk.com/api/v1/app/<APPID>/new_release/ -F "files[]=@./packages/flare.tar.gz" -F "filename=packages/flare.tar.gz" -F "cim_versions=4.9,4.7" -F "splunk_versions=9.3" -F "visibility=true"
+	curl -u   --request POST https://splunkbase.splunk.com/api/v1/app/7602/new_release/ -F "files[]=@./flare.tar.gz" -F "filename=flare.tar.gz" -F "splunk_versions=9.3" -F "visibility=true"
 
-# A manual review from the Splunk team will be required to know if we need to fix any of these tag warnings.
 .PHONY: validate
 validate: venv-tools
 	@echo "Running Splunk AppInspect..."
