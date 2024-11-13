@@ -1,4 +1,4 @@
-import { updateConfigurationFile } from './configurationFileHelper';
+import { updateConfigurationFile, getCurrentIndexName } from './configurationFileHelper';
 import { Tenant } from '../models/flare';
 import {
     PasswordKeys,
@@ -43,7 +43,10 @@ function getRedirectUrl(): string {
     return `/app/${appName}`;
 }
 
-function getFlareDataUrl(indexName: string): string {
+async function getFlareDataUrl(): Promise<string> {
+    const service = createService(applicationNameSpace);
+    const indexName = await getCurrentIndexName(service);
+
     return `/app/${appName}/search?q=search%20index%3D"${indexName}"%20source%3D"flare"`;
 }
 

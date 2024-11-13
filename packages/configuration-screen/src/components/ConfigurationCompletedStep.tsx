@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import Button from './Button';
 import { getFlareDataUrl } from '../utils/setupConfiguration';
 import ArrowRightIcon from './icons/ArrowRightIcon';
@@ -10,6 +10,12 @@ const ConfigurationCompletedStep: FC<{
     tenantName: string;
     onBackClicked: () => void;
 }> = ({ show, tenantName, onBackClicked }) => {
+    const [indexName, setIndexName] = useState<string>();
+
+    useEffect(() => {
+        getFlareDataUrl().then((name) => setIndexName(name));
+    }, []);
+
     return (
         <div hidden={!show}>
             <h5>
@@ -23,7 +29,7 @@ const ConfigurationCompletedStep: FC<{
                         Edit Configuration
                     </Button>
                     <div className="link">
-                        <a href={getFlareDataUrl('main')}>View Flare Data</a>
+                        <a href={indexName}>View Flare Data</a>
                         <ArrowRightIcon remSize={1} />
                     </div>
                 </div>
