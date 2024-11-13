@@ -24,7 +24,7 @@ const Toast: FC<ToastProps> = (props) => {
             }, 175);
         }, duration);
 
-        return () => clearTimeout(timer);
+        return (): void => clearTimeout(timer);
     }, [onDestroy, duration]);
 
     return (

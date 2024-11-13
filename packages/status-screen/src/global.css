@@ -1,0 +1,113 @@
+:root {
+    --primary: #4a61e0;
+    --secondary: #233ccd;
+    --terciary: #dce0f9;
+    --bg-color: #fdfdfd;
+    --secondary-bg-color: #f6f6f9;
+    --text-color: #000000;
+    --secondary-text-color: #888a91;
+    --button-bg-color: var(--primary);
+    --button-bg-hover-color: var(--secondary);
+    --button-bg-secondary-hover-color: var(--terciary);
+    --button-secondary-hover-color: var(--primary);
+    --button-text-color: #fff;
+    --button-disabled-bg-color: #d5d4e3;
+    --button-disabled-text-color: #56575d;
+    --switch-disabled-bg-color: #e8e9dd;
+    --switch-disabled-hover-bg-color: #c6c4d9;
+    --border-color: #dddce8;
+    --header-text-color: var(--primary);
+    --icon-bg-color: #f0f0f5;
+    --loading-bar-bg-color: #eae9f1;
+    --text-color-link: #131a41;
+    --error: #cc0032;
+    --flare-logo: #121a41;
+    --toast-bg-color-success: #d4f7e780;
+    --toast-border-color-success: #7fe6b680;
+    --toast-bg-color-error: #ffccd880;
+    --toast-border-color-error: #ff668b80;
+}
+
+.dark {
+    --primary: #8595ea;
+    --terciary: #97a5f2;
+    --bg-color: #272735;
+    --secondary-bg-color: #353544;
+    --text-color: #ffffff;
+    --secondary-text-color: #7a7689;
+    --button-bg-color: var(--primary);
+    --button-bg-secondary-hover-color: var(--terciary);
+    --button-text-color: #e0e0ff;
+    --switch-disabled-bg-color: #57576b;
+    --switch-disabled-hover-bg-color: #454536;
+    --border-color: #dddce8;
+    --header-text-color: var(--primary);
+    --icon-bg-color: #58586c;
+    --loading-bar-bg-color: #353544;
+    --text-color-link: #ffffff;
+    --flare-logo: #fff;
+    --toast-bg-color-success: #21ab6b80;
+    --toast-border-color-success: #21ab6b80;
+    --toast-bg-color-error: #ff004080;
+    --toast-border-color-error: #ff004080;
+}
+
+html,
+body {
+    height: 100%;
+    margin: 0;
+}
+
+body,
+button,
+input,
+select {
+    font-family: Splunk Platform Sans, Proxima Nova, sans-serif;
+}
+
+select,
+input {
+    width: 20rem;
+    padding: 0.5rem 1rem;
+    background-color: transparent;
+    color: var(--text-color);
+}
+
+input {
+    border: 1px solid var(--secondary-text-color);
+    border-radius: 40px;
+    margin-top: 1rem;
+}
+
+input:hover {
+    border: 1px solid var(--button-bg-color);
+}
+
+input::placeholder {
+    color: var(--secondary-text-color);
+}
+
+a {
+    color: var(--text-color-link);
+    text-decoration: underline;
+    font-size: 0.9rem;
+}
+
+h2 {
+    font-size: 1.5rem;
+    color: var(--header-text-color);
+    margin: 0;
+}
+
+h5 {
+    font-size: 1rem;
+    color: var(--text-color);
+    margin-top: 8px;
+    text-align: start;
+    font-weight: normal;
+}
+
+.parent-container {
+    background-color: var(--bg-color);
+    height: calc(100vh - 79px);
+}

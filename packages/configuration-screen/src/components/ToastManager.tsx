@@ -25,7 +25,7 @@ export class ToastManager {
         this.containerRef = toastContainer;
     }
 
-    public setTheme(theme: string) {
+    public setTheme(theme: string): void {
         if (theme === 'dark') {
             this.containerRef.className = theme;
         } else {
@@ -34,12 +34,11 @@ export class ToastManager {
     }
 
     public show(options: ToastOptions): void {
-        const toast: ToastProps = {
-            ...options,
-            onDestroy: () => this.destroy(options.id),
-        };
-
-        if (this.toasts.filter((p) => p.id === options.id).length === 0) {
+        if (this.toasts.filter((toast: ToastProps) => toast.id === options.id).length === 0) {
+            const toast: ToastProps = {
+                ...options,
+                onDestroy: () => this.destroy(options.id),
+            };
             this.toasts = [toast, ...this.toasts];
             this.render();
         }
