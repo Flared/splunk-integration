@@ -3,6 +3,7 @@ import { Tenant } from '../models/flare';
 import {
     PasswordKeys,
     SplunkApplicationNamespace,
+    SplunkCollectionItem,
     SplunkService,
     SplunkStoragePasswordAccessors,
 } from '../models/splunk';
@@ -108,6 +109,27 @@ async function savePassword(
     });
 }
 
+async function findCollection(): Promise<SplunkCollectionItem[]> {
+    const service = createService(applicationNameSpace);
+    return promisify(service.get)('storage/collections/data/event_ingestion_collection/', {})
+        .then((data: any) => {
+            const items: SplunkCollectionItem[] = [];
+            if (data.data) {
+                data.data.forEach((element) => {
+                    items.push({
+                        key: element._key,
+                        value: element.value,
+                        user: element._user,
+                    });
+                });
+            }
+            return items;
+        })
+        .catch(() => {
+            return [];
+        });
+}
+
 async function saveConfiguration(
     apiKey: string,
     tenantId: number,
@@ -174,4 +196,5 @@ export {
     redirectToHomepage,
     getRedirectUrl,
     getFlareDataUrl,
+    findCollection,
 };

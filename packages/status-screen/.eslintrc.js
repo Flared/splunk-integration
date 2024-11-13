@@ -6,6 +6,8 @@ module.exports = {
         'react/jsx-filename-extension': [2, { 'extensions': ['.js', '.jsx', '.ts', '.tsx'] }],
         'no-restricted-syntax': 'off',
         'no-use-before-define': 'off',
+        '@typescript-eslint/no-unused-vars': ['warn'],
+        '@typescript-eslint/no-use-before-define': 'off',
         "@typescript-eslint/explicit-function-return-type": [
             "error",
             {
@@ -16,7 +18,6 @@ module.exports = {
                 "allowConciseArrowFunctionExpressionsStartingWithVoid": true,
             }
         ],
-        '@typescript-eslint/no-unused-vars': ['warn'],
         'no-unused-vars': ['warn'],
         'camelcase': 'off',
         'no-underscore-dangle': 'off',

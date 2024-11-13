@@ -1,0 +1,4 @@
+<?xml version="1.0"?>
+<view template="flare:/templates/status.html" type="html">
+	<label>Status</label>
+</view>
