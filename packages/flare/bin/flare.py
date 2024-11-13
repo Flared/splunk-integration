@@ -75,7 +75,7 @@ class FlareAPI(AuthBase):
         data: Dict[str, Any] = {
             "from": next if next else None,
             "filters": {
-                "estimated_created_at": {
+                "materialized_at": {
                     "gte": start_date.isoformat()
                     if start_date
                     else date.today().isoformat()
