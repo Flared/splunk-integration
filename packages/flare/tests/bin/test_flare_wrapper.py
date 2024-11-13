@@ -2,6 +2,7 @@ import os
 import pytest
 import sys
 
+from typing import Any
 from unittest.mock import MagicMock
 from unittest.mock import Mock
 from unittest.mock import PropertyMock
@@ -53,7 +54,9 @@ def test_flare_full_data_without_metadata(
 
 @patch("flare.FlareAPI._retrieve_full_event_from_uid")
 @patch("flare.FlareAPI._retrieve_event_feed_metadata")
+@patch("time.sleep", return_value=None)
 def test_flare_full_data_with_metadata(
+    sleep: Any,
     retrieve_event_feed_metadata_mock: MagicMock,
     retrieve_full_event_from_uid_mock: MagicMock,
 ) -> None:

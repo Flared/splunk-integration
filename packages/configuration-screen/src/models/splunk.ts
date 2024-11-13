@@ -31,6 +31,7 @@ export interface ConfigurationStanzaAccessor {
     update: (properties: Record<string, string>) => void;
     list: () => Array<{ name: string }>;
     properties: () => Record<string, string>;
+    _properties: Record<string, string>;
 }
 
 export interface ConfigurationFileAccessor {
