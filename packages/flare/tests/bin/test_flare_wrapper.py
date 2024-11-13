@@ -77,7 +77,7 @@ def test_flare_full_data_with_metadata(
     expected_full_data_value = {
         "metadata": {
             "uid": "some_uid",
-            "estimated_created_at": "2024-11-08T19:12:04Z",
+            "materialized_at": "2024-11-08T19:12:04Z",
             "type": "chat_message",
             "severity": "low",
         },
