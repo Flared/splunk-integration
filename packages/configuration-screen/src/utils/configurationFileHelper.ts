@@ -157,10 +157,12 @@ export async function getCurrentIndexName(service: SplunkService): Promise<strin
     );
     configurationStanzaAccessor = await promisify(configurationStanzaAccessor.fetch)();
 
-    let currentIndex = 'main';
-    if ('index' in configurationStanzaAccessor._properties) {
-        currentIndex = configurationStanzaAccessor._properties.index;
+    if (
+        !('index' in configurationStanzaAccessor._properties) ||
+        configurationStanzaAccessor._properties.index === 'default'
+    ) {
+        return 'main';
     }
 
-    return currentIndex;
+    return configurationStanzaAccessor._properties.index;
 }
