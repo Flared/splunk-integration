@@ -11,10 +11,12 @@
     "start": "webpack --watch",
     "stylelint": "stylelint \"src/**/*.{js,jsx}\" --config stylelint.config.js"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@flare/configuration-screen": "^0.0.1",
+    "@flare/status-screen": "^0.0.1"
+  },
   "devDependencies": {
     "@babel/core": "^7.2.0",
-    "@splunk/configuration-screen": "^0.0.1",
     "@splunk/babel-preset": "^4.0.0",
     "@splunk/eslint-config": "^4.0.0",
     "@splunk/react-page": "^7.0.0",

@@ -12,17 +12,17 @@ const ConfigurationInitialStep: FC<{
     apiKey?: string;
     errorMessage?: string;
     isLoading?: boolean;
-    onBackClicked: () => void;
-    onNextClicked: () => void;
-    onApiKeyChanged: (e: ChangeEvent) => void;
+    onCancelConfigurationClick: () => void;
+    onSubmitApiKeyClick: () => void;
+    onApiKeyChange: (e: ChangeEvent) => void;
 }> = ({
     show = false,
     apiKey = '',
     errorMessage = '',
     isLoading = false,
-    onBackClicked,
-    onNextClicked,
-    onApiKeyChanged,
+    onCancelConfigurationClick,
+    onSubmitApiKeyClick,
+    onApiKeyChange,
 }) => {
     return (
         <div hidden={!show}>
@@ -43,7 +43,7 @@ const ConfigurationInitialStep: FC<{
                     id="apiKey"
                     type="password"
                     value={apiKey}
-                    onChange={onApiKeyChanged}
+                    onChange={onApiKeyChange}
                     className={`input ${errorMessage.length > 0 ? 'border-error' : ''}`}
                     placeholder="Your API Key"
                 />
@@ -52,10 +52,10 @@ const ConfigurationInitialStep: FC<{
                     <small>Error. {errorMessage}</small>
                 </div>
                 <div className="button-group">
-                    <Button onClick={() => onBackClicked()} isSecondary>
+                    <Button onClick={(): void => onCancelConfigurationClick()} isSecondary>
                         Cancel
                     </Button>
-                    <Button onClick={() => onNextClicked()} isLoading={isLoading}>
+                    <Button onClick={(): void => onSubmitApiKeyClick()} isLoading={isLoading}>
                         Next
                     </Button>
                 </div>

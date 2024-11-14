@@ -9,7 +9,7 @@ const TOOLTIP_WINDOW_ID = 'tooltip-window';
 const Tooltip: FC<{}> = ({ children }) => {
     const [isOpened, setIsOpened] = useState(false);
 
-    function globalClickListener(event: MouseEvent) {
+    function globalClickListener(event: MouseEvent): void {
         const tooltipWindow = document.getElementById(TOOLTIP_WINDOW_ID);
 
         if (
@@ -17,11 +17,11 @@ const Tooltip: FC<{}> = ({ children }) => {
             event.target instanceof HTMLElement &&
             !tooltipWindow.contains(event.target)
         ) {
-            toggleOpened(false);
+            toggleOpen(false);
         }
     }
 
-    function toggleOpened(open: boolean) {
+    function toggleOpen(open: boolean): void {
         if (open) {
             document.addEventListener('click', globalClickListener);
         } else {
@@ -32,10 +32,18 @@ const Tooltip: FC<{}> = ({ children }) => {
 
     return (
         <div className="tooltip-container">
-            <span className="tooltip-button" hidden={!isOpened} onClick={() => toggleOpened(false)}>
+            <span
+                className="tooltip-button"
+                hidden={!isOpened}
+                onClick={(): void => toggleOpen(false)}
+            >
                 <CloseIcon remSize={1} />
             </span>
-            <span className="tooltip-button" hidden={isOpened} onClick={() => toggleOpened(true)}>
+            <span
+                className="tooltip-button"
+                hidden={isOpened}
+                onClick={(): void => toggleOpen(true)}
+            >
                 <TooltipIcon remSize={1} />
             </span>
             <div hidden={!isOpened} id={TOOLTIP_WINDOW_ID} className="tooltip">

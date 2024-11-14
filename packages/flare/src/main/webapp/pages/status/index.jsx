@@ -1,12 +1,12 @@
 import React from 'react';
 
 import layout from '@splunk/react-page';
-import ConfigurationScreen from '@flare/configuration-screen';
+import StatusScreen from '@flare/status-screen';
 import { getUserTheme } from '@splunk/splunk-utils/themes';
 
 getUserTheme()
     .then((theme) => {
-        layout(<ConfigurationScreen theme={theme} />, {
+        layout(<StatusScreen theme={theme} />, {
             theme,
         });
     })
