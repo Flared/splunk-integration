@@ -164,3 +164,29 @@ export async function getCurrentIndexName(service: SplunkService): Promise<strin
 
     return currentIndex;
 }
+
+export async function getVersion(service: SplunkService): Promise<string> {
+    // Retrieve the accessor used to get a configuration file
+    let configurations = service.configurations({
+        // Name space information not provided
+    });
+    configurations = await promisify(configurations.fetch)();
+
+    // Retrieves the configuration file accessor
+    let configurationFileAccessor = getConfigurationFile(configurations, 'app');
+    configurationFileAccessor = await promisify(configurationFileAccessor.fetch)();
+
+    // Retrieves the configuration stanza accessor
+    let configurationStanzaAccessor = getConfigurationFileStanza(
+        configurationFileAccessor,
+        'launcher'
+    );
+    configurationStanzaAccessor = await promisify(configurationStanzaAccessor.fetch)();
+
+    let versionName = 'unknown';
+    if ('version' in configurationStanzaAccessor._properties) {
+        versionName = configurationStanzaAccessor._properties.version;
+    }
+
+    return versionName;
+}

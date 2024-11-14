@@ -1,7 +1,7 @@
 import React, { useEffect, FC, useState } from 'react';
 import './global.css';
 import './StatusScreen.css';
-import { findCollection, retrieveTenantId } from './utils/setupConfiguration';
+import { findCollection, getVersionName, retrieveTenantId } from './utils/setupConfiguration';
 import { SplunkCollectionItem } from './models/splunk';
 import Button from './components/Button';
 
@@ -21,28 +21,32 @@ interface StatusItem {
 }
 
 const StatusScreen: FC<{ theme: string }> = ({ theme }) => {
+    const [versionName, setVersionName] = useState<string>('unknown');
     const [statusItems, setStatusItem] = useState<StatusItem[]>([]);
     const [isShowingAllItems, setShowingAllItems] = useState<boolean>(false);
 
     useEffect(() => {
-        Promise.all([retrieveTenantId(), findCollection()]).then(([id, splunkCollectionItems]) => {
-            const items: StatusItem[] = [];
-            items.push({
-                key: StatusItemKeys.CURRENT_TENANT_ID,
-                name: getItemName(StatusItemKeys.CURRENT_TENANT_ID),
-                value: `${id}`,
-            });
-            splunkCollectionItems.forEach((item) => {
+        Promise.all([retrieveTenantId(), findCollection(), getVersionName()]).then(
+            ([id, splunkCollectionItems, version]) => {
+                const items: StatusItem[] = [];
                 items.push({
-                    key: item.key.startsWith(COLLECTION_KEYS_NEXT_PREFIX)
-                        ? StatusItemKeys.NEXT_TOKEN
-                        : (item.key as StatusItemKeys),
-                    name: getItemName(item.key),
-                    value: formatValue(item),
+                    key: StatusItemKeys.CURRENT_TENANT_ID,
+                    name: getItemName(StatusItemKeys.CURRENT_TENANT_ID),
+                    value: `${id}`,
                 });
-            });
-            setStatusItem(items);
-        });
+                splunkCollectionItems.forEach((item) => {
+                    items.push({
+                        key: item.key.startsWith(COLLECTION_KEYS_NEXT_PREFIX)
+                            ? StatusItemKeys.NEXT_TOKEN
+                            : (item.key as StatusItemKeys),
+                        name: getItemName(item.key),
+                        value: formatValue(item),
+                    });
+                });
+                setStatusItem(items);
+                setVersionName(version);
+            }
+        );
     }, []);
 
     useEffect(() => {
@@ -101,7 +105,10 @@ const StatusScreen: FC<{ theme: string }> = ({ theme }) => {
         <div id="container" className={theme === 'dark' ? 'dark' : ''}>
             <div id="experimental">This is an experimental release</div>
             <div className="content">
-                <h2>Status</h2>
+                <div>
+                    <h2>Status</h2>
+                    <small>{`Version: ${versionName}`}</small>
+                </div>
                 <div id="status-list">
                     {getItems().map((item) => {
                         return (
