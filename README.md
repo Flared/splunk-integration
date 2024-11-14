@@ -7,7 +7,7 @@ At the time of this writing, Splunk Enterprise is at version 9.3.0. This version
 
 ## Installation
 
-To be updated once documentation is publicly available
+Installation instructions are available [here](https://docs.flare.io/splunk-app-integration).
 
 ## Architecture Overview
 
