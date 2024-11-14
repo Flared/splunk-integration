@@ -33,7 +33,7 @@ const ConfigurationScreen: FC<{ theme: string }> = ({ theme }) => {
 
     toastManager.setTheme(theme);
 
-    function reset() {
+    function reset(): void {
         setApiKey('');
         setTenantId(-1);
         setUserTenants([]);
@@ -41,7 +41,7 @@ const ConfigurationScreen: FC<{ theme: string }> = ({ theme }) => {
         setIsCompleted(false);
     }
 
-    function getCurrentConfigurationStep() {
+    function getCurrentConfigurationStep(): ConfigurationSteps {
         if (tenants.length === 0) {
             return ConfigurationSteps.Initial;
         }
@@ -52,13 +52,13 @@ const ConfigurationScreen: FC<{ theme: string }> = ({ theme }) => {
         return ConfigurationSteps.Completed;
     }
 
-    const handleApiKeyChange = (e) => setApiKey(e.target.value);
-    const handleTenantIdChange = (e) => setTenantId(parseInt(e.target.value, 10));
-    const handleIsIngestingMetadataChange = (e) => {
+    const handleApiKeyChange = (e): void => setApiKey(e.target.value);
+    const handleTenantIdChange = (e): void => setTenantId(parseInt(e.target.value, 10));
+    const handleIsIngestingMetadataChange = (e): void => {
         setIsIngestingMetadataOnly(e.target.checked);
     };
 
-    const handleBackButton = () => {
+    const handleBackButton = (): void => {
         const currentConfigurationStep = getCurrentConfigurationStep();
         if (currentConfigurationStep === ConfigurationSteps.Initial) {
             redirectToHomepage();
@@ -69,11 +69,11 @@ const ConfigurationScreen: FC<{ theme: string }> = ({ theme }) => {
         }
     };
 
-    const handleSubmitApiKey = () => {
+    const handleSubmitApiKey = (): void => {
         setIsLoading(true);
         retrieveUserTenants(
             apiKey,
-            (userTenants) => {
+            (userTenants: Tenant[]) => {
                 if (tenantId === -1 && userTenants.length > 0) {
                     setTenantId(userTenants[0].id);
                 }
@@ -81,7 +81,7 @@ const ConfigurationScreen: FC<{ theme: string }> = ({ theme }) => {
                 setUserTenants(userTenants);
                 setIsLoading(false);
             },
-            (error) => {
+            (error: string) => {
                 setErrorMessage(error);
                 setIsLoading(false);
                 toastManager.show({
@@ -93,7 +93,7 @@ const ConfigurationScreen: FC<{ theme: string }> = ({ theme }) => {
         );
     };
 
-    const handleSubmitTenant = () => {
+    const handleSubmitTenant = (): void => {
         setIsLoading(true);
         saveConfiguration(apiKey, tenantId, isIngestingMetadataOnly)
             .then(() => {
@@ -105,7 +105,7 @@ const ConfigurationScreen: FC<{ theme: string }> = ({ theme }) => {
                     content: 'Configured Flare Account',
                 });
             })
-            .catch((e) => {
+            .catch((e: any) => {
                 setIsLoading(false);
                 toastManager.show({
                     id: TOAST_API_KEY_ERROR,
@@ -115,8 +115,8 @@ const ConfigurationScreen: FC<{ theme: string }> = ({ theme }) => {
             });
     };
 
-    function getSelectedTenantName() {
-        const filteredTenants = tenants.filter((p) => p.id === tenantId);
+    function getSelectedTenantName(): string {
+        const filteredTenants = tenants.filter((tenant: Tenant) => tenant.id === tenantId);
         if (filteredTenants.length > 0) {
             return filteredTenants[0].name;
         }
@@ -128,10 +128,12 @@ const ConfigurationScreen: FC<{ theme: string }> = ({ theme }) => {
         if (isCompleted) {
             return;
         }
-        retrieveApiKey().then((key) => setApiKey(key));
-        retrieveTenantId().then((id) => setTenantId(id));
-        retrieveIngestMetadataOnly().then((ingestMetadataOnly) =>
-            setIsIngestingMetadataOnly(ingestMetadataOnly)
+        Promise.all([retrieveApiKey(), retrieveTenantId(), retrieveIngestMetadataOnly()]).then(
+            ([key, id, ingestMetadataOnly]) => {
+                setApiKey(key);
+                setTenantId(id);
+                setIsIngestingMetadataOnly(ingestMetadataOnly);
+            }
         );
     }, [isCompleted]);
 
@@ -168,9 +170,9 @@ const ConfigurationScreen: FC<{ theme: string }> = ({ theme }) => {
                         apiKey={apiKey}
                         errorMessage={errorMessage}
                         isLoading={isLoading}
-                        onBackClicked={handleBackButton}
-                        onNextClicked={handleSubmitApiKey}
-                        onApiKeyChanged={handleApiKeyChange}
+                        onCancelConfigurationClick={handleBackButton}
+                        onSubmitApiKeyClick={handleSubmitApiKey}
+                        onApiKeyChange={handleApiKeyChange}
                     />
                     <ConfigurationUserPreferencesStep
                         show={currentConfigurationStep === ConfigurationSteps.UserPreferences}
@@ -178,15 +180,15 @@ const ConfigurationScreen: FC<{ theme: string }> = ({ theme }) => {
                         tenants={tenants}
                         isLoading={isLoading}
                         isIngestingMetadataOnly={isIngestingMetadataOnly}
-                        onBackClicked={handleBackButton}
-                        onNextClicked={handleSubmitTenant}
-                        onTenantIdChanged={handleTenantIdChange}
-                        onIngestingMetadataChanged={handleIsIngestingMetadataChange}
+                        onNavigateBackClick={handleBackButton}
+                        onSubmitUserPreferencesClick={handleSubmitTenant}
+                        onTenantIdChange={handleTenantIdChange}
+                        onIngestingMetadataChange={handleIsIngestingMetadataChange}
                     />
                     <ConfigurationCompletedStep
                         show={currentConfigurationStep === ConfigurationSteps.Completed}
                         tenantName={getSelectedTenantName()}
-                        onBackClicked={handleBackButton}
+                        onEditConfigurationClick={handleBackButton}
                     />
                 </div>
                 <div id="learn-more" className="link">

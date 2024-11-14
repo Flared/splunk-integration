@@ -8,8 +8,8 @@ import './ConfigurationGlobalStep.css';
 const ConfigurationCompletedStep: FC<{
     show: boolean;
     tenantName: string;
-    onBackClicked: () => void;
-}> = ({ show, tenantName, onBackClicked }) => {
+    onEditConfigurationClick: () => void;
+}> = ({ show, tenantName, onEditConfigurationClick }) => {
     const [indexName, setIndexName] = useState<string>();
 
     useEffect(() => {
@@ -25,7 +25,7 @@ const ConfigurationCompletedStep: FC<{
             </h5>
             <div className="form-group">
                 <div className="button-group">
-                    <Button onClick={() => onBackClicked()} isSecondary>
+                    <Button onClick={(): void => onEditConfigurationClick()} isSecondary>
                         Edit Configuration
                     </Button>
                     <div className="link">

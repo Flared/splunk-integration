@@ -14,27 +14,27 @@ const ConfigurationUserPreferencesStep: FC<{
     selectedTenantId: number;
     isLoading: boolean;
     isIngestingMetadataOnly: boolean;
-    onBackClicked: () => void;
-    onNextClicked: () => void;
-    onTenantIdChanged: (e: ChangeEvent) => void;
-    onIngestingMetadataChanged: (e: ChangeEvent) => void;
+    onNavigateBackClick: () => void;
+    onSubmitUserPreferencesClick: () => void;
+    onTenantIdChange: (e: ChangeEvent) => void;
+    onIngestingMetadataChange: (e: ChangeEvent) => void;
 }> = ({
     show,
     tenants,
     selectedTenantId,
     isLoading,
     isIngestingMetadataOnly,
-    onBackClicked,
-    onNextClicked,
-    onTenantIdChanged,
-    onIngestingMetadataChanged,
+    onNavigateBackClick,
+    onSubmitUserPreferencesClick,
+    onTenantIdChange,
+    onIngestingMetadataChange,
 }) => {
     return (
         <div hidden={!show}>
             <h5>Please select the Tenant you want to ingest events from</h5>
             <div className="form-group">
                 <Label isRequired>Tenant</Label>
-                <Select id="tenants" onChange={onTenantIdChanged} value={selectedTenantId}>
+                <Select id="tenants" onChange={onTenantIdChange} value={selectedTenantId}>
                     {tenants.map((tenant) => {
                         return (
                             <option key={tenants.indexOf(tenant)} value={tenant.id}>
@@ -46,13 +46,16 @@ const ConfigurationUserPreferencesStep: FC<{
                 <small className="note">You can only monitor one tenant at a time.</small>
                 <div className="switch-layout">
                     <span>Only ingest the metadata of events</span>
-                    <Switch value={isIngestingMetadataOnly} onChange={onIngestingMetadataChanged} />
+                    <Switch value={isIngestingMetadataOnly} onChange={onIngestingMetadataChange} />
                 </div>
                 <div className="button-group">
-                    <Button onClick={() => onBackClicked()} isSecondary>
+                    <Button onClick={(): void => onNavigateBackClick()} isSecondary>
                         Back
                     </Button>
-                    <Button onClick={() => onNextClicked()} isLoading={isLoading}>
+                    <Button
+                        onClick={(): void => onSubmitUserPreferencesClick()}
+                        isLoading={isLoading}
+                    >
                         Submit
                     </Button>
                 </div>
