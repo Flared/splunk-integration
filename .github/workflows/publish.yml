@@ -8,12 +8,19 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-      - name: Download Build Artifact
-        uses: actions/download-artifact@v4
+      - name: Checkout codebase
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          name: splunk-app
+            python-version: '3.9'
+
+      - name: Install Application Dependencies
+        run: |
+          make build
 
       - name: Package and Publish
         run: |
           make package
-          make publish
+          SPLUNKBASE_CREDS="${{ secrets.SPLUNKBASE_CREDS }}" make publish
