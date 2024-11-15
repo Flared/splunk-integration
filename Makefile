@@ -48,10 +48,6 @@ package: packages/flare/bin/vendor
 		"flare.tar.gz" \
 		"flare"
 
-.PHONY: publish
-publish: packages/flare.tar.gz
-	curl -u   --request POST https://splunkbase.splunk.com/api/v1/app/7602/new_release/ -F "files[]=@./flare.tar.gz" -F "filename=flare.tar.gz" -F "splunk_versions=9.3" -F "visibility=true"
-
 .PHONY: validate
 validate: venv-tools
 	@echo "Running Splunk AppInspect..."
