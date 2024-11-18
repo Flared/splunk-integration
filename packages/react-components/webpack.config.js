@@ -4,6 +4,7 @@ const baseComponentConfig = require('@splunk/webpack-configs/component.config').
 
 module.exports = webpackMerge(baseComponentConfig, {
     entry: {
+        ConfigurationScreen: path.join(__dirname, 'src/ConfigurationScreen.tsx'),
         StatusScreen: path.join(__dirname, 'src/StatusScreen.tsx'),
     },
     output: {

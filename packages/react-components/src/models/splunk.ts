@@ -1,5 +1,3 @@
-import '../vendor/splunk.min.js';
-
 export interface SplunkApplicationNamespace {
     app?: string;
     owner?: string;
@@ -17,6 +15,10 @@ export interface SplunkCollectionItem {
     key: string;
     value: string;
     user: string;
+}
+
+export interface SplunkIndex {
+    name: string;
 }
 
 export interface SplunkAppAccessor {
@@ -57,6 +59,13 @@ export interface ConfigurationsAccessor {
     list: () => Array<{ name: string }>;
 }
 
+export interface SplunkIndexesAccessor {
+    fetch: () => SplunkIndexesAccessor;
+    create: (indexName: string, data: any) => void;
+    item: (indexName: string) => SplunkIndex;
+    list: () => Array<SplunkIndex>;
+}
+
 export interface SplunkStoragePasswordAccessors {
     fetch: () => SplunkStoragePasswordAccessors;
     item: (applicationName: string) => SplunkAppAccessor;
@@ -69,6 +78,7 @@ export interface SplunkService {
     configurations: (params: SplunkApplicationNamespace) => ConfigurationsAccessor;
     apps: () => SplunkAppsAccessor;
     storagePasswords: () => SplunkStoragePasswordAccessors;
+    indexes: () => SplunkIndexesAccessor;
     get: (splunkUrlPath: string, data: any) => void;
     post: (
         splunkUrlPath: string,

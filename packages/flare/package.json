@@ -12,8 +12,7 @@
     "stylelint": "stylelint \"src/**/*.{js,jsx}\" --config stylelint.config.js"
   },
   "dependencies": {
-    "@flare/configuration-screen": "^0.0.1",
-    "@flare/status-screen": "^0.0.1"
+    "@flare/react-components": "^0.0.1"
   },
   "devDependencies": {
     "@babel/core": "^7.2.0",

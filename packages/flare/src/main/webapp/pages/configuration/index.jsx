@@ -1,7 +1,7 @@
 import React from 'react';
 
 import layout from '@splunk/react-page';
-import ConfigurationScreen from '@flare/configuration-screen';
+import ConfigurationScreen from '@flare/react-components/configuration-screen';
 import { getUserTheme } from '@splunk/splunk-utils/themes';
 
 getUserTheme()

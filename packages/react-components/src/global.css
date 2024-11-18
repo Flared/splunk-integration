@@ -97,15 +97,14 @@ h2 {
     font-size: 1.5rem;
     color: var(--header-text-color);
     margin: 0;
-    margin-bottom: 1.5rem;
 }
 
 h5 {
     font-size: 1rem;
     color: var(--text-color);
-    margin-top: 8px;
     text-align: start;
     font-weight: normal;
+    margin: 0;
 }
 
 .parent-container {

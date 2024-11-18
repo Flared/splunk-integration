@@ -3,6 +3,7 @@ import { Tenant } from '../models/flare';
 import {
     PasswordKeys,
     SplunkApplicationNamespace,
+    SplunkCollectionItem,
     SplunkService,
     SplunkStoragePasswordAccessors,
 } from '../models/splunk';
@@ -117,6 +118,27 @@ async function saveConfiguration(
     await reloadApp(service);
 }
 
+async function fetchCollectionItems(): Promise<SplunkCollectionItem[]> {
+    const service = createService();
+    return promisify(service.get)('storage/collections/data/event_ingestion_collection/', {})
+        .then((data: any) => {
+            const items: SplunkCollectionItem[] = [];
+            if (data.data) {
+                data.data.forEach((element) => {
+                    items.push({
+                        key: element._key,
+                        value: element.value,
+                        user: element._user,
+                    });
+                });
+            }
+            return items;
+        })
+        .catch(() => {
+            return [];
+        });
+}
+
 async function fetchPassword(passwordKey: string): Promise<string> {
     const service = createService();
     const storagePasswords = await promisify(service.storagePasswords().fetch)();
@@ -207,6 +229,11 @@ async function fetchCurrentIndexName(): Promise<string> {
     );
 }
 
+async function fetchVersionName(): Promise<string> {
+    const service = createService();
+    return getConfigurationStanzaValue(service, 'app', 'launcher', 'version', 'unknown');
+}
+
 export {
     saveConfiguration,
     fetchUserTenants,
@@ -219,4 +246,6 @@ export {
     createFlareIndex,
     fetchAvailableIndexNames,
     fetchCurrentIndexName,
+    fetchVersionName,
+    fetchCollectionItems,
 };
