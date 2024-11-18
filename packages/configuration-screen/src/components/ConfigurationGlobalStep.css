@@ -3,7 +3,7 @@
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    margin-top: 2.5rem;
+    margin-top: 1.5rem;
     gap: 1rem;
 }
 
@@ -13,6 +13,13 @@
     width: 100%;
     align-items: flex-start;
     margin-top: 1rem;
+    gap: 1rem;
+}
+
+.form-item {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
 }
 
 .progress-bar-container {

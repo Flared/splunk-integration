@@ -76,7 +76,7 @@ input {
 input {
     border: 1px solid var(--secondary-text-color);
     border-radius: 40px;
-    margin-top: 1rem;
+    margin-top: 0.5rem;
 }
 
 input:hover {

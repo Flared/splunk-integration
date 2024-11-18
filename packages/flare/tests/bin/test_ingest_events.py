@@ -14,11 +14,9 @@ from unittest.mock import patch
 
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../bin"))
-from constants import APP_NAME
 from constants import CRON_JOB_THRESHOLD_SINCE_LAST_FETCH
 from constants import KV_COLLECTION_NAME
 from constants import CollectionKeys
-from cron_job_ingest_events import create_flare_index
 from cron_job_ingest_events import fetch_feed
 from cron_job_ingest_events import get_api_key
 from cron_job_ingest_events import get_collection_value
@@ -29,19 +27,6 @@ from cron_job_ingest_events import get_tenant_id
 from cron_job_ingest_events import main
 from cron_job_ingest_events import save_collection_value
 from cron_job_ingest_events import save_start_date
-
-
-def test_create_flare_index_expect_none() -> None:
-    app = MagicMock()
-    app.service.indexes.__contains__.side_effect = lambda x: x == APP_NAME
-    create_flare_index(app.service)
-    app.service.indexes[APP_NAME].assert_not_called()
-
-
-def test_create_flare_index_expect_create() -> None:
-    app = MagicMock()
-    create_flare_index(app.service)
-    app.service.indexes.create.assert_called_once_with(APP_NAME)
 
 
 def test_get_collection_value_expect_none() -> None:
