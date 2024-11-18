@@ -1,4 +1,4 @@
-import { updateConfigurationFile, getCurrentIndexName } from './configurationFileHelper';
+import { updateConfigurationFile, getConfigurationStanzaValue } from './configurationFileHelper';
 import { Tenant } from '../models/flare';
 import {
     PasswordKeys,
@@ -8,7 +8,7 @@ import {
 } from '../models/splunk';
 import { promisify } from './util';
 
-const appName: string = 'flare';
+export const appName: string = 'flare';
 const storageRealm: string = 'flare_integration_realm';
 const applicationNameSpace: SplunkApplicationNamespace = {
     owner: 'nobody',
@@ -17,18 +17,9 @@ const applicationNameSpace: SplunkApplicationNamespace = {
 };
 
 async function completeSetup(splunkService: SplunkService): Promise<void> {
-    const configurationFileName = 'app';
-    const stanzaName = 'install';
-    const propertiesToUpdate = {
+    await updateConfigurationFile(splunkService, 'app', 'install', {
         is_configured: 'true',
-    };
-
-    await updateConfigurationFile(
-        splunkService,
-        configurationFileName,
-        stanzaName,
-        propertiesToUpdate
-    );
+    });
 }
 
 async function reloadApp(splunkService: SplunkService): Promise<void> {
@@ -43,23 +34,20 @@ function getRedirectUrl(): string {
     return `/app/${appName}`;
 }
 
-async function getFlareDataUrl(): Promise<string> {
-    const service = createService(applicationNameSpace);
-    const indexName = await getCurrentIndexName(service);
-
-    return `/app/${appName}/search?q=search%20index%3D"${indexName}"%20source%3D"flare"`;
+function getFlareDataUrl(): string {
+    return `/app/${appName}/search?q=search%20source%3D"flare"`;
 }
 
 function redirectToHomepage(): void {
     window.location.href = getRedirectUrl();
 }
 
-function createService(applicationNamespace: SplunkApplicationNamespace): SplunkService {
+function createService(): SplunkService {
     // The splunkjs is injected by Splunk
     // eslint-disable-next-line no-undef
     const http = new splunkjs.SplunkWebHttp();
     // eslint-disable-next-line no-undef
-    const service = new splunkjs.Service(http, applicationNamespace);
+    const service = new splunkjs.Service(http, applicationNameSpace);
 
     return service;
 }
@@ -69,7 +57,7 @@ function retrieveUserTenants(
     successCallback: (userTenants: Array<Tenant>) => void,
     errorCallback: (errorMessage: string) => void
 ): void {
-    const service = createService(applicationNameSpace);
+    const service = createService();
     const data = { apiKey };
     service.post('/services/retrieve_user_tenants', data, (err, response) => {
         if (err) {
@@ -111,9 +99,10 @@ async function savePassword(
 async function saveConfiguration(
     apiKey: string,
     tenantId: number,
+    indexName: string,
     isIngestingMetadataOnly: boolean
 ): Promise<void> {
-    const service = createService(applicationNameSpace);
+    const service = createService();
 
     const storagePasswords = await promisify(service.storagePasswords().fetch)();
     await savePassword(storagePasswords, PasswordKeys.API_KEY, apiKey);
@@ -123,13 +112,13 @@ async function saveConfiguration(
         PasswordKeys.INGEST_METADATA_ONLY,
         `${isIngestingMetadataOnly}`
     );
-
+    await saveIndexForIngestion(service, indexName);
     await completeSetup(service);
     await reloadApp(service);
 }
 
 async function retrievePassword(passwordKey: string): Promise<string> {
-    const service = createService(applicationNameSpace);
+    const service = createService();
     const storagePasswords = await promisify(service.storagePasswords().fetch)();
     const passwordId = `${storageRealm}:${passwordKey}:`;
 
@@ -165,6 +154,59 @@ async function retrieveIngestMetadataOnly(): Promise<boolean> {
     });
 }
 
+async function createFlareIndex(): Promise<void> {
+    const service = createService();
+    const isConfigured =
+        (await getConfigurationStanzaValue(
+            service,
+            'app',
+            'install',
+            'is_configured',
+            'unknown'
+        )) === '1';
+    if (!isConfigured) {
+        const currentIndexNames = await retrieveAvailableIndexNames();
+        if (!currentIndexNames.find((indexName) => indexName === appName)) {
+            await service.indexes().create(appName, {});
+        }
+    }
+}
+
+async function saveIndexForIngestion(service: SplunkService, indexName: string): Promise<void> {
+    await updateConfigurationFile(
+        service,
+        'inputs',
+        'script://$SPLUNK_HOME/etc/apps/flare/bin/cron_job_ingest_events.py',
+        {
+            index: indexName,
+        }
+    );
+}
+
+async function retrieveAvailableIndexNames(): Promise<Array<string>> {
+    const service = createService();
+    const indexes = await promisify(service.indexes().fetch)();
+    const indexNames: string[] = [];
+    const ignoredIndexNames = ['history', 'summary', 'splunklogger'];
+    for (const { name: indexName } of indexes.list()) {
+        if (!indexName.startsWith('_') && !ignoredIndexNames.includes(indexName)) {
+            indexNames.push(indexName);
+        }
+    }
+    return indexNames;
+}
+
+async function retrieveCurrentIndexName(): Promise<string> {
+    const service = createService();
+    return getConfigurationStanzaValue(
+        service,
+        'inputs',
+        'script://$SPLUNK_HOME/etc/apps/flare/bin/cron_job_ingest_events.py',
+        'index',
+        'main'
+    );
+}
+
 export {
     saveConfiguration,
     retrieveUserTenants,
@@ -174,4 +216,7 @@ export {
     redirectToHomepage,
     getRedirectUrl,
     getFlareDataUrl,
+    createFlareIndex,
+    retrieveAvailableIndexNames,
+    retrieveCurrentIndexName,
 };

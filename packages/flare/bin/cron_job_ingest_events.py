@@ -25,7 +25,6 @@ from vendor.splunklib.client import Service
 
 
 def main(logger: Logger, app: client.Application) -> None:
-    create_flare_index(app.service)
     create_collection(app=app)
 
     # To avoid cron jobs from doing the same work at the same time, exit new cron jobs if a cron job is already doing work
@@ -61,11 +60,6 @@ def main(logger: Logger, app: client.Application) -> None:
         events_retrieved_count += 1
 
     logger.info(f"Retrieved {events_retrieved_count} events")
-
-
-def create_flare_index(service: Service) -> None:
-    if APP_NAME not in service.indexes:
-        service.indexes.create(APP_NAME)
 
 
 def get_storage_password_value(

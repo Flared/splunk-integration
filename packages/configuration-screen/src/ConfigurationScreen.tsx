@@ -1,7 +1,11 @@
 import React, { useEffect, useState, FC } from 'react';
 import {
+    appName,
+    createFlareIndex,
     redirectToHomepage,
     retrieveApiKey,
+    retrieveAvailableIndexNames,
+    retrieveCurrentIndexName,
     retrieveIngestMetadataOnly,
     retrieveTenantId,
     retrieveUserTenants,
@@ -25,11 +29,13 @@ const TOAST_TENANT_SUCCESS = 'tenant_success';
 const ConfigurationScreen: FC<{ theme: string }> = ({ theme }) => {
     const [apiKey, setApiKey] = useState('');
     const [tenantId, setTenantId] = useState(-1);
+    const [indexName, setIndexName] = useState(appName);
     const [errorMessage, setErrorMessage] = useState('');
     const [tenants, setUserTenants] = useState<Tenant[]>([]);
     const [isIngestingMetadataOnly, setIsIngestingMetadataOnly] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [isCompleted, setIsCompleted] = useState(false);
+    const [indexNames, setIndexNames] = useState<string[]>([]);
 
     toastManager.setTheme(theme);
 
@@ -54,6 +60,7 @@ const ConfigurationScreen: FC<{ theme: string }> = ({ theme }) => {
 
     const handleApiKeyChange = (e): void => setApiKey(e.target.value);
     const handleTenantIdChange = (e): void => setTenantId(parseInt(e.target.value, 10));
+    const handleIndexNameChange = (e): void => setIndexName(e.target.value);
     const handleIsIngestingMetadataChange = (e): void => {
         setIsIngestingMetadataOnly(e.target.checked);
     };
@@ -95,7 +102,7 @@ const ConfigurationScreen: FC<{ theme: string }> = ({ theme }) => {
 
     const handleSubmitTenant = (): void => {
         setIsLoading(true);
-        saveConfiguration(apiKey, tenantId, isIngestingMetadataOnly)
+        saveConfiguration(apiKey, tenantId, indexName, isIngestingMetadataOnly)
             .then(() => {
                 setIsLoading(false);
                 setIsCompleted(true);
@@ -128,13 +135,21 @@ const ConfigurationScreen: FC<{ theme: string }> = ({ theme }) => {
         if (isCompleted) {
             return;
         }
-        Promise.all([retrieveApiKey(), retrieveTenantId(), retrieveIngestMetadataOnly()]).then(
-            ([key, id, ingestMetadataOnly]) => {
+        createFlareIndex().then(() => {
+            Promise.all([
+                retrieveApiKey(),
+                retrieveTenantId(),
+                retrieveIngestMetadataOnly(),
+                retrieveCurrentIndexName(),
+                retrieveAvailableIndexNames(),
+            ]).then(([key, id, ingestMetadataOnly, index, availableIndexNames]) => {
                 setApiKey(key);
                 setTenantId(id);
                 setIsIngestingMetadataOnly(ingestMetadataOnly);
-            }
-        );
+                setIndexName(index);
+                setIndexNames(availableIndexNames);
+            });
+        });
     }, [isCompleted]);
 
     useEffect(() => {
@@ -178,11 +193,14 @@ const ConfigurationScreen: FC<{ theme: string }> = ({ theme }) => {
                         show={currentConfigurationStep === ConfigurationSteps.UserPreferences}
                         selectedTenantId={tenantId}
                         tenants={tenants}
+                        selectedIndexName={indexName}
+                        indexNames={indexNames}
                         isLoading={isLoading}
                         isIngestingMetadataOnly={isIngestingMetadataOnly}
                         onNavigateBackClick={handleBackButton}
                         onSubmitUserPreferencesClick={handleSubmitTenant}
                         onTenantIdChange={handleTenantIdChange}
+                        onIndexNameChange={handleIndexNameChange}
                         onIngestingMetadataChange={handleIsIngestingMetadataChange}
                     />
                     <ConfigurationCompletedStep

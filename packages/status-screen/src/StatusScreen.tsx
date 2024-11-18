@@ -4,6 +4,7 @@ import './StatusScreen.css';
 import { findCollection, getVersionName, retrieveTenantId } from './utils/setupConfiguration';
 import { SplunkCollectionItem } from './models/splunk';
 import Button from './components/Button';
+import { retrieveCurrentIndexName } from '../../configuration-screen/src/utils/setupConfiguration';
 
 const COLLECTION_KEYS_NEXT_PREFIX = 'next_';
 
@@ -12,6 +13,7 @@ enum StatusItemKeys {
     LAST_FETCHED = 'timestamp_last_fetch',
     NEXT_TOKEN = 'next_token',
     CURRENT_TENANT_ID = 'current_tenant_id',
+    INDEX = 'index',
 }
 
 interface StatusItem {
@@ -26,27 +28,35 @@ const StatusScreen: FC<{ theme: string }> = ({ theme }) => {
     const [isShowingAllItems, setShowingAllItems] = useState<boolean>(false);
 
     useEffect(() => {
-        Promise.all([retrieveTenantId(), findCollection(), getVersionName()]).then(
-            ([id, splunkCollectionItems, version]) => {
-                const items: StatusItem[] = [];
+        Promise.all([
+            retrieveTenantId(),
+            findCollection(),
+            getVersionName(),
+            retrieveCurrentIndexName(),
+        ]).then(([id, splunkCollectionItems, version, indexName]) => {
+            const items: StatusItem[] = [];
+            items.push({
+                key: StatusItemKeys.CURRENT_TENANT_ID,
+                name: getItemName(StatusItemKeys.CURRENT_TENANT_ID),
+                value: `${id}`,
+            });
+            items.push({
+                key: StatusItemKeys.INDEX,
+                name: getItemName(StatusItemKeys.INDEX),
+                value: `${indexName}`,
+            });
+            splunkCollectionItems.forEach((item) => {
                 items.push({
-                    key: StatusItemKeys.CURRENT_TENANT_ID,
-                    name: getItemName(StatusItemKeys.CURRENT_TENANT_ID),
-                    value: `${id}`,
+                    key: item.key.startsWith(COLLECTION_KEYS_NEXT_PREFIX)
+                        ? StatusItemKeys.NEXT_TOKEN
+                        : (item.key as StatusItemKeys),
+                    name: getItemName(item.key),
+                    value: formatValue(item),
                 });
-                splunkCollectionItems.forEach((item) => {
-                    items.push({
-                        key: item.key.startsWith(COLLECTION_KEYS_NEXT_PREFIX)
-                            ? StatusItemKeys.NEXT_TOKEN
-                            : (item.key as StatusItemKeys),
-                        name: getItemName(item.key),
-                        value: formatValue(item),
-                    });
-                });
-                setStatusItem(items);
-                setVersionName(version);
-            }
-        );
+            });
+            setStatusItem(items);
+            setVersionName(version);
+        });
     }, []);
 
     useEffect(() => {
@@ -85,6 +95,10 @@ const StatusScreen: FC<{ theme: string }> = ({ theme }) => {
 
         if (key === StatusItemKeys.CURRENT_TENANT_ID) {
             return 'Current Tenant ID';
+        }
+
+        if (key === StatusItemKeys.INDEX) {
+            return 'Splunk Index';
         }
 
         return 'Unknown Status Item';
