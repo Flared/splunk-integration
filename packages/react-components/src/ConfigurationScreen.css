@@ -24,6 +24,7 @@
     flex-direction: column;
     flex: content;
     align-items: flex-start;
+    gap: 2rem;
 }
 
 .link {

@@ -1,10 +1,14 @@
 import React, { useEffect, FC, useState } from 'react';
 import './global.css';
 import './StatusScreen.css';
-import { fetchTenantId, fetchVersionName, fetchCollectionItems } from './utils/setupConfiguration';
+import {
+    fetchTenantId,
+    fetchVersionName,
+    fetchCollectionItems,
+    fetchCurrentIndexName,
+} from './utils/setupConfiguration';
 import { SplunkCollectionItem } from './models/splunk';
 import Button from './components/Button';
-import { fetchCurrentIndexName } from '../../configuration-screen/src/utils/setupConfiguration';
 
 const COLLECTION_KEYS_NEXT_PREFIX = 'next_';
 
