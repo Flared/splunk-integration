@@ -42,7 +42,7 @@ def main(logger: Logger, app: client.Application) -> None:
     ingest_metadata_only = get_ingest_metadata_only(app=app)
 
     save_last_fetched(app=app)
-    events_retrieved_count = 0
+    events_fetchd_count = 0
     for event, next_token in fetch_feed(
         logger=logger,
         app=app,
@@ -57,9 +57,9 @@ def main(logger: Logger, app: client.Application) -> None:
 
         print(json.dumps(event), flush=True)
 
-        events_retrieved_count += 1
+        events_fetchd_count += 1
 
-    logger.info(f"Retrieved {events_retrieved_count} events")
+    logger.info(f"Fetchd {events_fetchd_count} events")
 
 
 def get_storage_password_value(
@@ -231,7 +231,7 @@ def fetch_feed(
         next = get_next(app=app, tenant_id=tenant_id)
         start_date = get_start_date(app=app)
         logger.info(f"Fetching {tenant_id=}, {next=}, {start_date=}")
-        for event_next in flare_api.retrieve_feed_events(
+        for event_next in flare_api.fetch_feed_events(
             next=next, start_date=start_date, ingest_metadata_only=ingest_metadata_only
         ):
             yield event_next

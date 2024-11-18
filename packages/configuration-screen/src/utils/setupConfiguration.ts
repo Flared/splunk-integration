@@ -52,14 +52,14 @@ function createService(): SplunkService {
     return service;
 }
 
-function retrieveUserTenants(
+function fetchUserTenants(
     apiKey: string,
     successCallback: (userTenants: Array<Tenant>) => void,
     errorCallback: (errorMessage: string) => void
 ): void {
     const service = createService();
     const data = { apiKey };
-    service.post('/services/retrieve_user_tenants', data, (err, response) => {
+    service.post('/services/fetch_user_tenants', data, (err, response) => {
         if (err) {
             errorCallback(err.data);
         } else if (response.status === 200) {
@@ -117,7 +117,7 @@ async function saveConfiguration(
     await reloadApp(service);
 }
 
-async function retrievePassword(passwordKey: string): Promise<string> {
+async function fetchPassword(passwordKey: string): Promise<string> {
     const service = createService();
     const storagePasswords = await promisify(service.storagePasswords().fetch)();
     const passwordId = `${storageRealm}:${passwordKey}:`;
@@ -130,12 +130,12 @@ async function retrievePassword(passwordKey: string): Promise<string> {
     return '';
 }
 
-async function retrieveApiKey(): Promise<string> {
-    return retrievePassword(PasswordKeys.API_KEY);
+async function fetchApiKey(): Promise<string> {
+    return fetchPassword(PasswordKeys.API_KEY);
 }
 
-async function retrieveTenantId(): Promise<number> {
-    return retrievePassword(PasswordKeys.TENANT_ID).then((tenantId) => {
+async function fetchTenantId(): Promise<number> {
+    return fetchPassword(PasswordKeys.TENANT_ID).then((tenantId) => {
         if (tenantId !== '') {
             return parseInt(tenantId, 10);
         }
@@ -144,8 +144,8 @@ async function retrieveTenantId(): Promise<number> {
     });
 }
 
-async function retrieveIngestMetadataOnly(): Promise<boolean> {
-    return retrievePassword(PasswordKeys.INGEST_METADATA_ONLY).then((isIngestingMetadataOnly) => {
+async function fetchIngestMetadataOnly(): Promise<boolean> {
+    return fetchPassword(PasswordKeys.INGEST_METADATA_ONLY).then((isIngestingMetadataOnly) => {
         if (isIngestingMetadataOnly !== '') {
             return isIngestingMetadataOnly === 'true';
         }
@@ -165,7 +165,7 @@ async function createFlareIndex(): Promise<void> {
             'unknown'
         )) === '1';
     if (!isConfigured) {
-        const currentIndexNames = await retrieveAvailableIndexNames();
+        const currentIndexNames = await fetchAvailableIndexNames();
         if (!currentIndexNames.find((indexName) => indexName === appName)) {
             await service.indexes().create(appName, {});
         }
@@ -183,7 +183,7 @@ async function saveIndexForIngestion(service: SplunkService, indexName: string):
     );
 }
 
-async function retrieveAvailableIndexNames(): Promise<Array<string>> {
+async function fetchAvailableIndexNames(): Promise<Array<string>> {
     const service = createService();
     const indexes = await promisify(service.indexes().fetch)();
     const indexNames: string[] = [];
@@ -196,7 +196,7 @@ async function retrieveAvailableIndexNames(): Promise<Array<string>> {
     return indexNames;
 }
 
-async function retrieveCurrentIndexName(): Promise<string> {
+async function fetchCurrentIndexName(): Promise<string> {
     const service = createService();
     return getConfigurationStanzaValue(
         service,
@@ -209,14 +209,14 @@ async function retrieveCurrentIndexName(): Promise<string> {
 
 export {
     saveConfiguration,
-    retrieveUserTenants,
-    retrieveApiKey,
-    retrieveTenantId,
-    retrieveIngestMetadataOnly,
+    fetchUserTenants,
+    fetchApiKey,
+    fetchTenantId,
+    fetchIngestMetadataOnly,
     redirectToHomepage,
     getRedirectUrl,
     getFlareDataUrl,
     createFlareIndex,
-    retrieveAvailableIndexNames,
-    retrieveCurrentIndexName,
+    fetchAvailableIndexNames,
+    fetchCurrentIndexName,
 };

@@ -94,7 +94,7 @@ export async function updateConfigurationFile(
     stanzaName: string,
     properties: Record<string, string>
 ): Promise<void> {
-    // Retrieve the accessor used to get a configuration file
+    // Fetch the accessor used to get a configuration file
     let configurations = service.configurations({
         // Name space information not provided
     });
@@ -110,7 +110,7 @@ export async function updateConfigurationFile(
         configurations = await promisify(configurations.fetch)();
     }
 
-    // Retrieves the configuration file accessor
+    // Fetchs the configuration file accessor
     let configurationFileAccessor = getConfigurationFile(configurations, configurationFilename);
     configurationFileAccessor = await promisify(configurationFileAccessor.fetch)();
 
@@ -125,7 +125,7 @@ export async function updateConfigurationFile(
     // Need to update the information after the creation of the stanza
     configurationFileAccessor = await promisify(configurationFileAccessor.fetch)();
 
-    // Retrieves the configuration stanza accessor
+    // Fetchs the configuration stanza accessor
     let configurationStanzaAccessor = getConfigurationFileStanza(
         configurationFileAccessor,
         stanzaName
@@ -139,18 +139,18 @@ export async function updateConfigurationFile(
     await updateStanzaProperties(configurationStanzaAccessor, properties);
 }
 
-export async function getCurrentIndexName(service: SplunkService): Promise<string> {
-    // Retrieve the accessor used to get a configuration file
+export async function fetchCurrentIndexName(service: SplunkService): Promise<string> {
+    // Fetch the accessor used to get a configuration file
     let configurations = service.configurations({
         // Name space information not provided
     });
     configurations = await promisify(configurations.fetch)();
 
-    // Retrieves the configuration file accessor
+    // Fetchs the configuration file accessor
     let configurationFileAccessor = getConfigurationFile(configurations, 'inputs');
     configurationFileAccessor = await promisify(configurationFileAccessor.fetch)();
 
-    // Retrieves the configuration stanza accessor
+    // Fetchs the configuration stanza accessor
     let configurationStanzaAccessor = getConfigurationFileStanza(
         configurationFileAccessor,
         'script://$SPLUNK_HOME/etc/apps/flare/bin/cron_job_ingest_events.py'
@@ -165,18 +165,18 @@ export async function getCurrentIndexName(service: SplunkService): Promise<strin
     return currentIndex;
 }
 
-export async function getVersion(service: SplunkService): Promise<string> {
-    // Retrieve the accessor used to get a configuration file
+export async function fetchVersion(service: SplunkService): Promise<string> {
+    // Fetch the accessor used to get a configuration file
     let configurations = service.configurations({
         // Name space information not provided
     });
     configurations = await promisify(configurations.fetch)();
 
-    // Retrieves the configuration file accessor
+    // Fetchs the configuration file accessor
     let configurationFileAccessor = getConfigurationFile(configurations, 'app');
     configurationFileAccessor = await promisify(configurationFileAccessor.fetch)();
 
-    // Retrieves the configuration stanza accessor
+    // Fetchs the configuration stanza accessor
     let configurationStanzaAccessor = getConfigurationFileStanza(
         configurationFileAccessor,
         'launcher'

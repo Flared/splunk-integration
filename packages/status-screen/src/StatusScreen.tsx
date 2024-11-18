@@ -1,10 +1,10 @@
 import React, { useEffect, FC, useState } from 'react';
 import './global.css';
 import './StatusScreen.css';
-import { findCollection, getVersionName, retrieveTenantId } from './utils/setupConfiguration';
+import { fetchTenantId, fetchVersionName, fetchCollectionItems } from './utils/setupConfiguration';
 import { SplunkCollectionItem } from './models/splunk';
 import Button from './components/Button';
-import { retrieveCurrentIndexName } from '../../configuration-screen/src/utils/setupConfiguration';
+import { fetchCurrentIndexName } from '../../configuration-screen/src/utils/setupConfiguration';
 
 const COLLECTION_KEYS_NEXT_PREFIX = 'next_';
 
@@ -29,10 +29,10 @@ const StatusScreen: FC<{ theme: string }> = ({ theme }) => {
 
     useEffect(() => {
         Promise.all([
-            retrieveTenantId(),
-            findCollection(),
-            getVersionName(),
-            retrieveCurrentIndexName(),
+            fetchTenantId(),
+            fetchCollectionItems(),
+            fetchVersionName(),
+            fetchCurrentIndexName(),
         ]).then(([id, splunkCollectionItems, version, indexName]) => {
             const items: StatusItem[] = [];
             items.push({

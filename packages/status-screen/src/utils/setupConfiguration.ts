@@ -1,7 +1,7 @@
 import {
     updateConfigurationFile,
-    getCurrentIndexName,
-    getVersion,
+    fetchCurrentIndexName,
+    fetchVersion,
 } from './configurationFileHelper';
 import { Tenant } from '../models/flare';
 import {
@@ -50,14 +50,14 @@ function getRedirectUrl(): string {
 
 async function getFlareDataUrl(): Promise<string> {
     const service = createService(applicationNameSpace);
-    const indexName = await getCurrentIndexName(service);
+    const indexName = await fetchCurrentIndexName(service);
 
     return `/app/${appName}/search?q=search%20index%3D"${indexName}"%20source%3D"flare"`;
 }
 
-async function getVersionName(): Promise<string> {
+async function fetchVersionName(): Promise<string> {
     const service = createService(applicationNameSpace);
-    return getVersion(service);
+    return fetchVersion(service);
 }
 
 function redirectToHomepage(): void {
@@ -74,14 +74,14 @@ function createService(applicationNamespace: SplunkApplicationNamespace): Splunk
     return service;
 }
 
-function retrieveUserTenants(
+function fetchUserTenants(
     apiKey: string,
     successCallback: (userTenants: Array<Tenant>) => void,
     errorCallback: (errorMessage: string) => void
 ): void {
     const service = createService(applicationNameSpace);
     const data = { apiKey };
-    service.post('/services/retrieve_user_tenants', data, (err, response) => {
+    service.post('/services/fetch_user_tenants', data, (err, response) => {
         if (err) {
             errorCallback(err.data);
         } else if (response.status === 200) {
@@ -118,7 +118,7 @@ async function savePassword(
     });
 }
 
-async function findCollection(): Promise<SplunkCollectionItem[]> {
+async function fetchCollectionItems(): Promise<SplunkCollectionItem[]> {
     const service = createService(applicationNameSpace);
     return promisify(service.get)('storage/collections/data/event_ingestion_collection/', {})
         .then((data: any) => {
@@ -159,7 +159,7 @@ async function saveConfiguration(
     await reloadApp(service);
 }
 
-async function retrievePassword(passwordKey: string): Promise<string> {
+async function fetchPassword(passwordKey: string): Promise<string> {
     const service = createService(applicationNameSpace);
     const storagePasswords = await promisify(service.storagePasswords().fetch)();
     const passwordId = `${storageRealm}:${passwordKey}:`;
@@ -172,12 +172,12 @@ async function retrievePassword(passwordKey: string): Promise<string> {
     return '';
 }
 
-async function retrieveApiKey(): Promise<string> {
-    return retrievePassword(PasswordKeys.API_KEY);
+async function fetchApiKey(): Promise<string> {
+    return fetchPassword(PasswordKeys.API_KEY);
 }
 
-async function retrieveTenantId(): Promise<number> {
-    return retrievePassword(PasswordKeys.TENANT_ID).then((tenantId) => {
+async function fetchTenantId(): Promise<number> {
+    return fetchPassword(PasswordKeys.TENANT_ID).then((tenantId) => {
         if (tenantId !== '') {
             return parseInt(tenantId, 10);
         }
@@ -186,8 +186,8 @@ async function retrieveTenantId(): Promise<number> {
     });
 }
 
-async function retrieveIngestMetadataOnly(): Promise<boolean> {
-    return retrievePassword(PasswordKeys.INGEST_METADATA_ONLY).then((isIngestingMetadataOnly) => {
+async function fetchIngestMetadataOnly(): Promise<boolean> {
+    return fetchPassword(PasswordKeys.INGEST_METADATA_ONLY).then((isIngestingMetadataOnly) => {
         if (isIngestingMetadataOnly !== '') {
             return isIngestingMetadataOnly === 'true';
         }
@@ -198,13 +198,13 @@ async function retrieveIngestMetadataOnly(): Promise<boolean> {
 
 export {
     saveConfiguration,
-    retrieveUserTenants,
-    retrieveApiKey,
-    retrieveTenantId,
-    retrieveIngestMetadataOnly,
+    fetchUserTenants,
+    fetchApiKey,
+    fetchTenantId,
+    fetchIngestMetadataOnly,
     redirectToHomepage,
     getRedirectUrl,
     getFlareDataUrl,
-    findCollection,
-    getVersionName,
+    fetchCollectionItems,
+    fetchVersionName,
 };
