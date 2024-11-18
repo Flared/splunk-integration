@@ -1,5 +1,5 @@
 <nav search_view="search" color="#272735">
-  <view name="search" default='true' />
+  <saved name="Flare Search" default='true' />
   <view name="configuration" />
   <view name="status" />
   <a href="https://docs.flare.io/splunk-app-integration" target="_blank">Documentation</a>
