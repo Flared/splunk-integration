@@ -51,6 +51,10 @@
     width: var(--content-width);
 }
 
+.status-item[hidden] {
+    display: none;
+}
+
 .status-item-name {
     font-weight: bold;
     color: var(--text-color);
