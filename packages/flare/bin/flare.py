@@ -44,14 +44,14 @@ class FlareAPI(AuthBase):
         )
         self.logger = Logger(class_name=__file__)
 
-    def retrieve_feed_events(
+    def fetch_feed_events(
         self,
         *,
         next: Optional[str] = None,
         start_date: Optional[date] = None,
         ingest_metadata_only: bool,
     ) -> Iterator[tuple[dict, str]]:
-        for response in self._retrieve_event_feed_metadata(
+        for response in self._fetch_event_feed_metadata(
             next=next,
             start_date=start_date,
         ):
@@ -60,13 +60,13 @@ class FlareAPI(AuthBase):
             next_token = event_feed["next"]
             for event in event_feed["items"]:
                 if not ingest_metadata_only:
-                    event = self._retrieve_full_event_from_uid(
+                    event = self._fetch_full_event_from_uid(
                         uid=event["metadata"]["uid"]
                     )
                     time.sleep(1)
                 yield (event, next_token)
 
-    def _retrieve_event_feed_metadata(
+    def _fetch_event_feed_metadata(
         self,
         *,
         next: Optional[str] = None,
@@ -92,13 +92,13 @@ class FlareAPI(AuthBase):
             # Rate limiting.
             time.sleep(1)
 
-    def _retrieve_full_event_from_uid(self, *, uid: str) -> dict:
+    def _fetch_full_event_from_uid(self, *, uid: str) -> dict:
         event_response = self.flare_client.get(url=f"/firework/v2/activities/{uid}")
         event = event_response.json()["activity"]
         self.logger.debug(event)
         return event
 
-    def retrieve_tenants(self) -> requests.Response:
+    def fetch_tenants(self) -> requests.Response:
         return self.flare_client.get(
             url="/firework/v2/me/tenants",
         )

@@ -3,12 +3,12 @@ import {
     appName,
     createFlareIndex,
     redirectToHomepage,
-    retrieveApiKey,
-    retrieveAvailableIndexNames,
-    retrieveCurrentIndexName,
-    retrieveIngestMetadataOnly,
-    retrieveTenantId,
-    retrieveUserTenants,
+    fetchApiKey,
+    fetchAvailableIndexNames,
+    fetchCurrentIndexName,
+    fetchIngestMetadataOnly,
+    fetchTenantId,
+    fetchUserTenants,
     saveConfiguration,
 } from './utils/setupConfiguration';
 import { ConfigurationSteps, Tenant } from './models/flare';
@@ -78,7 +78,7 @@ const ConfigurationScreen: FC<{ theme: string }> = ({ theme }) => {
 
     const handleSubmitApiKey = (): void => {
         setIsLoading(true);
-        retrieveUserTenants(
+        fetchUserTenants(
             apiKey,
             (userTenants: Tenant[]) => {
                 if (tenantId === -1 && userTenants.length > 0) {
@@ -137,11 +137,11 @@ const ConfigurationScreen: FC<{ theme: string }> = ({ theme }) => {
         }
         createFlareIndex().then(() => {
             Promise.all([
-                retrieveApiKey(),
-                retrieveTenantId(),
-                retrieveIngestMetadataOnly(),
-                retrieveCurrentIndexName(),
-                retrieveAvailableIndexNames(),
+                fetchApiKey(),
+                fetchTenantId(),
+                fetchIngestMetadataOnly(),
+                fetchCurrentIndexName(),
+                fetchAvailableIndexNames(),
             ]).then(([key, id, ingestMetadataOnly, index, availableIndexNames]) => {
                 setApiKey(key);
                 setTenantId(id);

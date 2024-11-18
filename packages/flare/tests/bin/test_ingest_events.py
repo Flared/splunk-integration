@@ -218,7 +218,7 @@ def test_fetch_feed_expect_feed_response(
     }
     expected_items = [first_item, second_item]
     flare_api_mock_instance = flare_api_mock.return_value
-    flare_api_mock_instance.retrieve_feed_events.return_value = iter(
+    flare_api_mock_instance.fetch_feed_events.return_value = iter(
         [(first_item, next), (second_item, next)]
     )
 

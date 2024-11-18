@@ -20,7 +20,7 @@ class FlareUserTenants(splunk.rest.BaseRestHandler):
 
         if "apiKey" in params:
             flare_api = FlareAPI(api_key=params["apiKey"][0])
-            user_tenants_response = flare_api.retrieve_tenants()
+            user_tenants_response = flare_api.fetch_tenants()
             tenants_response = user_tenants_response.json()
             logger.debug(tenants_response)
             self.response.setHeader("Content-Type", "application/json")

@@ -94,7 +94,7 @@ export async function updateConfigurationFile(
     stanzaName: string,
     properties: Record<string, string>
 ): Promise<void> {
-    // Retrieve the accessor used to get a configuration file
+    // Fetch the accessor used to get a configuration file
     let configurations = service.configurations({
         // Name space information not provided
     });
@@ -110,7 +110,7 @@ export async function updateConfigurationFile(
         configurations = await promisify(configurations.fetch)();
     }
 
-    // Retrieves the configuration file accessor
+    // Fetchs the configuration file accessor
     let configurationFileAccessor = getConfigurationFile(configurations, configurationFilename);
     configurationFileAccessor = await promisify(configurationFileAccessor.fetch)();
 
@@ -125,7 +125,7 @@ export async function updateConfigurationFile(
     // Need to update the information after the creation of the stanza
     configurationFileAccessor = await promisify(configurationFileAccessor.fetch)();
 
-    // Retrieves the configuration stanza accessor
+    // Fetchs the configuration stanza accessor
     let configurationStanzaAccessor = getConfigurationFileStanza(
         configurationFileAccessor,
         stanzaName
@@ -146,17 +146,17 @@ export async function getConfigurationStanzaValue(
     propertyName: string,
     defaultValue: string
 ): Promise<string> {
-    // Retrieve the accessor used to get a configuration file
+    // Fetch the accessor used to get a configuration file
     let configurations = service.configurations({
         // Name space information not provided
     });
     configurations = await promisify(configurations.fetch)();
 
-    // Retrieves the configuration file accessor
+    // Fetchs the configuration file accessor
     let configurationFileAccessor = getConfigurationFile(configurations, configurationFilename);
     configurationFileAccessor = await promisify(configurationFileAccessor.fetch)();
 
-    // Retrieves the configuration stanza accessor
+    // Fetchs the configuration stanza accessor
     let configurationStanzaAccessor = getConfigurationFileStanza(
         configurationFileAccessor,
         stanzaName
