@@ -18,6 +18,7 @@ enum StatusItemKeys {
     NEXT_TOKEN = 'next_token',
     CURRENT_TENANT_ID = 'current_tenant_id',
     INDEX = 'index',
+    VERSION = 'version',
 }
 
 interface StatusItem {
@@ -27,39 +28,57 @@ interface StatusItem {
 }
 
 const StatusScreen: FC<{ theme: string }> = ({ theme }) => {
-    const [versionName, setVersionName] = useState<string>('unknown');
     const [statusItems, setStatusItem] = useState<StatusItem[]>([]);
+    const [advancedStatusItems, setAdvancedStatusItem] = useState<StatusItem[]>([]);
     const [isShowingAllItems, setShowingAllItems] = useState<boolean>(false);
 
     useEffect(() => {
         Promise.all([
             fetchTenantId(),
             fetchCollectionItems(),
-            fetchVersionName(),
+            fetchVersionName('unknown'),
             fetchCurrentIndexName(),
         ]).then(([id, splunkCollectionItems, version, indexName]) => {
-            const items: StatusItem[] = [];
-            items.push({
-                key: StatusItemKeys.CURRENT_TENANT_ID,
-                name: getItemName(StatusItemKeys.CURRENT_TENANT_ID),
-                value: `${id}`,
-            });
-            items.push({
-                key: StatusItemKeys.INDEX,
-                name: getItemName(StatusItemKeys.INDEX),
-                value: `${indexName}`,
-            });
+            const items: StatusItem[] = [
+                {
+                    key: StatusItemKeys.VERSION,
+                    name: getItemName(StatusItemKeys.VERSION),
+                    value: `${version}`,
+                },
+                {
+                    key: StatusItemKeys.INDEX,
+                    name: getItemName(StatusItemKeys.INDEX),
+                    value: `${indexName}`,
+                },
+            ];
+            const advancedItems: StatusItem[] = [
+                {
+                    key: StatusItemKeys.CURRENT_TENANT_ID,
+                    name: getItemName(StatusItemKeys.CURRENT_TENANT_ID),
+                    value: `${id}`,
+                },
+            ];
             splunkCollectionItems.forEach((item) => {
-                items.push({
-                    key: item.key.startsWith(COLLECTION_KEYS_NEXT_PREFIX)
-                        ? StatusItemKeys.NEXT_TOKEN
-                        : (item.key as StatusItemKeys),
-                    name: getItemName(item.key),
-                    value: formatValue(item),
-                });
+                if (item.key === StatusItemKeys.LAST_FETCHED) {
+                    items.push({
+                        key: item.key.startsWith(COLLECTION_KEYS_NEXT_PREFIX)
+                            ? StatusItemKeys.NEXT_TOKEN
+                            : (item.key as StatusItemKeys),
+                        name: getItemName(item.key),
+                        value: formatValue(item),
+                    });
+                } else {
+                    advancedItems.push({
+                        key: item.key.startsWith(COLLECTION_KEYS_NEXT_PREFIX)
+                            ? StatusItemKeys.NEXT_TOKEN
+                            : (item.key as StatusItemKeys),
+                        name: getItemName(item.key),
+                        value: formatValue(item),
+                    });
+                }
             });
             setStatusItem(items);
-            setVersionName(version);
+            setAdvancedStatusItem(advancedItems);
         });
     }, []);
 
@@ -70,18 +89,6 @@ const StatusScreen: FC<{ theme: string }> = ({ theme }) => {
             parentContainer.className = `parent-container ${theme === 'dark' ? 'dark' : ''}`;
         }
     }, [theme]);
-
-    function getItems(): StatusItem[] {
-        return statusItems
-            .filter((item: StatusItem) => {
-                if (!isShowingAllItems) {
-                    return item.key === StatusItemKeys.LAST_FETCHED;
-                }
-
-                return true;
-            })
-            .reverse();
-    }
 
     function getItemName(key: string): string {
         if (key.startsWith(COLLECTION_KEYS_NEXT_PREFIX)) {
@@ -105,6 +112,10 @@ const StatusScreen: FC<{ theme: string }> = ({ theme }) => {
             return 'Splunk Index';
         }
 
+        if (key === StatusItemKeys.VERSION) {
+            return 'Version';
+        }
+
         return 'Unknown Status Item';
     }
 
@@ -125,12 +136,23 @@ const StatusScreen: FC<{ theme: string }> = ({ theme }) => {
             <div className="content">
                 <div>
                     <h2>Status</h2>
-                    <small>{`Version: ${versionName}`}</small>
                 </div>
                 <div id="status-list">
-                    {getItems().map((item) => {
+                    {statusItems.map((item) => {
                         return (
                             <span className="status-item" key={item.key}>
+                                <span className="status-item-name">{item.name}</span>
+                                <span className="status-item-value">{item.value}</span>
+                            </span>
+                        );
+                    })}
+                    {advancedStatusItems.map((item) => {
+                        return (
+                            <span
+                                className="status-item"
+                                key={item.key}
+                                hidden={!isShowingAllItems}
+                            >
                                 <span className="status-item-name">{item.name}</span>
                                 <span className="status-item-value">{item.value}</span>
                             </span>

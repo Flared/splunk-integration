@@ -229,9 +229,9 @@ async function fetchCurrentIndexName(): Promise<string> {
     );
 }
 
-async function fetchVersionName(): Promise<string> {
+async function fetchVersionName(defaultValue: string): Promise<string> {
     const service = createService();
-    return getConfigurationStanzaValue(service, 'app', 'launcher', 'version', 'unknown');
+    return getConfigurationStanzaValue(service, 'app', 'launcher', 'version', defaultValue);
 }
 
 export {
