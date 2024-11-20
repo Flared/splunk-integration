@@ -38,10 +38,3 @@
     right: 0;
     height: fit-content;
 }
-
-#experimental {
-    align-self: center;
-    text-align: left;
-    width: 800px;
-    font-style: italic;
-}

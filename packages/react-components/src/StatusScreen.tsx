@@ -132,7 +132,6 @@ const StatusScreen: FC<{ theme: string }> = ({ theme }) => {
 
     return (
         <div id="container" className={theme === 'dark' ? 'dark' : ''}>
-            <div id="experimental">This is an experimental release</div>
             <div className="content">
                 <div>
                     <h2>Status</h2>

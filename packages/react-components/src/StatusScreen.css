@@ -11,6 +11,7 @@
     color: var(--text-color);
     text-align: center;
     gap: 2rem;
+    padding-top: 2rem;
 }
 
 .content {
@@ -22,14 +23,6 @@
     align-self: center;
     align-items: flex-start;
     gap: 1.5rem;
-}
-
-#experimental {
-    align-self: center;
-    text-align: left;
-    width: var(--content-width);
-    font-style: italic;
-    margin-top: 2rem;
 }
 
 #status-list {

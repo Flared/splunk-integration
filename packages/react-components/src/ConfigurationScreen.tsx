@@ -168,7 +168,6 @@ const ConfigurationScreen: FC<{ theme: string }> = ({ theme }) => {
                 max={Object.keys(ConfigurationSteps).length / 2}
                 value={currentConfigurationStep}
             />
-            <div id="experimental">This is an experimental release</div>
             <div className="content">
                 <ToolIcon
                     remSize={6}
