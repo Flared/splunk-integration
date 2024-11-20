@@ -16,6 +16,7 @@ const applicationNameSpace: SplunkApplicationNamespace = {
     app: appName,
     sharing: 'app',
 };
+const flareSavedSearchName = 'Flare Search';
 
 async function completeSetup(splunkService: SplunkService): Promise<void> {
     await updateConfigurationFile(splunkService, 'app', 'install', {
@@ -35,8 +36,11 @@ function getRedirectUrl(): string {
     return `/app/${appName}`;
 }
 
-function getFlareDataUrl(): string {
-    return `/app/${appName}/search?q=search%20source%3D"flare"`;
+async function getFlareSearchDataUrl(): Promise<string> {
+    const service = createService();
+    const savedSearches = await promisify(service.savedSearches().fetch)();
+    const savedSearch = savedSearches.item(flareSavedSearchName);
+    return `/app/${appName}/@go?s=${savedSearch.qualifiedPath}`;
 }
 
 function redirectToHomepage(): void {
@@ -104,7 +108,6 @@ async function saveConfiguration(
     isIngestingMetadataOnly: boolean
 ): Promise<void> {
     const service = createService();
-
     const storagePasswords = await promisify(service.storagePasswords().fetch)();
     await savePassword(storagePasswords, PasswordKeys.API_KEY, apiKey);
     await savePassword(storagePasswords, PasswordKeys.TENANT_ID, `${tenantId}`);
@@ -114,8 +117,27 @@ async function saveConfiguration(
         `${isIngestingMetadataOnly}`
     );
     await saveIndexForIngestion(service, indexName);
+    await updateSavedSearchQuery(
+        service,
+        flareSavedSearchName,
+        `source=${appName} index=${indexName}`
+    );
     await completeSetup(service);
     await reloadApp(service);
+}
+
+async function updateSavedSearchQuery(
+    service: SplunkService,
+    savedSearchName: string,
+    query: string
+): Promise<void> {
+    const savedSearches = await promisify(service.savedSearches().fetch)();
+    const savedSearch = savedSearches.item(savedSearchName);
+    if (savedSearch) {
+        await savedSearch.update({
+            search: query,
+        });
+    }
 }
 
 async function fetchCollectionItems(): Promise<SplunkCollectionItem[]> {
@@ -242,7 +264,7 @@ export {
     fetchIngestMetadataOnly,
     redirectToHomepage,
     getRedirectUrl,
-    getFlareDataUrl,
+    getFlareSearchDataUrl,
     createFlareIndex,
     fetchAvailableIndexNames,
     fetchCurrentIndexName,
