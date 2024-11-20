@@ -117,6 +117,10 @@ async function saveConfiguration(
         `${isIngestingMetadataOnly}`
     );
     await saveIndexForIngestion(service, indexName);
+    const isFirstConfiguration = await fetchIsFirstConfiguration();
+    if (isFirstConfiguration) {
+        await updateEventIngestionCronJobInterval(service, '1');
+    }
     await updateSavedSearchQuery(
         service,
         flareSavedSearchName,
@@ -124,6 +128,24 @@ async function saveConfiguration(
     );
     await completeSetup(service);
     await reloadApp(service);
+    if (isFirstConfiguration) {
+        await updateEventIngestionCronJobInterval(service, '* * * * *');
+        await reloadApp(service);
+    }
+}
+
+async function updateEventIngestionCronJobInterval(
+    service: SplunkService,
+    interval: string
+): Promise<void> {
+    await updateConfigurationFile(
+        service,
+        'inputs',
+        'script://$SPLUNK_HOME/etc/apps/flare/bin/cron_job_ingest_events.py',
+        {
+            interval: `${interval}`,
+        }
+    );
 }
 
 async function updateSavedSearchQuery(
@@ -200,15 +222,8 @@ async function fetchIngestMetadataOnly(): Promise<boolean> {
 
 async function createFlareIndex(): Promise<void> {
     const service = createService();
-    const isConfigured =
-        (await getConfigurationStanzaValue(
-            service,
-            'app',
-            'install',
-            'is_configured',
-            'unknown'
-        )) === '1';
-    if (!isConfigured) {
+    const isFirstConfiguration = await fetchIsFirstConfiguration();
+    if (isFirstConfiguration) {
         const currentIndexNames = await fetchAvailableIndexNames();
         if (!currentIndexNames.find((indexName) => indexName === appName)) {
             await service.indexes().create(appName, {});
@@ -238,6 +253,19 @@ async function fetchAvailableIndexNames(): Promise<Array<string>> {
         }
     }
     return indexNames;
+}
+
+async function fetchIsFirstConfiguration(): Promise<boolean> {
+    const service = createService();
+    return (
+        (await getConfigurationStanzaValue(
+            service,
+            'app',
+            'install',
+            'is_configured',
+            'unknown'
+        )) !== '1'
+    );
 }
 
 async function fetchCurrentIndexName(): Promise<string> {
