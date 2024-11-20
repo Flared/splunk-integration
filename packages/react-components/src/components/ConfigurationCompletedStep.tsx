@@ -1,6 +1,6 @@
-import React, { FC } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import Button from './Button';
-import { getFlareDataUrl } from '../utils/setupConfiguration';
+import { getFlareSearchDataUrl } from '../utils/setupConfiguration';
 import ArrowRightIcon from './icons/ArrowRightIcon';
 
 import './ConfigurationGlobalStep.css';
@@ -10,6 +10,12 @@ const ConfigurationCompletedStep: FC<{
     tenantName: string;
     onEditConfigurationClick: () => void;
 }> = ({ show, tenantName, onEditConfigurationClick }) => {
+    const [flareSearchUrl, setFlareSearchUrl] = useState('');
+
+    useEffect(() => {
+        getFlareSearchDataUrl().then((url) => setFlareSearchUrl(url));
+    }, []);
+
     return (
         <div hidden={!show}>
             <h5>
@@ -23,7 +29,7 @@ const ConfigurationCompletedStep: FC<{
                         Edit Configuration
                     </Button>
                     <div className="link">
-                        <a href={getFlareDataUrl()}>View Flare Data</a>
+                        <a href={flareSearchUrl}>View Flare Data</a>
                         <ArrowRightIcon remSize={1} />
                     </div>
                 </div>

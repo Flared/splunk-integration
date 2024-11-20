@@ -21,6 +21,12 @@ export interface SplunkIndex {
     name: string;
 }
 
+export interface SplunkSavedSearch {
+    name: string;
+    qualifiedPath: string;
+    update: (properties: Record<string, string>) => void;
+}
+
 export interface SplunkAppAccessor {
     reload: () => void;
 }
@@ -66,6 +72,13 @@ export interface SplunkIndexesAccessor {
     list: () => Array<SplunkIndex>;
 }
 
+export interface SplunkSavedSearchAccessor {
+    fetch: () => SplunkSavedSearchAccessor;
+    create: (indexName: string, data: any) => void;
+    item: (indexName: string) => SplunkSavedSearch;
+    list: () => Array<SplunkSavedSearch>;
+}
+
 export interface SplunkStoragePasswordAccessors {
     fetch: () => SplunkStoragePasswordAccessors;
     item: (applicationName: string) => SplunkAppAccessor;
@@ -79,6 +92,7 @@ export interface SplunkService {
     apps: () => SplunkAppsAccessor;
     storagePasswords: () => SplunkStoragePasswordAccessors;
     indexes: () => SplunkIndexesAccessor;
+    savedSearches: () => SplunkSavedSearchAccessor;
     get: (splunkUrlPath: string, data: any) => void;
     post: (
         splunkUrlPath: string,
