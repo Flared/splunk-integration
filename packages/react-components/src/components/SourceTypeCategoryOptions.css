@@ -1,0 +1,8 @@
+#source-types-categories-container {
+    display: flex;
+    flex-direction: column;
+    margin-top: 0.5rem;
+    gap: 1rem;
+    align-items: start;
+    text-align: start;
+}

@@ -14,3 +14,12 @@ export interface Severity {
     label: string;
     color: string;
 }
+
+export interface SourceType {
+    value: string;
+    label: string;
+}
+
+export interface SourceTypeCategory extends SourceType {
+    types: SourceType[];
+}

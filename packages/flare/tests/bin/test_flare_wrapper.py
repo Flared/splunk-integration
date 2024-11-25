@@ -45,6 +45,7 @@ def test_flare_full_data_without_metadata(
         start_date=None,
         ingest_metadata_only=True,
         severities=[],
+        source_types=[],
     ):
         assert next_token == expected_return_value["next"]
         events.append(event)
@@ -107,6 +108,7 @@ def test_flare_full_data_with_metadata(
         start_date=None,
         ingest_metadata_only=False,
         severities=[],
+        source_types=[],
     ):
         assert next_token == expected_return_value["next"]
         events.append(event)
@@ -150,6 +152,7 @@ def test_flare_full_data_with_metadata_and_exception(
                 start_date=None,
                 ingest_metadata_only=False,
                 severities=[],
+                source_types=[],
             )
         )
 

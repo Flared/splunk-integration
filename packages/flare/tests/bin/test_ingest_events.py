@@ -229,6 +229,7 @@ def test_fetch_feed_expect_exception() -> None:
         tenant_id=11111,
         ingest_metadata_only=False,
         severities=[],
+        source_types=[],
     ):
         pass
 
@@ -264,6 +265,7 @@ def test_fetch_feed_expect_feed_response(
         tenant_id=11111,
         ingest_metadata_only=False,
         severities=[],
+        source_types=[],
     ):
         assert next_token == next
         events.append(event)
@@ -323,4 +325,5 @@ def test_main_expect_normal_run(
         tenant_id=111,
         ingest_metadata_only=False,
         severities=[],
+        source_types=[],
     )

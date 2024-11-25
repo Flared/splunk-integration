@@ -8,7 +8,6 @@ export const APPLICATION_NAMESPACE: SplunkApplicationNamespace = {
     sharing: 'app',
 };
 export const FLARE_SAVED_SEARCH_NAME = 'Flare Search';
-export const DEFAULT_FILTER_VALUE = '*';
 export const KV_COLLECTION_NAME = 'event_ingestion_collection';
 export const KV_COLLECTION_KEY = '_key';
 export const KV_COLLECTION_VALUE = 'value';
@@ -18,6 +17,7 @@ export enum PasswordKeys {
     TENANT_ID = 'tenant_id',
     INGEST_METADATA_ONLY = 'ingest_metadata_only',
     SEVERITIES_FILTER = 'severities_filter',
+    SOURCE_TYPES_FILTER = 'source_types_filter',
 }
 
 export enum CollectionKeys {

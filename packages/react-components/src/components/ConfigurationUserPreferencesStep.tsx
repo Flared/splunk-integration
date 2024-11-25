@@ -1,5 +1,11 @@
 import React, { FC, useEffect, useState } from 'react';
-import { ConfigurationStep, Severity, Tenant } from '../models/flare';
+import {
+    ConfigurationStep,
+    Severity,
+    SourceType,
+    SourceTypeCategory,
+    Tenant,
+} from '../models/flare';
 import Button from './Button';
 import Label from './Label';
 import Select from './Select';
@@ -10,16 +16,21 @@ import {
     fetchAvailableIndexNames,
     fetchCurrentIndexName,
     fetchSeverityFilters,
+    fetchSourceTypeFilters,
     fetchIngestMetadataOnly,
     fetchSeveritiesFilter,
     fetchTenantId,
     fetchUserTenants,
+    fetchSourceTypesFilter,
     getSeverityFilterValue,
+    getSourceTypesFilterValue,
     saveConfiguration,
+    convertSourceTypeFilterToArray,
 } from '../utils/setupConfiguration';
 import './ConfigurationGlobalStep.css';
 import './ConfigurationUserPreferencesStep.css';
 import SeverityOptions from './SeverityOptions';
+import SourceTypeCategoryOptions from './SourceTypeCategoryOptions';
 import Switch from './Switch';
 import { ToastKeys, toastManager } from './ToastManager';
 import Tooltip from './Tooltip';
@@ -35,6 +46,8 @@ const ConfigurationUserPreferencesStep: FC<{
     const [tenants, setUserTenants] = useState<Tenant[]>([]);
     const [selectedSeverities, setSelectedSeverities] = useState<Severity[]>([]);
     const [severities, setSeverities] = useState<Severity[]>([]);
+    const [sourceTypeCategories, setSourceTypeCategories] = useState<SourceTypeCategory[]>([]);
+    const [selectedSourceTypes, setSelectedSourceTypes] = useState<SourceType[]>([]);
     const [indexName, setIndexName] = useState('');
     const [indexNames, setIndexNames] = useState<string[]>([]);
     const [isIngestingMetadataOnly, setIsIngestingMetadataOnly] = useState(false);
@@ -53,7 +66,8 @@ const ConfigurationUserPreferencesStep: FC<{
             Number(tenantId),
             indexName,
             isIngestingMetadataOnly,
-            getSeverityFilterValue(selectedSeverities, severities)
+            getSeverityFilterValue(selectedSeverities, severities),
+            getSourceTypesFilterValue(selectedSourceTypes, sourceTypeCategories)
         )
             .then(() => {
                 setIsLoading(false);
@@ -84,6 +98,8 @@ const ConfigurationUserPreferencesStep: FC<{
                 fetchAvailableIndexNames(),
                 fetchSeverityFilters(apiKey),
                 fetchSeveritiesFilter(),
+                fetchSourceTypeFilters(apiKey),
+                fetchSourceTypesFilter(),
             ])
                 .then(
                     ([
@@ -94,11 +110,13 @@ const ConfigurationUserPreferencesStep: FC<{
                         availableIndexNames,
                         allSeverities,
                         severitiesFilter,
+                        allSourceTypeCategories,
+                        sourceTypeFilter,
                     ]) => {
                         setTenantId(id);
                         setIsIngestingMetadataOnly(ingestMetadataOnly);
                         setIndexName(index);
-                        if (id === -1 && userTenants.length > 0) {
+                        if (id === undefined && userTenants.length > 0) {
                             setTenantId(userTenants[0].id);
                         }
                         setUserTenants(userTenants);
@@ -106,6 +124,13 @@ const ConfigurationUserPreferencesStep: FC<{
                         setSeverities(allSeverities);
                         setSelectedSeverities(
                             convertSeverityFilterToArray(severitiesFilter, allSeverities)
+                        );
+                        setSourceTypeCategories(allSourceTypeCategories);
+                        setSelectedSourceTypes(
+                            convertSourceTypeFilterToArray(
+                                sourceTypeFilter,
+                                allSourceTypeCategories
+                            )
                         );
                     }
                 )
@@ -124,11 +149,17 @@ const ConfigurationUserPreferencesStep: FC<{
             setIsLoading(false);
             setSeverities([]);
             setSelectedSeverities([]);
+            setSourceTypeCategories([]);
+            setSelectedSourceTypes([]);
         }
     }, [configurationStep, apiKey]);
 
     const isFormValid = (): boolean => {
-        return tenantId !== undefined && selectedSeverities.length > 0;
+        return (
+            tenantId !== undefined &&
+            selectedSeverities.length > 0 &&
+            selectedSourceTypes.length > 0
+        );
     };
 
     return (
@@ -183,6 +214,27 @@ const ConfigurationUserPreferencesStep: FC<{
                         setSelectedSeverities={setSelectedSeverities}
                         severities={severities}
                         selectedSeverities={selectedSeverities}
+                    />
+                </div>
+                <div className="form-item">
+                    <div className="label-tooltip">
+                        <Label>Categories filter</Label>
+                        <Tooltip>
+                            <div>
+                                {'For more details on Identifier Categories, please visit our '}
+                                <a
+                                    target="_blank"
+                                    href="https://docs.flare.io/configure-identifiers"
+                                >
+                                    Documentation.
+                                </a>
+                            </div>
+                        </Tooltip>
+                    </div>
+                    <SourceTypeCategoryOptions
+                        setSelectedSourceTypes={setSelectedSourceTypes}
+                        sourceTypeCategories={sourceTypeCategories}
+                        selectedSourceTypes={selectedSourceTypes}
                     />
                 </div>
                 <div className="form-item">
