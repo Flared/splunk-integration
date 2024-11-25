@@ -42,7 +42,8 @@ def main(logger: Logger, app: client.Application) -> None:
     ingest_metadata_only = get_ingest_metadata_only(app=app)
 
     save_last_fetched(app=app)
-    events_fetchd_count = 0
+    save_last_ingested_tenant_id(app=app, tenant_id=tenant_id)
+    events_fetched_count = 0
     for event, next_token in fetch_feed(
         logger=logger,
         app=app,
@@ -52,14 +53,13 @@ def main(logger: Logger, app: client.Application) -> None:
     ):
         save_last_fetched(app=app)
 
-        save_start_date(app=app, tenant_id=tenant_id)
         save_next(app=app, tenant_id=tenant_id, next=next_token)
 
         print(json.dumps(event), flush=True)
 
-        events_fetchd_count += 1
+        events_fetched_count += 1
 
-    logger.info(f"Fetchd {events_fetchd_count} events")
+    logger.info(f"Fetched {events_fetched_count} events")
 
 
 def get_storage_password_value(
@@ -120,12 +120,12 @@ def get_start_date(app: client.Application) -> Optional[date]:
     return None
 
 
-def get_current_tenant_id(app: client.Application) -> Optional[int]:
-    current_tenant_id = get_collection_value(
-        app=app, key=CollectionKeys.CURRENT_TENANT_ID.value
+def get_last_ingested_tenant_id(app: client.Application) -> Optional[int]:
+    last_ingested_tenant_id = get_collection_value(
+        app=app, key=CollectionKeys.LAST_INGESTED_TENANT_ID.value
     )
     try:
-        return int(current_tenant_id) if current_tenant_id else None
+        return int(last_ingested_tenant_id) if last_ingested_tenant_id else None
     except Exception:
         pass
     return None
@@ -151,24 +151,22 @@ def create_collection(app: client.Application) -> None:
         )
 
 
-def save_start_date(app: client.Application, tenant_id: int) -> None:
-    current_tenant_id = get_current_tenant_id(app=app)
-    # If this is the first request ever, insert today's date so that future requests will be based on that
-    if not get_start_date(app):
+def save_last_ingested_tenant_id(app: client.Application, tenant_id: int) -> None:
+    # If the tenant has changed, update the start date so that future requests will be based off today
+    # If you switch tenants, this will avoid the old tenant from ingesting all the events before today and the day
+    # that tenant was switched in the first place.
+    if get_last_ingested_tenant_id(app=app) != tenant_id:
         save_collection_value(
             app=app,
             key=CollectionKeys.START_DATE.value,
             value=date.today().isoformat(),
         )
 
-    # If the current tenant has changed, update the start date so that future requests will be based off today
-    # If you switch tenants, this will avoid the old tenant from ingesting all the events before today and the day
-    # that tenant was switched in the first place.
-    if current_tenant_id != tenant_id:
-        app.service.kvstore[KV_COLLECTION_NAME].data.update(
-            id=CollectionKeys.START_DATE.value,
-            data=json.dumps({"value": date.today().isoformat()}),
-        )
+    save_collection_value(
+        app=app,
+        key=CollectionKeys.LAST_INGESTED_TENANT_ID.value,
+        value=tenant_id,
+    )
 
 
 def save_next(app: client.Application, tenant_id: int, next: Optional[str]) -> None:
