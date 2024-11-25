@@ -14,6 +14,8 @@ class PasswordKeys(Enum):
     API_KEY = "api_key"
     TENANT_ID = "tenant_id"
     INGEST_METADATA_ONLY = "ingest_metadata_only"
+    SEVERITIES_FILTER = "severities_filter"
+    SOURCE_TYPES_FILTER = "source_types_filter"
 
 
 class CollectionKeys(Enum):

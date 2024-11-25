@@ -94,15 +94,5 @@ export interface SplunkService {
     indexes: () => SplunkIndexesAccessor;
     savedSearches: () => SplunkSavedSearchAccessor;
     get: (splunkUrlPath: string, data: any) => void;
-    post: (
-        splunkUrlPath: string,
-        data: any,
-        callback: (err: { data: string }, response: any) => void
-    ) => void;
-}
-
-export enum PasswordKeys {
-    API_KEY = 'api_key',
-    TENANT_ID = 'tenant_id',
-    INGEST_METADATA_ONLY = 'ingest_metadata_only',
+    post: (splunkUrlPath: string, data: any) => void;
 }

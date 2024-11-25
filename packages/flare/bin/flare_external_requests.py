@@ -12,18 +12,66 @@ from flare import FlareAPI
 from logger import Logger
 
 
+class FlareValidateApiKey(splunk.rest.BaseRestHandler):
+    def handle_POST(self) -> None:
+        payload = self.request["payload"]
+        params = parse.parse_qs(payload)
+
+        if "apiKey" not in params:
+            raise Exception("API Key is required")
+
+        flare_api = FlareAPI(api_key=params["apiKey"][0])
+        flare_api.fetch_api_key_validation()
+        self.response.setHeader("Content-Type", "application/json")
+        self.response.write(json.dumps({}))
+
+
 class FlareUserTenants(splunk.rest.BaseRestHandler):
     def handle_POST(self) -> None:
         logger = Logger(class_name=__file__)
         payload = self.request["payload"]
         params = parse.parse_qs(payload)
 
-        if "apiKey" in params:
-            flare_api = FlareAPI(api_key=params["apiKey"][0])
-            user_tenants_response = flare_api.fetch_tenants()
-            tenants_response = user_tenants_response.json()
-            logger.debug(tenants_response)
-            self.response.setHeader("Content-Type", "application/json")
-            self.response.write(json.dumps(tenants_response))
-        else:
+        if "apiKey" not in params:
             raise Exception("API Key is required")
+
+        flare_api = FlareAPI(api_key=params["apiKey"][0])
+        response = flare_api.fetch_tenants()
+        response_json = response.json()
+        logger.debug(f"FlareUserTenants: {response_json}")
+        self.response.setHeader("Content-Type", "application/json")
+        self.response.write(json.dumps(response_json))
+
+
+class FlareFiltersSeverity(splunk.rest.BaseRestHandler):
+    def handle_POST(self) -> None:
+        logger = Logger(class_name=__file__)
+        payload = self.request["payload"]
+        params = parse.parse_qs(payload)
+
+        if "apiKey" not in params:
+            raise Exception("API Key is required")
+
+        flare_api = FlareAPI(api_key=params["apiKey"][0])
+        response = flare_api.fetch_filters_severity()
+        response_json = response.json()
+        logger.debug(f"FlareFiltersSeverity: {response_json}")
+        self.response.setHeader("Content-Type", "application/json")
+        self.response.write(json.dumps(response_json))
+
+
+class FlareFiltersSourceTypes(splunk.rest.BaseRestHandler):
+    def handle_POST(self) -> None:
+        logger = Logger(class_name=__file__)
+        payload = self.request["payload"]
+        params = parse.parse_qs(payload)
+
+        if "apiKey" not in params:
+            raise Exception("API Key is required")
+
+        flare_api = FlareAPI(api_key=params["apiKey"][0])
+        response = flare_api.fetch_filters_source_types()
+        response_json = response.json()
+        logger.debug(f"FlareFiltersSourceTypes: {response_json}")
+        self.response.setHeader("Content-Type", "application/json")
+        self.response.write(json.dumps(response_json))

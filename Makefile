@@ -75,9 +75,8 @@ inspect-tags:
 
 .PHONY: test
 test: venv-tools
-	@if test -d "./packages/flare/tests" ; then \
-		venv-tools/bin/pytest ./packages/flare/tests/**/*.py -vv ; \
-	fi
+	venv-tools/bin/pytest ./packages/flare/tests/**/*.py -vv ;
+	yarn run test:ci
 
 .PHONY: format setup-web
 format: venv-tools

@@ -41,7 +41,11 @@ def test_flare_full_data_without_metadata(
 
     events: list[dict] = []
     for event, next_token in flare_api.fetch_feed_events(
-        next=None, start_date=None, ingest_metadata_only=True
+        next=None,
+        start_date=None,
+        ingest_metadata_only=True,
+        severities=[],
+        source_types=[],
     ):
         assert next_token == expected_return_value["next"]
         events.append(event)
@@ -100,7 +104,11 @@ def test_flare_full_data_with_metadata(
 
     events: list[dict] = []
     for event, next_token in flare_api.fetch_feed_events(
-        next=None, start_date=None, ingest_metadata_only=False
+        next=None,
+        start_date=None,
+        ingest_metadata_only=False,
+        severities=[],
+        source_types=[],
     ):
         assert next_token == expected_return_value["next"]
         events.append(event)
@@ -138,9 +146,14 @@ def test_flare_full_data_with_metadata_and_exception(
     flare_api = FlareAPI(api_key="some_key", tenant_id=111)
 
     with pytest.raises(KeyError, match="metadata"):
-        for _, _ in flare_api.fetch_feed_events(
-            next=None, start_date=None, ingest_metadata_only=False
-        ):
-            pass
+        next(
+            flare_api.fetch_feed_events(
+                next=None,
+                start_date=None,
+                ingest_metadata_only=False,
+                severities=[],
+                source_types=[],
+            )
+        )
 
     fetch_event_feed_metadata_mock.assert_called_once()

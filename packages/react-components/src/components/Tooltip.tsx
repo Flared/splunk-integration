@@ -1,13 +1,15 @@
 import React, { FC, useState } from 'react';
-import TooltipIcon from './icons/TooltipIcon';
 import CloseIcon from './icons/CloseIcon';
+import TooltipIcon from './icons/TooltipIcon';
 
 import './Tooltip.css';
 
 const TOOLTIP_WINDOW_ID = 'tooltip-window';
 
-const Tooltip: FC<{}> = ({ children }) => {
-    const [isOpened, setIsOpened] = useState(false);
+const Tooltip: FC<{
+    openedByDefault?: boolean;
+}> = ({ openedByDefault = false, children }) => {
+    const [isOpened, setIsOpened] = useState(openedByDefault);
 
     function globalClickListener(event: MouseEvent): void {
         const tooltipWindow = document.getElementById(TOOLTIP_WINDOW_ID);

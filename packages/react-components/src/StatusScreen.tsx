@@ -9,8 +9,7 @@ import {
     fetchTenantId,
     fetchVersionName,
 } from './utils/setupConfiguration';
-
-const COLLECTION_KEYS_NEXT_PREFIX = 'next_';
+import { CollectionKeys } from './models/constants';
 
 enum StatusItemKeys {
     START_DATE = 'start_date',
@@ -61,7 +60,7 @@ const StatusScreen: FC<{ theme: string }> = ({ theme }) => {
             splunkCollectionItems.forEach((item) => {
                 if (item.key === StatusItemKeys.LAST_FETCHED) {
                     items.push({
-                        key: item.key.startsWith(COLLECTION_KEYS_NEXT_PREFIX)
+                        key: item.key.startsWith(CollectionKeys.NEXT_PREFIX)
                             ? StatusItemKeys.NEXT_TOKEN
                             : (item.key as StatusItemKeys),
                         name: getItemName(item.key),
@@ -69,7 +68,7 @@ const StatusScreen: FC<{ theme: string }> = ({ theme }) => {
                     });
                 } else {
                     advancedItems.push({
-                        key: item.key.startsWith(COLLECTION_KEYS_NEXT_PREFIX)
+                        key: item.key.startsWith(CollectionKeys.NEXT_PREFIX)
                             ? StatusItemKeys.NEXT_TOKEN
                             : (item.key as StatusItemKeys),
                         name: getItemName(item.key),
@@ -91,8 +90,8 @@ const StatusScreen: FC<{ theme: string }> = ({ theme }) => {
     }, [theme]);
 
     function getItemName(key: string): string {
-        if (key.startsWith(COLLECTION_KEYS_NEXT_PREFIX)) {
-            const parsedTenantId = parseInt(key.substring(COLLECTION_KEYS_NEXT_PREFIX.length), 10);
+        if (key.startsWith(CollectionKeys.NEXT_PREFIX)) {
+            const parsedTenantId = parseInt(key.substring(CollectionKeys.NEXT_PREFIX.length), 10);
             return `Next token for Tenant ID ${parsedTenantId}`;
         }
 

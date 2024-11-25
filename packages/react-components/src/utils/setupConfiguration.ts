@@ -1,22 +1,22 @@
-import { updateConfigurationFile, getConfigurationStanzaValue } from './configurationFileHelper';
-import { Tenant } from '../models/flare';
 import {
+    applicationNameSpace,
+    appName,
+    DEFAULT_FILTER_VALUE,
+    flareSavedSearchName,
+    KV_COLLECTION_KEY,
+    KV_COLLECTION_NAME,
+    KV_COLLECTION_VALUE,
     PasswordKeys,
-    SplunkApplicationNamespace,
+    storageRealm,
+} from '../models/constants';
+import { Severity, SourceType, SourceTypeCategory, Tenant } from '../models/flare';
+import {
     SplunkCollectionItem,
     SplunkService,
     SplunkStoragePasswordAccessors,
 } from '../models/splunk';
+import { getConfigurationStanzaValue, updateConfigurationFile } from './configurationFileHelper';
 import { promisify } from './util';
-
-export const appName: string = 'flare';
-const storageRealm: string = 'flare_integration_realm';
-const applicationNameSpace: SplunkApplicationNamespace = {
-    owner: 'nobody',
-    app: appName,
-    sharing: 'app',
-};
-const flareSavedSearchName = 'Flare Search';
 
 async function completeSetup(splunkService: SplunkService): Promise<void> {
     await updateConfigurationFile(splunkService, 'app', 'install', {
@@ -57,20 +57,42 @@ function createService(): SplunkService {
     return service;
 }
 
-function fetchUserTenants(
-    apiKey: string,
-    successCallback: (userTenants: Array<Tenant>) => void,
-    errorCallback: (errorMessage: string) => void
-): void {
+function fetchApiKeyValidation(apiKey: string): Promise<boolean> {
     const service = createService();
     const data = { apiKey };
-    service.post('/services/fetch_user_tenants', data, (err, response) => {
-        if (err) {
-            errorCallback(err.data);
-        } else if (response.status === 200) {
-            successCallback(response.data.tenants);
+    return promisify(service.post)('/services/fetch_api_key_validation', data).then(
+        (response: any) => {
+            return response.status === 200;
         }
+    );
+}
+
+function fetchUserTenants(apiKey: string): Promise<Array<Tenant>> {
+    const service = createService();
+    const data = { apiKey };
+    return promisify(service.post)('/services/fetch_user_tenants', data).then((response: any) => {
+        return response.data.tenants;
     });
+}
+
+function fetchFiltersSeverities(apiKey: string): Promise<Array<Severity>> {
+    const service = createService();
+    const data = { apiKey };
+    return promisify(service.post)('/services/fetch_filters_severities', data).then(
+        (response: any) => {
+            return response.data.severities;
+        }
+    );
+}
+
+function fetchFiltersSourceTypes(apiKey: string): Promise<Array<SourceTypeCategory>> {
+    const service = createService();
+    const data = { apiKey };
+    return promisify(service.post)('/services/fetch_filters_source_types', data).then(
+        (response: any) => {
+            return response.data.categories;
+        }
+    );
 }
 
 function doesPasswordExist(storage: SplunkStoragePasswordAccessors, key: string): boolean {
@@ -94,18 +116,22 @@ async function savePassword(
         const passwordId = `${storageRealm}:${key}:`;
         await storage.del(passwordId);
     }
-    return promisify(storage.create)({
-        name: key,
-        realm: storageRealm,
-        password: value,
-    });
+    if (value.length > 0) {
+        await promisify(storage.create)({
+            name: key,
+            realm: storageRealm,
+            password: value,
+        });
+    }
 }
 
 async function saveConfiguration(
     apiKey: string,
     tenantId: number,
     indexName: string,
-    isIngestingMetadataOnly: boolean
+    isIngestingMetadataOnly: boolean,
+    severitiesFilter: string,
+    sourceTypesFilter: string
 ): Promise<void> {
     const service = createService();
     const storagePasswords = await promisify(service.storagePasswords().fetch)();
@@ -116,6 +142,8 @@ async function saveConfiguration(
         PasswordKeys.INGEST_METADATA_ONLY,
         `${isIngestingMetadataOnly}`
     );
+    await savePassword(storagePasswords, PasswordKeys.SEVERITIES_FILTER, `${severitiesFilter}`);
+    await savePassword(storagePasswords, PasswordKeys.SOURCE_TYPES_FILTER, `${sourceTypesFilter}`);
     await saveIndexForIngestion(service, indexName);
     const isFirstConfiguration = await fetchIsFirstConfiguration();
     if (isFirstConfiguration) {
@@ -164,14 +192,17 @@ async function updateSavedSearchQuery(
 
 async function fetchCollectionItems(): Promise<SplunkCollectionItem[]> {
     const service = createService();
-    return promisify(service.get)('storage/collections/data/event_ingestion_collection/', {})
-        .then((data: any) => {
+    return promisify(service.get)(
+        `storage/collections/data/event_ingestion_collection/${KV_COLLECTION_NAME}`,
+        {}
+    )
+        .then((response: any) => {
             const items: SplunkCollectionItem[] = [];
-            if (data.data) {
-                data.data.forEach((element) => {
+            if (response.data) {
+                response.data.forEach((element) => {
                     items.push({
-                        key: element._key,
-                        value: element.value,
+                        key: element[KV_COLLECTION_KEY],
+                        value: element[KV_COLLECTION_VALUE],
                         user: element._user,
                     });
                 });
@@ -183,7 +214,7 @@ async function fetchCollectionItems(): Promise<SplunkCollectionItem[]> {
         });
 }
 
-async function fetchPassword(passwordKey: string): Promise<string> {
+async function fetchPassword(passwordKey: string): Promise<string | undefined> {
     const service = createService();
     const storagePasswords = await promisify(service.storagePasswords().fetch)();
     const passwordId = `${storageRealm}:${passwordKey}:`;
@@ -193,16 +224,16 @@ async function fetchPassword(passwordKey: string): Promise<string> {
             return password._properties.clear_password;
         }
     }
-    return '';
+    return undefined;
 }
 
 async function fetchApiKey(): Promise<string> {
-    return fetchPassword(PasswordKeys.API_KEY);
+    return (await fetchPassword(PasswordKeys.API_KEY)) || '';
 }
 
 async function fetchTenantId(): Promise<number> {
     return fetchPassword(PasswordKeys.TENANT_ID).then((tenantId) => {
-        if (tenantId !== '') {
+        if (tenantId) {
             return parseInt(tenantId, 10);
         }
 
@@ -212,12 +243,26 @@ async function fetchTenantId(): Promise<number> {
 
 async function fetchIngestMetadataOnly(): Promise<boolean> {
     return fetchPassword(PasswordKeys.INGEST_METADATA_ONLY).then((isIngestingMetadataOnly) => {
-        if (isIngestingMetadataOnly !== '') {
-            return isIngestingMetadataOnly === 'true';
-        }
-
-        return false;
+        return isIngestingMetadataOnly === 'true';
     });
+}
+
+async function fetchSeveritiesFilter(): Promise<Array<string>> {
+    const savedSeverities = await fetchPassword(PasswordKeys.SEVERITIES_FILTER);
+    if (savedSeverities) {
+        return savedSeverities.split(',');
+    }
+
+    return [DEFAULT_FILTER_VALUE];
+}
+
+async function fetchSourceTypesFilter(): Promise<Array<string>> {
+    const savedSourceTypes = await fetchPassword(PasswordKeys.SOURCE_TYPES_FILTER);
+    if (savedSourceTypes) {
+        return savedSourceTypes.split(',');
+    }
+
+    return [DEFAULT_FILTER_VALUE];
 }
 
 async function createFlareIndex(): Promise<void> {
@@ -284,18 +329,72 @@ async function fetchVersionName(defaultValue: string): Promise<string> {
     return getConfigurationStanzaValue(service, 'app', 'launcher', 'version', defaultValue);
 }
 
+function getSeverityFilterValue(
+    selectedSeverities: Severity[],
+    availableSeverities: Severity[]
+): string {
+    let severitiesFilter = '';
+
+    if (selectedSeverities.length === 0) {
+        throw new Error('At least one severity must be selected');
+    }
+
+    // Only set a filter if the user did not select everything
+    if (selectedSeverities.length !== availableSeverities.length) {
+        severitiesFilter = selectedSeverities.map((severity) => severity.value).join(',');
+    }
+    return severitiesFilter;
+}
+
+function getSourceTypesFilterValue(
+    selectedSourceTypes: SourceType[],
+    availableSourceTypeCategories: SourceTypeCategory[]
+): string {
+    let sourceTypesFilter = '';
+
+    if (selectedSourceTypes.length === 0) {
+        throw new Error('At least one source type must be selected');
+    }
+
+    // Only set a filter if the user did not select everything
+    if (
+        selectedSourceTypes.length !==
+        availableSourceTypeCategories.flatMap((category) => category.types).length
+    ) {
+        let remainingSourceTypes = [...selectedSourceTypes];
+        availableSourceTypeCategories.forEach((sourceTypeCategory) => {
+            // If the user has selected every sub option, replace them by the parent
+            if (sourceTypeCategory.types.every((type) => remainingSourceTypes.includes(type))) {
+                remainingSourceTypes = remainingSourceTypes.filter(
+                    (type) => !sourceTypeCategory.types.includes(type)
+                );
+                remainingSourceTypes.push(sourceTypeCategory);
+            }
+        });
+        sourceTypesFilter = remainingSourceTypes.map((sourceType) => sourceType.value).join(',');
+    }
+    return sourceTypesFilter;
+}
+
 export {
-    saveConfiguration,
-    fetchUserTenants,
-    fetchApiKey,
-    fetchTenantId,
-    fetchIngestMetadataOnly,
-    redirectToHomepage,
-    getRedirectUrl,
-    getFlareSearchDataUrl,
     createFlareIndex,
+    fetchApiKey,
+    fetchApiKeyValidation,
     fetchAvailableIndexNames,
-    fetchCurrentIndexName,
-    fetchVersionName,
     fetchCollectionItems,
+    fetchCurrentIndexName,
+    fetchFiltersSeverities,
+    fetchFiltersSourceTypes,
+    fetchIngestMetadataOnly,
+    fetchSeveritiesFilter,
+    fetchSourceTypesFilter,
+    fetchTenantId,
+    fetchUserTenants,
+    fetchVersionName,
+    getFlareSearchDataUrl,
+    getRedirectUrl,
+    redirectToHomepage,
+    saveConfiguration,
+    getSeverityFilterValue,
+    getSourceTypesFilterValue,
 };

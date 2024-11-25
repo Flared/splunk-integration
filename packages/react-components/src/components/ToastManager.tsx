@@ -10,6 +10,11 @@ interface ToastOptions {
     duration?: number;
 }
 
+export enum ToastKeys {
+    SUCCESS = 'tenant_success',
+    ERROR = 'api_key_error',
+}
+
 const TOAST_CONTAINER_ID = 'toast-container-main';
 
 export class ToastManager {

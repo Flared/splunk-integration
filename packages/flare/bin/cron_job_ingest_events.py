@@ -93,6 +93,8 @@ def main(
     api_key = get_api_key(storage_passwords=storage_passwords)
     tenant_id = get_tenant_id(storage_passwords=storage_passwords)
     ingest_metadata_only = get_ingest_metadata_only(storage_passwords=storage_passwords)
+    severities_filter = get_severities_filter(storage_passwords=storage_passwords)
+    source_types_filter = get_source_types_filter(storage_passwords=storage_passwords)
 
     save_last_fetched(kvstore=kvstore)
     save_last_ingested_tenant_id(kvstore=kvstore, tenant_id=tenant_id)
@@ -103,6 +105,8 @@ def main(
         api_key=api_key,
         tenant_id=tenant_id,
         ingest_metadata_only=ingest_metadata_only,
+        severities=severities_filter,
+        source_types=source_types_filter,
     ):
         save_last_fetched(kvstore=kvstore)
 
@@ -156,6 +160,30 @@ def get_ingest_metadata_only(storage_passwords: StoragePasswords) -> bool:
         )
         == "true"
     )
+
+
+def get_severities_filter(storage_passwords: StoragePasswords) -> list[str]:
+    severities_filter = get_storage_password_value(
+        storage_passwords=storage_passwords,
+        password_key=PasswordKeys.SEVERITIES_FILTER.value,
+    )
+
+    if severities_filter:
+        return severities_filter.split(",")
+
+    return []
+
+
+def get_source_types_filter(storage_passwords: StoragePasswords) -> list[str]:
+    source_types_filter = get_storage_password_value(
+        storage_passwords=storage_passwords,
+        password_key=PasswordKeys.SOURCE_TYPES_FILTER.value,
+    )
+
+    if source_types_filter:
+        return source_types_filter.split(",")
+
+    return []
 
 
 def get_next(kvstore: KVStoreCollections, tenant_id: int) -> Optional[str]:
@@ -281,6 +309,8 @@ def fetch_feed(
     api_key: str,
     tenant_id: int,
     ingest_metadata_only: bool,
+    severities: list[str],
+    source_types: list[str],
 ) -> Iterator[tuple[dict, str]]:
     try:
         flare_api = FlareAPI(api_key=api_key, tenant_id=tenant_id)
@@ -289,7 +319,11 @@ def fetch_feed(
         start_date = get_start_date(kvstore=kvstore)
         logger.info(f"Fetching {tenant_id=}, {next=}, {start_date=}")
         for event_next in flare_api.fetch_feed_events(
-            next=next, start_date=start_date, ingest_metadata_only=ingest_metadata_only
+            next=next,
+            start_date=start_date,
+            ingest_metadata_only=ingest_metadata_only,
+            severities=severities,
+            source_types=source_types,
         ):
             yield event_next
     except Exception as e:

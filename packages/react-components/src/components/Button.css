@@ -20,6 +20,11 @@ button:disabled {
     background-color: var(--button-disabled-bg-color);
     color: var(--button-disabled-text-color);
     border: none;
+    cursor: not-allowed;
+}
+
+.button-loading {
+    cursor: wait !important;
 }
 
 .secondary-button {
