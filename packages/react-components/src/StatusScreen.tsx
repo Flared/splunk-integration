@@ -1,14 +1,14 @@
-import React, { useEffect, FC, useState } from 'react';
+import React, { FC, useEffect, useState } from 'react';
+import Button from './components/Button';
 import './global.css';
+import { SplunkCollectionItem } from './models/splunk';
 import './StatusScreen.css';
 import {
-    fetchTenantId,
-    fetchVersionName,
     fetchCollectionItems,
     fetchCurrentIndexName,
+    fetchTenantId,
+    fetchVersionName,
 } from './utils/setupConfiguration';
-import { SplunkCollectionItem } from './models/splunk';
-import Button from './components/Button';
 
 const COLLECTION_KEYS_NEXT_PREFIX = 'next_';
 
@@ -16,7 +16,7 @@ enum StatusItemKeys {
     START_DATE = 'start_date',
     LAST_FETCHED = 'timestamp_last_fetch',
     NEXT_TOKEN = 'next_token',
-    CURRENT_TENANT_ID = 'current_tenant_id',
+    LAST_INGESTED_TENANT_ID = 'last_ingested_tenant_id',
     INDEX = 'index',
     VERSION = 'version',
 }
@@ -53,8 +53,8 @@ const StatusScreen: FC<{ theme: string }> = ({ theme }) => {
             ];
             const advancedItems: StatusItem[] = [
                 {
-                    key: StatusItemKeys.CURRENT_TENANT_ID,
-                    name: getItemName(StatusItemKeys.CURRENT_TENANT_ID),
+                    key: StatusItemKeys.LAST_INGESTED_TENANT_ID,
+                    name: getItemName(StatusItemKeys.LAST_INGESTED_TENANT_ID),
                     value: `${id}`,
                 },
             ];
@@ -104,8 +104,8 @@ const StatusScreen: FC<{ theme: string }> = ({ theme }) => {
             return 'Last moment the events were ingested';
         }
 
-        if (key === StatusItemKeys.CURRENT_TENANT_ID) {
-            return 'Current Tenant ID';
+        if (key === StatusItemKeys.LAST_INGESTED_TENANT_ID) {
+            return 'Last Tenant ID Ingested';
         }
 
         if (key === StatusItemKeys.INDEX) {

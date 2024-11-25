@@ -17,7 +17,7 @@ class PasswordKeys(Enum):
 
 
 class CollectionKeys(Enum):
-    CURRENT_TENANT_ID = "current_tenant_id"
+    LAST_INGESTED_TENANT_ID = "last_ingested_tenant_id"
     START_DATE = "start_date"
     TIMESTAMP_LAST_FETCH = "timestamp_last_fetch"
 

@@ -10,6 +10,7 @@ from typing import Any
 from unittest.mock import MagicMock
 from unittest.mock import Mock
 from unittest.mock import PropertyMock
+from unittest.mock import call
 from unittest.mock import patch
 
 
@@ -20,13 +21,13 @@ from constants import CollectionKeys
 from cron_job_ingest_events import fetch_feed
 from cron_job_ingest_events import get_api_key
 from cron_job_ingest_events import get_collection_value
-from cron_job_ingest_events import get_current_tenant_id
 from cron_job_ingest_events import get_last_fetched
+from cron_job_ingest_events import get_last_ingested_tenant_id
 from cron_job_ingest_events import get_start_date
 from cron_job_ingest_events import get_tenant_id
 from cron_job_ingest_events import main
 from cron_job_ingest_events import save_collection_value
-from cron_job_ingest_events import save_start_date
+from cron_job_ingest_events import save_last_ingested_tenant_id
 
 
 def test_get_collection_value_expect_none() -> None:
@@ -121,19 +122,19 @@ def test_get_start_date_expect_date(get_collection_value_mock: MagicMock) -> Non
 
 
 @patch("cron_job_ingest_events.get_collection_value", return_value="not_a_number")
-def test_get_current_tenant_id_expect_none(
+def test_get_last_ingested_tenant_id_expect_none(
     get_collection_value_mock: MagicMock,
 ) -> None:
     app = MagicMock()
-    assert get_current_tenant_id(app=app) is None
+    assert get_last_ingested_tenant_id(app=app) is None
 
 
 @patch("cron_job_ingest_events.get_collection_value", return_value="11111")
-def test_get_current_tenant_id_expect_integer(
+def test_get_last_ingested_tenant_id_expect_integer(
     get_collection_value_mock: MagicMock,
 ) -> None:
     app = MagicMock()
-    assert get_current_tenant_id(app=app) == 11111
+    assert get_last_ingested_tenant_id(app=app) == 11111
 
 
 @patch(
@@ -154,35 +155,63 @@ def test_get_last_fetched_expect_datetime(get_collection_value_mock: MagicMock) 
 
 
 @patch("cron_job_ingest_events.save_collection_value")
-@patch("cron_job_ingest_events.get_start_date", return_value=None)
-@patch("cron_job_ingest_events.get_current_tenant_id", return_value=11111)
-def test_save_start_date_expect_save_collection_value_called_and_tenant_id_unchanged(
-    get_current_tenant_id_mock: MagicMock,
-    get_start_date_mock: MagicMock,
+@patch("cron_job_ingest_events.get_last_ingested_tenant_id", return_value=None)
+def test_save_last_ingested_tenant_id_expect_save_collection_value_called_and_tenant_id_unchanged(
+    get_last_ingested_tenant_id_mock: MagicMock,
     save_collection_value_mock: MagicMock,
 ) -> None:
     app = MagicMock()
-    save_start_date(app=app, tenant_id=11111)
-    save_collection_value_mock.assert_called_once_with(
-        app=app, key=CollectionKeys.START_DATE.value, value=date.today().isoformat()
+    save_last_ingested_tenant_id(app=app, tenant_id=11111)
+    save_collection_value_mock.assert_has_calls(
+        [
+            call(
+                app=app,
+                key=CollectionKeys.START_DATE.value,
+                value=date.today().isoformat(),
+            ),
+            call(
+                app=app, key=CollectionKeys.LAST_INGESTED_TENANT_ID.value, value=11111
+            ),
+        ]
     )
-    app.service.kvstore[KV_COLLECTION_NAME].data.update.assert_not_called()
 
 
 @patch("cron_job_ingest_events.save_collection_value")
 @patch("cron_job_ingest_events.get_start_date", return_value=date.today())
-@patch("cron_job_ingest_events.get_current_tenant_id", return_value=22222)
-def test_save_start_date_expect_save_collection_value_not_called_and_tenant_id_changed(
-    get_current_tenant_id_mock: MagicMock,
+@patch("cron_job_ingest_events.get_last_ingested_tenant_id", return_value=22222)
+def test_save_last_ingested_tenant_id_expect_save_collection_value_not_called_and_tenant_id_changed(
+    get_last_ingested_tenant_id_mock: MagicMock,
     get_start_date_mock: MagicMock,
     save_collection_value_mock: MagicMock,
 ) -> None:
     app = MagicMock()
-    save_start_date(app=app, tenant_id=11111)
-    save_collection_value_mock.assert_not_called()
-    app.service.kvstore[KV_COLLECTION_NAME].data.update.assert_called_once_with(
-        id=CollectionKeys.START_DATE.value,
-        data=json.dumps({"value": date.today().isoformat()}),
+    save_last_ingested_tenant_id(app=app, tenant_id=11111)
+    save_collection_value_mock.assert_has_calls(
+        [
+            call(
+                app=app,
+                key=CollectionKeys.START_DATE.value,
+                value=date.today().isoformat(),
+            ),
+            call(
+                app=app, key=CollectionKeys.LAST_INGESTED_TENANT_ID.value, value=11111
+            ),
+        ]
+    )
+
+
+@patch("cron_job_ingest_events.save_collection_value")
+@patch("cron_job_ingest_events.get_start_date", return_value=date.today())
+@patch("cron_job_ingest_events.get_last_ingested_tenant_id", return_value=11111)
+def test_save_last_ingested_tenant_id_expect_same_tenant_id(
+    get_last_ingested_tenant_id_mock: MagicMock,
+    get_start_date_mock: MagicMock,
+    save_collection_value_mock: MagicMock,
+) -> None:
+    app = MagicMock()
+    save_last_ingested_tenant_id(app=app, tenant_id=11111)
+    save_collection_value_mock.assert_called_once_with(
+        app=app, key=CollectionKeys.LAST_INGESTED_TENANT_ID.value, value=11111
     )
 
 
