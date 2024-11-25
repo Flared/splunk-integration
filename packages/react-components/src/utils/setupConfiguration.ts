@@ -8,7 +8,7 @@ import {
     PasswordKeys,
     STORAGE_REALM,
 } from '../models/constants';
-import { Tenant } from '../models/flare';
+import { Severity, Tenant } from '../models/flare';
 import {
     SplunkCollectionItem,
     SplunkRequestResponse,
@@ -77,6 +77,16 @@ function fetchUserTenants(apiKey: string): Promise<Array<Tenant>> {
     );
 }
 
+function fetchSeverityFilters(apiKey: string): Promise<Array<Severity>> {
+    const service = createService();
+    const data = { apiKey };
+    return promisify(service.post)('/services/fetch_severity_filters', data).then(
+        (response: SplunkRequestResponse) => {
+            return response.data.severities;
+        }
+    );
+}
+
 function doesPasswordExist(storage: SplunkStoragePasswordAccessors, key: string): boolean {
     const passwordId = `${STORAGE_REALM}:${key}:`;
 
@@ -111,7 +121,8 @@ async function saveConfiguration(
     apiKey: string,
     tenantId: number,
     indexName: string,
-    isIngestingMetadataOnly: boolean
+    isIngestingMetadataOnly: boolean,
+    severitiesFilter: string
 ): Promise<void> {
     const service = createService();
     const storagePasswords = await promisify(service.storagePasswords().fetch)();
@@ -122,6 +133,7 @@ async function saveConfiguration(
         PasswordKeys.INGEST_METADATA_ONLY,
         `${isIngestingMetadataOnly}`
     );
+    await savePassword(storagePasswords, PasswordKeys.SEVERITIES_FILTER, `${severitiesFilter}`);
     await saveIndexForIngestion(service, indexName);
     const isFirstConfiguration = await fetchIsFirstConfiguration();
     if (isFirstConfiguration) {
@@ -225,6 +237,15 @@ async function fetchIngestMetadataOnly(): Promise<boolean> {
     });
 }
 
+async function fetchSeveritiesFilter(): Promise<Array<string>> {
+    const savedSeverities = await fetchPassword(PasswordKeys.SEVERITIES_FILTER);
+    if (savedSeverities) {
+        return savedSeverities.split(',');
+    }
+
+    return [];
+}
+
 async function createFlareIndex(): Promise<void> {
     const service = createService();
     const isFirstConfiguration = await fetchIsFirstConfiguration();
@@ -289,14 +310,50 @@ async function fetchVersionName(defaultValue: string): Promise<string> {
     return getConfigurationStanzaValue(service, 'app', 'launcher', 'version', defaultValue);
 }
 
+function convertSeverityFilterToArray(
+    severitiesFilter: string[],
+    allSeverities: Severity[]
+): Severity[] {
+    // If no filter is specified, add every severities
+    if (severitiesFilter.length === 0) {
+        return [...allSeverities];
+    }
+
+    // Otherwise, find the matching severities from the filter
+    const severities: Severity[] = [];
+    severitiesFilter.forEach((severityValue) => {
+        const severityMatch = allSeverities.find((severity) => severity.value === severityValue);
+        if (severityMatch) {
+            severities.push(severityMatch);
+        }
+    });
+    return severities;
+}
+
+function getSeverityFilterValue(selectedSeverities: Severity[], allSeverities: Severity[]): string {
+    let severitiesFilter = '';
+
+    if (selectedSeverities.length === 0) {
+        throw new Error('At least one severity must be selected');
+    }
+
+    // Only set a filter if the user did not select everything
+    if (selectedSeverities.length !== allSeverities.length) {
+        severitiesFilter = selectedSeverities.map((severity) => severity.value).join(',');
+    }
+    return severitiesFilter;
+}
+
 export {
     createFlareIndex,
     fetchApiKey,
     fetchApiKeyValidation,
     fetchAvailableIndexNames,
+    fetchSeverityFilters,
     fetchCollectionItems,
     fetchCurrentIndexName,
     fetchIngestMetadataOnly,
+    fetchSeveritiesFilter,
     fetchTenantId,
     fetchUserTenants,
     fetchVersionName,
@@ -304,4 +361,6 @@ export {
     getRedirectUrl,
     redirectToHomepage,
     saveConfiguration,
+    getSeverityFilterValue,
+    convertSeverityFilterToArray,
 };

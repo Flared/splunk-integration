@@ -1,20 +1,25 @@
 import React, { FC, useEffect, useState } from 'react';
-import { ConfigurationStep, Tenant } from '../models/flare';
+import { ConfigurationStep, Severity, Tenant } from '../models/flare';
 import Button from './Button';
 import Label from './Label';
 import Select from './Select';
 
 import { APP_NAME } from '../models/constants';
 import {
+    convertSeverityFilterToArray,
     fetchAvailableIndexNames,
     fetchCurrentIndexName,
+    fetchSeverityFilters,
     fetchIngestMetadataOnly,
+    fetchSeveritiesFilter,
     fetchTenantId,
     fetchUserTenants,
+    getSeverityFilterValue,
     saveConfiguration,
 } from '../utils/setupConfiguration';
 import './ConfigurationGlobalStep.css';
 import './ConfigurationUserPreferencesStep.css';
+import SeverityOptions from './SeverityOptions';
 import Switch from './Switch';
 import { ToastKeys, toastManager } from './ToastManager';
 import Tooltip from './Tooltip';
@@ -28,6 +33,8 @@ const ConfigurationUserPreferencesStep: FC<{
 }> = ({ show, configurationStep, apiKey, onNavigateBackClick, onUserPreferencesSaved }) => {
     const [tenantId, setTenantId] = useState<number | undefined>(undefined);
     const [tenants, setUserTenants] = useState<Tenant[]>([]);
+    const [selectedSeverities, setSelectedSeverities] = useState<Severity[]>([]);
+    const [severities, setSeverities] = useState<Severity[]>([]);
     const [indexName, setIndexName] = useState('');
     const [indexNames, setIndexNames] = useState<string[]>([]);
     const [isIngestingMetadataOnly, setIsIngestingMetadataOnly] = useState(false);
@@ -41,7 +48,13 @@ const ConfigurationUserPreferencesStep: FC<{
     const handleSubmitUserPreferences = (): void => {
         setIsLoading(true);
 
-        saveConfiguration(apiKey, Number(tenantId), indexName, isIngestingMetadataOnly)
+        saveConfiguration(
+            apiKey,
+            Number(tenantId),
+            indexName,
+            isIngestingMetadataOnly,
+            getSeverityFilterValue(selectedSeverities, severities)
+        )
             .then(() => {
                 setIsLoading(false);
                 toastManager.destroy(ToastKeys.ERROR);
@@ -69,17 +82,33 @@ const ConfigurationUserPreferencesStep: FC<{
                 fetchCurrentIndexName(),
                 fetchUserTenants(apiKey),
                 fetchAvailableIndexNames(),
+                fetchSeverityFilters(apiKey),
+                fetchSeveritiesFilter(),
             ])
-                .then(([id, ingestMetadataOnly, index, userTenants, availableIndexNames]) => {
-                    setTenantId(id);
-                    setIsIngestingMetadataOnly(ingestMetadataOnly);
-                    setIndexName(index);
-                    if (id === -1 && userTenants.length > 0) {
-                        setTenantId(userTenants[0].id);
+                .then(
+                    ([
+                        id,
+                        ingestMetadataOnly,
+                        index,
+                        userTenants,
+                        availableIndexNames,
+                        allSeverities,
+                        severitiesFilter,
+                    ]) => {
+                        setTenantId(id);
+                        setIsIngestingMetadataOnly(ingestMetadataOnly);
+                        setIndexName(index);
+                        if (id === -1 && userTenants.length > 0) {
+                            setTenantId(userTenants[0].id);
+                        }
+                        setUserTenants(userTenants);
+                        setIndexNames(availableIndexNames);
+                        setSeverities(allSeverities);
+                        setSelectedSeverities(
+                            convertSeverityFilterToArray(severitiesFilter, allSeverities)
+                        );
                     }
-                    setUserTenants(userTenants);
-                    setIndexNames(availableIndexNames);
-                })
+                )
                 .catch(() => {
                     toastManager.show({
                         id: ToastKeys.ERROR,
@@ -93,11 +122,13 @@ const ConfigurationUserPreferencesStep: FC<{
             setIndexNames([]);
             setUserTenants([]);
             setIsLoading(false);
+            setSeverities([]);
+            setSelectedSeverities([]);
         }
     }, [configurationStep, apiKey]);
 
     const isFormValid = (): boolean => {
-        return tenantId !== undefined;
+        return tenantId !== undefined && selectedSeverities.length > 0;
     };
 
     return (
@@ -128,6 +159,31 @@ const ConfigurationUserPreferencesStep: FC<{
                             );
                         })}
                     </Select>
+                </div>
+                <div className="form-item">
+                    <div className="label-tooltip">
+                        <Label>Severity filter</Label>
+                        <Tooltip>
+                            <div>
+                                Select the minimal alert severity to ignore less critical events
+                                associated with this identifier.
+                                <br />
+                                <br />
+                                {'To learn more about severities see '}
+                                <a
+                                    target="_blank"
+                                    href="https://docs.flare.io/understand-event-severity"
+                                >
+                                    Understand Severity Scoring.
+                                </a>
+                            </div>
+                        </Tooltip>
+                    </div>
+                    <SeverityOptions
+                        setSelectedSeverities={setSelectedSeverities}
+                        severities={severities}
+                        selectedSeverities={selectedSeverities}
+                    />
                 </div>
                 <div className="form-item">
                     <div className="label-tooltip">

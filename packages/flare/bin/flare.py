@@ -50,10 +50,12 @@ class FlareAPI(AuthBase):
         next: Optional[str] = None,
         start_date: Optional[date] = None,
         ingest_metadata_only: bool,
+        severities: list[str],
     ) -> Iterator[tuple[dict, str]]:
         for response in self._fetch_event_feed_metadata(
             next=next,
             start_date=start_date,
+            severities=severities,
         ):
             event_feed = response.json()
             self.logger.debug(event_feed)
@@ -71,6 +73,7 @@ class FlareAPI(AuthBase):
         *,
         next: Optional[str] = None,
         start_date: Optional[date] = None,
+        severities: list[str],
     ) -> Iterator[requests.Response]:
         data: Dict[str, Any] = {
             "from": next if next else None,
@@ -79,9 +82,12 @@ class FlareAPI(AuthBase):
                     "gte": start_date.isoformat()
                     if start_date
                     else date.today().isoformat()
-                }
+                },
             },
         }
+
+        if len(severities):
+            data["severity"] = severities
 
         for response in self.flare_client.scroll(
             method="POST",
@@ -106,4 +112,9 @@ class FlareAPI(AuthBase):
     def fetch_tenants(self) -> requests.Response:
         return self.flare_client.get(
             url="/firework/v2/me/tenants",
+        )
+
+    def fetch_filters_severity(self) -> requests.Response:
+        return self.flare_client.get(
+            url="/firework/v4/events/filters/severities",
         )
