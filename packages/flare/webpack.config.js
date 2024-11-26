@@ -16,7 +16,7 @@ const entries = fs
 module.exports = webpackMerge(baseConfig, {
     entry: entries,
     output: {
-        path: path.join(__dirname, 'flare/appserver/static/pages/'),
+        path: path.join(__dirname, '../../output/flare/appserver/static/pages/'),
         filename: '[name].js',
     },
     plugins: [
@@ -24,16 +24,16 @@ module.exports = webpackMerge(baseConfig, {
             patterns: [
                 {
                     from: path.join(__dirname, 'src/main/resources/splunk'),
-                    to: path.join(__dirname, 'flare'),
+                    to: path.join(__dirname, '../../output/flare'),
                     filter: (filepath) => { return !filepath.endsWith("README/splunk_create.spec.conf"); },
                 },
                 {
                     from: path.join(__dirname, 'bin'),
-                    to: path.join(__dirname, 'flare/bin'),
+                    to: path.join(__dirname, '../../output/flare/bin'),
                 },
                 {
                     from: path.join(__dirname, 'README'),
-                    to: path.join(__dirname, 'flare/'),
+                    to: path.join(__dirname, '../../output/flare/'),
                 },
             ],
         }),

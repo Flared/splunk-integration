@@ -19,3 +19,5 @@ yarn-error.log
 licenses.json
 functional-temp
 splunktional-temp
+
+output/

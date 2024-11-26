@@ -32,32 +32,32 @@ clean:
 	rm -rf packages/flare/bin/vendor
 	@unlink "/Applications/Splunk/etc/apps/flare" || true
 	@find . -type d -name "node_modules" -exec rm -rf {} +
-	rm -rf packages/flare/flare
-	@rm -f flare.tar.gz
+	rm -rf output/flare
+	@rm -f output/flare.tar.gz
 	@echo "Done."
 
 .PHONY: package
 package: packages/flare/bin/vendor
-	-@rm flare.tar.gz
-	@find packages/flare/flare/bin -type d -name "__pycache__" -exec rm -r {} +
+	-@rm -f output/flare.tar.gz
+	@find output/flare/bin -type d -name "__pycache__" -exec rm -r {} +
 	COPYFILE_DISABLE=1 tar \
-		--exclude='packages/flare/flare/local' \
-		--exclude='packages/flare/flare/metadata/local.meta' \
+		--exclude='output/flare/local' \
+		--exclude='output/flare/metadata/local.meta' \
 		--format ustar \
-		-C packages/flare \
+		-C output \
 		-cvzf \
-		"flare.tar.gz" \
+		"output/flare.tar.gz" \
 		"flare"
 
 .PHONY: publish
 publish: flare.tar.gz
-	curl -u "$(SPLUNKBASE_CREDS)" --request POST https://splunkbase.splunk.com/api/v1/app/7602/new_release/ -F "files[]=@./flare.tar.gz" -F "filename=flare.tar.gz" -F "splunk_versions=9.3" -F "visibility=true"
+	curl -u "$(SPLUNKBASE_CREDS)" --request POST https://splunkbase.splunk.com/api/v1/app/7602/new_release/ -F "files[]=@./output/flare.tar.gz" -F "filename=flare.tar.gz" -F "splunk_versions=9.3" -F "visibility=true"
 
 .PHONY: validate
 validate: venv-tools
 	@echo "Running Splunk AppInspect..."
 	@echo "If you get an error about \"libmagic\", run \"brew install libmagic\""
-	@venv-tools/bin/splunk-appinspect inspect --ci "packages/flare/flare" || \
+	@venv-tools/bin/splunk-appinspect inspect --ci "output/flare" || \
 	if test  "$$?" -eq "102" || "$$?" -eq "103" ; then \
 		exit 0 ; \
 	else \
@@ -70,7 +70,7 @@ TAGS = advanced_xml alert_actions_conf ast bias cloud csv custom_search_commands
 inspect-tags:
 	@for TAG in $(TAGS); do \
 		echo "Tag: $$TAG" ; \
-		venv-tools/bin/splunk-appinspect inspect --ci --included-tags $$TAG "packages/flare/flare" ; \
+		venv-tools/bin/splunk-appinspect inspect --ci --included-tags $$TAG "output/flare" ; \
 	done
 
 .PHONY: test
