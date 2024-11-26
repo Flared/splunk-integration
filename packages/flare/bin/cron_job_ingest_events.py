@@ -246,11 +246,13 @@ def save_last_fetched(kvstore: KVStoreCollections) -> None:
 
 
 def get_collection_value(kvstore: KVStoreCollections, key: str) -> Optional[str]:
-    if KV_COLLECTION_NAME in kvstore:
-        data = kvstore[KV_COLLECTION_NAME].data.query()
-        for entry in data:
-            if entry["_key"] == key:
-                return entry["value"]
+    # Ensure collection exists
+    create_collection(kvstore=kvstore)
+
+    data = kvstore[KV_COLLECTION_NAME].data.query()
+    for entry in data:
+        if entry["_key"] == key:
+            return entry["value"]
 
     return None
 
@@ -265,11 +267,12 @@ def save_collection_value(kvstore: KVStoreCollections, key: str, value: Any) -> 
                 }
             )
         )
-    else:
-        kvstore[KV_COLLECTION_NAME].data.update(
-            id=key,
-            data=json.dumps({"value": value}),
-        )
+        return
+
+    kvstore[KV_COLLECTION_NAME].data.update(
+        id=key,
+        data=json.dumps({"value": value}),
+    )
 
 
 def fetch_feed(
