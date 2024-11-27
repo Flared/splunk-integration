@@ -39,7 +39,7 @@ clean:
 .PHONY: package
 package: packages/flare/bin/vendor
 	-@rm flare.tar.gz
-	@find packages/flare/bin -type d -name "__pycache__" -exec rm -r {} +
+	@find packages/flare/flare/bin -type d -name "__pycache__" -exec rm -r {} +
 	COPYFILE_DISABLE=1 tar \
 		--exclude='packages/flare/flare/local' \
 		--exclude='packages/flare/flare/metadata/local.meta' \
