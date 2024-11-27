@@ -1,22 +1,22 @@
-import { updateConfigurationFile, getConfigurationStanzaValue } from './configurationFileHelper';
+import {
+    APPLICATION_NAMESPACE,
+    APP_NAME,
+    FLARE_SAVED_SEARCH_NAME,
+    KV_COLLECTION_KEY,
+    KV_COLLECTION_NAME,
+    KV_COLLECTION_VALUE,
+    PasswordKeys,
+    STORAGE_REALM,
+} from '../models/constants';
 import { Tenant } from '../models/flare';
 import {
-    PasswordKeys,
-    SplunkApplicationNamespace,
     SplunkCollectionItem,
+    SplunkRequestResponse,
     SplunkService,
     SplunkStoragePasswordAccessors,
 } from '../models/splunk';
+import { getConfigurationStanzaValue, updateConfigurationFile } from './configurationFileHelper';
 import { promisify } from './util';
-
-export const appName: string = 'flare';
-const storageRealm: string = 'flare_integration_realm';
-const applicationNameSpace: SplunkApplicationNamespace = {
-    owner: 'nobody',
-    app: appName,
-    sharing: 'app',
-};
-const flareSavedSearchName = 'Flare Search';
 
 async function completeSetup(splunkService: SplunkService): Promise<void> {
     await updateConfigurationFile(splunkService, 'app', 'install', {
@@ -28,19 +28,19 @@ async function reloadApp(splunkService: SplunkService): Promise<void> {
     const splunkApps = splunkService.apps();
     await promisify(splunkApps.fetch)();
 
-    const currentApp = splunkApps.item(appName);
+    const currentApp = splunkApps.item(APP_NAME);
     await promisify(currentApp.reload)();
 }
 
 function getRedirectUrl(): string {
-    return `/app/${appName}`;
+    return `/app/${APP_NAME}`;
 }
 
 async function getFlareSearchDataUrl(): Promise<string> {
     const service = createService();
     const savedSearches = await promisify(service.savedSearches().fetch)();
-    const savedSearch = savedSearches.item(flareSavedSearchName);
-    return `/app/${appName}/@go?s=${savedSearch.qualifiedPath}`;
+    const savedSearch = savedSearches.item(FLARE_SAVED_SEARCH_NAME);
+    return `/app/${APP_NAME}/@go?s=${savedSearch.qualifiedPath}`;
 }
 
 function redirectToHomepage(): void {
@@ -52,29 +52,33 @@ function createService(): SplunkService {
     // eslint-disable-next-line no-undef
     const http = new splunkjs.SplunkWebHttp();
     // eslint-disable-next-line no-undef
-    const service = new splunkjs.Service(http, applicationNameSpace);
+    const service = new splunkjs.Service(http, APPLICATION_NAMESPACE);
 
     return service;
 }
 
-function fetchUserTenants(
-    apiKey: string,
-    successCallback: (userTenants: Array<Tenant>) => void,
-    errorCallback: (errorMessage: string) => void
-): void {
+function fetchApiKeyValidation(apiKey: string): Promise<boolean> {
     const service = createService();
     const data = { apiKey };
-    service.post('/services/fetch_user_tenants', data, (err, response) => {
-        if (err) {
-            errorCallback(err.data);
-        } else if (response.status === 200) {
-            successCallback(response.data.tenants);
+    return promisify(service.post)('/services/fetch_api_key_validation', data).then(
+        (response: SplunkRequestResponse) => {
+            return response.status === 200;
         }
-    });
+    );
+}
+
+function fetchUserTenants(apiKey: string): Promise<Array<Tenant>> {
+    const service = createService();
+    const data = { apiKey };
+    return promisify(service.post)('/services/fetch_user_tenants', data).then(
+        (response: SplunkRequestResponse) => {
+            return response.data.tenants;
+        }
+    );
 }
 
 function doesPasswordExist(storage: SplunkStoragePasswordAccessors, key: string): boolean {
-    const passwordId = `${storageRealm}:${key}:`;
+    const passwordId = `${STORAGE_REALM}:${key}:`;
 
     for (const password of storage.list()) {
         if (password.name === passwordId) {
@@ -91,14 +95,16 @@ async function savePassword(
 ): Promise<void> {
     const passwordExists = doesPasswordExist(storage, key);
     if (passwordExists) {
-        const passwordId = `${storageRealm}:${key}:`;
+        const passwordId = `${STORAGE_REALM}:${key}:`;
         await storage.del(passwordId);
     }
-    return promisify(storage.create)({
-        name: key,
-        realm: storageRealm,
-        password: value,
-    });
+    if (value.length > 0) {
+        await promisify(storage.create)({
+            name: key,
+            realm: STORAGE_REALM,
+            password: value,
+        });
+    }
 }
 
 async function saveConfiguration(
@@ -123,8 +129,8 @@ async function saveConfiguration(
     }
     await updateSavedSearchQuery(
         service,
-        flareSavedSearchName,
-        `source=${appName} index=${indexName}`
+        FLARE_SAVED_SEARCH_NAME,
+        `source=${APP_NAME} index=${indexName}`
     );
     await completeSetup(service);
     await reloadApp(service);
@@ -164,14 +170,17 @@ async function updateSavedSearchQuery(
 
 async function fetchCollectionItems(): Promise<SplunkCollectionItem[]> {
     const service = createService();
-    return promisify(service.get)('storage/collections/data/event_ingestion_collection/', {})
-        .then((data: any) => {
+    return promisify(service.get)(
+        `storage/collections/data/event_ingestion_collection/${KV_COLLECTION_NAME}`,
+        {}
+    )
+        .then((response: SplunkRequestResponse) => {
             const items: SplunkCollectionItem[] = [];
-            if (data.data) {
-                data.data.forEach((element) => {
+            if (response.data) {
+                response.data.forEach((element) => {
                     items.push({
-                        key: element._key,
-                        value: element.value,
+                        key: element[KV_COLLECTION_KEY],
+                        value: element[KV_COLLECTION_VALUE],
                         user: element._user,
                     });
                 });
@@ -183,26 +192,26 @@ async function fetchCollectionItems(): Promise<SplunkCollectionItem[]> {
         });
 }
 
-async function fetchPassword(passwordKey: string): Promise<string> {
+async function fetchPassword(passwordKey: string): Promise<string | undefined> {
     const service = createService();
     const storagePasswords = await promisify(service.storagePasswords().fetch)();
-    const passwordId = `${storageRealm}:${passwordKey}:`;
+    const passwordId = `${STORAGE_REALM}:${passwordKey}:`;
 
     for (const password of storagePasswords.list()) {
         if (password.name === passwordId) {
             return password._properties.clear_password;
         }
     }
-    return '';
+    return undefined;
 }
 
 async function fetchApiKey(): Promise<string> {
-    return fetchPassword(PasswordKeys.API_KEY);
+    return (await fetchPassword(PasswordKeys.API_KEY)) || '';
 }
 
 async function fetchTenantId(): Promise<number> {
     return fetchPassword(PasswordKeys.TENANT_ID).then((tenantId) => {
-        if (tenantId !== '') {
+        if (tenantId) {
             return parseInt(tenantId, 10);
         }
 
@@ -212,11 +221,7 @@ async function fetchTenantId(): Promise<number> {
 
 async function fetchIngestMetadataOnly(): Promise<boolean> {
     return fetchPassword(PasswordKeys.INGEST_METADATA_ONLY).then((isIngestingMetadataOnly) => {
-        if (isIngestingMetadataOnly !== '') {
-            return isIngestingMetadataOnly === 'true';
-        }
-
-        return false;
+        return isIngestingMetadataOnly === 'true';
     });
 }
 
@@ -225,8 +230,8 @@ async function createFlareIndex(): Promise<void> {
     const isFirstConfiguration = await fetchIsFirstConfiguration();
     if (isFirstConfiguration) {
         const currentIndexNames = await fetchAvailableIndexNames();
-        if (!currentIndexNames.find((indexName) => indexName === appName)) {
-            await service.indexes().create(appName, {});
+        if (!currentIndexNames.find((indexName) => indexName === APP_NAME)) {
+            await service.indexes().create(APP_NAME, {});
         }
     }
 }
@@ -285,17 +290,18 @@ async function fetchVersionName(defaultValue: string): Promise<string> {
 }
 
 export {
-    saveConfiguration,
-    fetchUserTenants,
-    fetchApiKey,
-    fetchTenantId,
-    fetchIngestMetadataOnly,
-    redirectToHomepage,
-    getRedirectUrl,
-    getFlareSearchDataUrl,
     createFlareIndex,
+    fetchApiKey,
+    fetchApiKeyValidation,
     fetchAvailableIndexNames,
-    fetchCurrentIndexName,
-    fetchVersionName,
     fetchCollectionItems,
+    fetchCurrentIndexName,
+    fetchIngestMetadataOnly,
+    fetchTenantId,
+    fetchUserTenants,
+    fetchVersionName,
+    getFlareSearchDataUrl,
+    getRedirectUrl,
+    redirectToHomepage,
+    saveConfiguration,
 };

@@ -1,20 +1,37 @@
 import React, { FC, useEffect, useState } from 'react';
+import {
+    fetchTenantId,
+    fetchUserTenants,
+    getFlareSearchDataUrl,
+} from '../utils/setupConfiguration';
 import Button from './Button';
-import { getFlareSearchDataUrl } from '../utils/setupConfiguration';
 import ArrowRightIcon from './icons/ArrowRightIcon';
 
+import { ConfigurationStep, Tenant } from '../models/flare';
 import './ConfigurationGlobalStep.css';
 
 const ConfigurationCompletedStep: FC<{
     show: boolean;
-    tenantName: string;
+    apiKey: string;
+    configurationStep: ConfigurationStep;
     onEditConfigurationClick: () => void;
-}> = ({ show, tenantName, onEditConfigurationClick }) => {
+}> = ({ show, apiKey, configurationStep, onEditConfigurationClick }) => {
     const [flareSearchUrl, setFlareSearchUrl] = useState('');
+    const [tenantName, setTenantName] = useState('');
 
     useEffect(() => {
-        getFlareSearchDataUrl().then((url) => setFlareSearchUrl(url));
-    }, []);
+        if (configurationStep === ConfigurationStep.Completed) {
+            Promise.all([getFlareSearchDataUrl(), fetchTenantId(), fetchUserTenants(apiKey)]).then(
+                ([url, tenantId, userTenants]) => {
+                    setFlareSearchUrl(url);
+                    setTenantName(
+                        userTenants.find((tenant: Tenant) => tenant.id === tenantId)?.name ||
+                            'unknown'
+                    );
+                }
+            );
+        }
+    }, [configurationStep, apiKey]);
 
     return (
         <div hidden={!show}>

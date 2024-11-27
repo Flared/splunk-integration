@@ -3,7 +3,7 @@ export interface Tenant {
     name: string;
 }
 
-export enum ConfigurationSteps {
+export enum ConfigurationStep {
     Initial = 1,
     UserPreferences = 2,
     Completed = 3,

@@ -98,6 +98,11 @@ class FlareAPI(AuthBase):
         self.logger.debug(event)
         return event
 
+    def fetch_api_key_validation(self) -> requests.Response:
+        return self.flare_client.get(
+            url="/tokens/test",
+        )
+
     def fetch_tenants(self) -> requests.Response:
         return self.flare_client.get(
             url="/firework/v2/me/tenants",
