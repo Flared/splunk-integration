@@ -289,7 +289,9 @@ def fetch_feed(
         start_date = get_start_date(kvstore=kvstore)
         logger.info(f"Fetching {tenant_id=}, {next=}, {start_date=}")
         for event_next in flare_api.fetch_feed_events(
-            next=next, start_date=start_date, ingest_metadata_only=ingest_metadata_only
+            next=next,
+            start_date=start_date,
+            ingest_metadata_only=ingest_metadata_only,
         ):
             yield event_next
     except Exception as e:

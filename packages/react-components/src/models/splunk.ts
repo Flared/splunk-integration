@@ -24,7 +24,7 @@ export interface SplunkIndex {
 export interface SplunkSavedSearch {
     name: string;
     qualifiedPath: string;
-    update: (properties: Record<string, string>) => void;
+    update: (properties: Record<string, string>) => SplunkRequestResponse;
 }
 
 export interface SplunkAppAccessor {
@@ -35,6 +35,11 @@ export interface Stanza {
     name: string;
 }
 
+export interface SplunkRequestResponse {
+    status: number;
+    data: any;
+}
+
 export interface SplunkAppsAccessor {
     fetch: () => SplunkAppsAccessor;
     item: (applicationName: string) => SplunkAppAccessor;
@@ -42,14 +47,14 @@ export interface SplunkAppsAccessor {
 
 export interface ConfigurationStanzaAccessor {
     fetch: () => ConfigurationStanzaAccessor;
-    update: (properties: Record<string, string>) => void;
+    update: (properties: Record<string, string>) => SplunkRequestResponse;
     list: () => Array<{ name: string }>;
     properties: () => Record<string, string>;
     _properties: Record<string, string>;
 }
 
 export interface ConfigurationFileAccessor {
-    create: (stanzaName: string) => void;
+    create: (stanzaName: string) => SplunkRequestResponse;
     fetch: () => ConfigurationFileAccessor;
     item: (
         stanzaName: string,
@@ -60,21 +65,21 @@ export interface ConfigurationFileAccessor {
 
 export interface ConfigurationsAccessor {
     fetch: () => ConfigurationsAccessor;
-    create: (configurationFilename: string) => void;
+    create: (configurationFilename: string) => SplunkRequestResponse;
     item: (stanzaName: string, properties: SplunkApplicationNamespace) => ConfigurationFileAccessor;
     list: () => Array<{ name: string }>;
 }
 
 export interface SplunkIndexesAccessor {
     fetch: () => SplunkIndexesAccessor;
-    create: (indexName: string, data: any) => void;
+    create: (indexName: string, data: any) => SplunkRequestResponse;
     item: (indexName: string) => SplunkIndex;
     list: () => Array<SplunkIndex>;
 }
 
 export interface SplunkSavedSearchAccessor {
     fetch: () => SplunkSavedSearchAccessor;
-    create: (indexName: string, data: any) => void;
+    create: (indexName: string, data: any) => SplunkRequestResponse;
     item: (indexName: string) => SplunkSavedSearch;
     list: () => Array<SplunkSavedSearch>;
 }
@@ -83,8 +88,8 @@ export interface SplunkStoragePasswordAccessors {
     fetch: () => SplunkStoragePasswordAccessors;
     item: (applicationName: string) => SplunkAppAccessor;
     list: () => Array<SplunkPassword>;
-    del: (passwordId: string) => void;
-    create: (params: { name: string; realm: string; password: string }) => void;
+    del: (passwordId: string) => SplunkRequestResponse;
+    create: (params: { name: string; realm: string; password: string }) => SplunkRequestResponse;
 }
 
 export interface SplunkService {
@@ -93,16 +98,6 @@ export interface SplunkService {
     storagePasswords: () => SplunkStoragePasswordAccessors;
     indexes: () => SplunkIndexesAccessor;
     savedSearches: () => SplunkSavedSearchAccessor;
-    get: (splunkUrlPath: string, data: any) => void;
-    post: (
-        splunkUrlPath: string,
-        data: any,
-        callback: (err: { data: string }, response: any) => void
-    ) => void;
-}
-
-export enum PasswordKeys {
-    API_KEY = 'api_key',
-    TENANT_ID = 'tenant_id',
-    INGEST_METADATA_ONLY = 'ingest_metadata_only',
+    get: (splunkUrlPath: string, data: any) => SplunkRequestResponse;
+    post: (splunkUrlPath: string, data: any) => SplunkRequestResponse;
 }

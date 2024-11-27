@@ -4,12 +4,12 @@
   "license": "UNLICENSED",
   "scripts": {
     "build": "node build.js build",
-    "eslint": "eslint src --ext \".js,.tsx,.ts\"",
-    "eslint:fix": "eslint src --ext \".js,.tsx,.ts\" --fix",
+    "eslint": "eslint src --ext \".tsx,.ts\"",
+    "eslint:fix": "eslint src --ext \".tsx,.ts\" --fix",
     "lint": "yarn run eslint && yarn run stylelint",
     "lint:ci": "yarn run eslint:ci && yarn run stylelint",
     "start": "webpack --watch",
-    "stylelint": "stylelint \"src/**/*.{js,jsx}\" --config stylelint.config.js"
+    "stylelint": "stylelint \"src/**/*.{ts,tsx}\" --config stylelint.config.js"
   },
   "exports": {
     "./configuration-screen": "./ConfigurationScreen.js",
