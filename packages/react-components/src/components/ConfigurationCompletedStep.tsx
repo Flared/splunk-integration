@@ -9,13 +9,14 @@ import ArrowRightIcon from './icons/ArrowRightIcon';
 
 import { ConfigurationStep, Tenant } from '../models/flare';
 import './ConfigurationGlobalStep.css';
+import FlareLogoLoading from './FlareLogoLoading';
 
 const ConfigurationCompletedStep: FC<{
-    show: boolean;
     apiKey: string;
     configurationStep: ConfigurationStep;
     onEditConfigurationClick: () => void;
-}> = ({ show, apiKey, configurationStep, onEditConfigurationClick }) => {
+}> = ({ apiKey, configurationStep, onEditConfigurationClick }) => {
+    const [isInitializingData, setIsInitializingData] = useState(true);
     const [flareSearchUrl, setFlareSearchUrl] = useState('');
     const [tenantName, setTenantName] = useState('');
 
@@ -28,13 +29,26 @@ const ConfigurationCompletedStep: FC<{
                         userTenants.find((tenant: Tenant) => tenant.id === tenantId)?.name ||
                             'unknown'
                     );
+                    setIsInitializingData(false);
                 }
             );
+        } else {
+            setIsInitializingData(true);
+            setFlareSearchUrl('');
+            setTenantName('');
         }
     }, [configurationStep, apiKey]);
 
+    if (configurationStep !== ConfigurationStep.Completed) {
+        return null;
+    }
+
+    if (isInitializingData) {
+        return <FlareLogoLoading />;
+    }
+
     return (
-        <div hidden={!show}>
+        <div>
             <h5>
                 {`You can now access `}
                 <b>{tenantName}</b>

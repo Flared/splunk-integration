@@ -1,0 +1,18 @@
+.flare-logo-loading-container {
+    position: relative;
+    top: 100%;
+    left: 50%;
+    margin-left: -2.5rem;
+}
+
+.flare-logo-loading-svg {
+    transform-origin: 50% 50%;
+    animation: rotate-flare-logo 0.4s linear infinite;
+}
+
+/* Animations */
+@keyframes rotate-flare-logo {
+    100% {
+        transform: rotate(90deg);
+    }
+}

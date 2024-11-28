@@ -34,14 +34,15 @@ import SourceTypeCategoryOptions from './SourceTypeCategoryOptions';
 import Switch from './Switch';
 import { ToastKeys, toastManager } from './ToastManager';
 import Tooltip from './Tooltip';
+import FlareLogoLoading from './FlareLogoLoading';
 
 const ConfigurationUserPreferencesStep: FC<{
-    show: boolean;
     configurationStep: ConfigurationStep;
     apiKey: string;
     onNavigateBackClick: () => void;
     onUserPreferencesSaved: () => void;
-}> = ({ show, configurationStep, apiKey, onNavigateBackClick, onUserPreferencesSaved }) => {
+}> = ({ configurationStep, apiKey, onNavigateBackClick, onUserPreferencesSaved }) => {
+    const [isInitializingData, setIsInitializingData] = useState(true);
     const [tenantId, setTenantId] = useState<number | undefined>(undefined);
     const [tenants, setUserTenants] = useState<Tenant[]>([]);
     const [selectedSeverities, setSelectedSeverities] = useState<Severity[]>([]);
@@ -132,6 +133,7 @@ const ConfigurationUserPreferencesStep: FC<{
                                 allSourceTypeCategories
                             )
                         );
+                        setIsInitializingData(false);
                     }
                 )
                 .catch(() => {
@@ -151,6 +153,7 @@ const ConfigurationUserPreferencesStep: FC<{
             setSelectedSeverities([]);
             setSourceTypeCategories([]);
             setSelectedSourceTypes([]);
+            setIsInitializingData(true);
         }
     }, [configurationStep, apiKey]);
 
@@ -162,8 +165,16 @@ const ConfigurationUserPreferencesStep: FC<{
         );
     };
 
+    if (configurationStep !== ConfigurationStep.UserPreferences) {
+        return null;
+    }
+
+    if (isInitializingData) {
+        return <FlareLogoLoading />;
+    }
+
     return (
-        <div hidden={!show}>
+        <div>
             <h5>Please select the Tenant you want to ingest events from</h5>
             <div className="form-group">
                 <div className="form-item">

@@ -57,7 +57,6 @@ const ConfigurationScreen: FC<{ theme: string }> = ({ theme }) => {
                 <div className="content-step">
                     <h2>Configure your Flare Account</h2>
                     <ConfigurationInitialStep
-                        show={configurationStep === ConfigurationStep.Initial}
                         configurationStep={configurationStep}
                         apiKey={apiKey}
                         onCancelConfigurationClick={handleBackButton}
@@ -67,7 +66,6 @@ const ConfigurationScreen: FC<{ theme: string }> = ({ theme }) => {
                         setApiKey={setApiKey}
                     />
                     <ConfigurationUserPreferencesStep
-                        show={configurationStep === ConfigurationStep.UserPreferences}
                         configurationStep={configurationStep}
                         apiKey={apiKey}
                         onNavigateBackClick={handleBackButton}
@@ -76,7 +74,6 @@ const ConfigurationScreen: FC<{ theme: string }> = ({ theme }) => {
                         }
                     />
                     <ConfigurationCompletedStep
-                        show={configurationStep === ConfigurationStep.Completed}
                         apiKey={apiKey}
                         configurationStep={configurationStep}
                         onEditConfigurationClick={handleBackButton}
