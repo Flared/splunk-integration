@@ -94,6 +94,7 @@ def main(
     tenant_id = get_tenant_id(storage_passwords=storage_passwords)
     ingest_metadata_only = get_ingest_metadata_only(storage_passwords=storage_passwords)
     severities_filter = get_severities_filter(storage_passwords=storage_passwords)
+    source_types_filter = get_source_types_filter(storage_passwords=storage_passwords)
 
     save_last_fetched(kvstore=kvstore)
     save_last_ingested_tenant_id(kvstore=kvstore, tenant_id=tenant_id)
@@ -105,6 +106,7 @@ def main(
         tenant_id=tenant_id,
         ingest_metadata_only=ingest_metadata_only,
         severities=severities_filter,
+        source_types=source_types_filter,
     ):
         save_last_fetched(kvstore=kvstore)
 
@@ -172,9 +174,21 @@ def get_severities_filter(storage_passwords: StoragePasswords) -> list[str]:
     return []
 
 
+def get_source_types_filter(storage_passwords: StoragePasswords) -> list[str]:
+    source_types_filter = get_storage_password_value(
+        storage_passwords=storage_passwords,
+        password_key=PasswordKeys.SOURCE_TYPES_FILTER.value,
+    )
+
+    if source_types_filter:
+        return source_types_filter.split(",")
+
+    return []
+
+
 def get_next(kvstore: KVStoreCollections, tenant_id: int) -> Optional[str]:
     return get_collection_value(
-        kvstore=kvstore, key=f"{CollectionKeys.get_next_token(tenantId=tenant_id)}"
+        kvstore=kvstore, key=CollectionKeys.get_next_token(tenantId=tenant_id)
     )
 
 
@@ -246,7 +260,7 @@ def save_next(kvstore: KVStoreCollections, tenant_id: int, next: Optional[str]) 
 
     save_collection_value(
         kvstore=kvstore,
-        key=f"{CollectionKeys.get_next_token(tenantId=tenant_id)}",
+        key=CollectionKeys.get_next_token(tenantId=tenant_id),
         value=next,
     )
 
@@ -296,6 +310,7 @@ def fetch_feed(
     tenant_id: int,
     ingest_metadata_only: bool,
     severities: list[str],
+    source_types: list[str],
 ) -> Iterator[tuple[dict, str]]:
     try:
         flare_api = FlareAPI(api_key=api_key, tenant_id=tenant_id)
@@ -308,6 +323,7 @@ def fetch_feed(
             start_date=start_date,
             ingest_metadata_only=ingest_metadata_only,
             severities=severities,
+            source_types=source_types,
         ):
             yield event_next
     except Exception as e:

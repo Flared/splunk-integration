@@ -1,4 +1,4 @@
-import { Severity } from '../models/flare';
+import { Severity, SourceTypeCategory } from '../models/flare';
 
 export function getAllSeverities(): Severity[] {
     return [
@@ -26,6 +26,99 @@ export function getAllSeverities(): Severity[] {
             value: 'critical',
             label: 'Critical',
             color: '#FF0C47',
+        },
+    ];
+}
+
+export function getAllSourceTypeCategories(): SourceTypeCategory[] {
+    return [
+        {
+            value: 'illicit_networks',
+            label: 'Illicit Networks',
+            types: [
+                {
+                    value: 'listing',
+                    label: 'Market',
+                },
+                {
+                    value: 'forum_content',
+                    label: 'Forum Posts',
+                },
+                {
+                    value: 'blog_content',
+                    label: 'Blog Posts',
+                },
+                {
+                    value: 'profile',
+                    label: 'Profiles',
+                },
+                {
+                    value: 'chat_message',
+                    label: 'Chats',
+                },
+                {
+                    value: 'ransomleak',
+                    label: 'Ransom Leaks',
+                },
+                {
+                    value: 'infected_devices',
+                    label: 'Infected Devices',
+                },
+                {
+                    value: 'financial_data',
+                    label: 'Financial Data',
+                },
+            ],
+        },
+        {
+            value: 'open_web',
+            label: 'Open Web',
+            types: [
+                {
+                    value: 'paste',
+                    label: 'Pastes',
+                },
+                {
+                    value: 'social_media',
+                    label: 'Web Accounts',
+                },
+                {
+                    value: 'source_code',
+                    label: 'Source Code',
+                },
+                {
+                    value: 'google',
+                    label: 'Google',
+                },
+                {
+                    value: 'service',
+                    label: 'Hosts',
+                },
+                {
+                    value: 'buckets',
+                    label: 'Buckets',
+                },
+            ],
+        },
+        {
+            value: 'leaks',
+            label: 'Leaked Credentials',
+            types: [
+                {
+                    value: 'leak',
+                    label: 'Leaked Credentials',
+                },
+            ],
+        },
+        {
+            value: 'domains',
+            label: 'Look-alike Domains',
+            types: [
+                {
+                    value: 'domain',
+                    label: 'Look-alike Domains',
+                },
+            ],
         },
     ];
 }

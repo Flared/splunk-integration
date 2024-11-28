@@ -8,7 +8,7 @@ import {
     PasswordKeys,
     STORAGE_REALM,
 } from '../models/constants';
-import { Severity, Tenant } from '../models/flare';
+import { Severity, SourceType, SourceTypeCategory, Tenant } from '../models/flare';
 import {
     SplunkCollectionItem,
     SplunkRequestResponse,
@@ -87,6 +87,16 @@ function fetchSeverityFilters(apiKey: string): Promise<Array<Severity>> {
     );
 }
 
+function fetchSourceTypeFilters(apiKey: string): Promise<Array<SourceTypeCategory>> {
+    const service = createService();
+    const data = { apiKey };
+    return promisify(service.post)('/services/fetch_source_type_filters', data).then(
+        (response: SplunkRequestResponse) => {
+            return response.data.categories;
+        }
+    );
+}
+
 function doesPasswordExist(storage: SplunkStoragePasswordAccessors, key: string): boolean {
     const passwordId = `${STORAGE_REALM}:${key}:`;
 
@@ -122,7 +132,8 @@ async function saveConfiguration(
     tenantId: number,
     indexName: string,
     isIngestingMetadataOnly: boolean,
-    severitiesFilter: string
+    severitiesFilter: string,
+    sourceTypesFilter: string
 ): Promise<void> {
     const service = createService();
     const storagePasswords = await promisify(service.storagePasswords().fetch)();
@@ -134,6 +145,7 @@ async function saveConfiguration(
         `${isIngestingMetadataOnly}`
     );
     await savePassword(storagePasswords, PasswordKeys.SEVERITIES_FILTER, `${severitiesFilter}`);
+    await savePassword(storagePasswords, PasswordKeys.SOURCE_TYPES_FILTER, `${sourceTypesFilter}`);
     await saveIndexForIngestion(service, indexName);
     const isFirstConfiguration = await fetchIsFirstConfiguration();
     if (isFirstConfiguration) {
@@ -221,13 +233,13 @@ async function fetchApiKey(): Promise<string> {
     return (await fetchPassword(PasswordKeys.API_KEY)) || '';
 }
 
-async function fetchTenantId(): Promise<number> {
+async function fetchTenantId(): Promise<number | undefined> {
     return fetchPassword(PasswordKeys.TENANT_ID).then((tenantId) => {
         if (tenantId) {
             return parseInt(tenantId, 10);
         }
 
-        return -1;
+        return undefined;
     });
 }
 
@@ -241,6 +253,15 @@ async function fetchSeveritiesFilter(): Promise<Array<string>> {
     const savedSeverities = await fetchPassword(PasswordKeys.SEVERITIES_FILTER);
     if (savedSeverities) {
         return savedSeverities.split(',');
+    }
+
+    return [];
+}
+
+async function fetchSourceTypesFilter(): Promise<Array<string>> {
+    const savedSourceTypes = await fetchPassword(PasswordKeys.SOURCE_TYPES_FILTER);
+    if (savedSourceTypes) {
+        return savedSourceTypes.split(',');
     }
 
     return [];
@@ -344,6 +365,67 @@ function getSeverityFilterValue(selectedSeverities: Severity[], allSeverities: S
     return severitiesFilter;
 }
 
+function convertSourceTypeFilterToArray(
+    sourceTypesFilter: string[],
+    allSourceTypeCategories: SourceTypeCategory[]
+): SourceType[] {
+    // If no filter is specified, add every sub source types
+    if (sourceTypesFilter.length === 0) {
+        return [...allSourceTypeCategories.flatMap((category) => category.types)];
+    }
+
+    // Otherwise, try to match the filter with the source type categories and subtypes
+    const sourceTypes: SourceType[] = [];
+    sourceTypesFilter.forEach((sourceTypeValue) => {
+        // Check if the source type is actually a category and if so, add all of their subtypes
+        const sourceTypeCategoryMatch = allSourceTypeCategories.find(
+            (sourceTypeCategory) => sourceTypeCategory.value === sourceTypeValue
+        );
+        if (sourceTypeCategoryMatch) {
+            sourceTypes.push(...sourceTypeCategoryMatch.types);
+        }
+
+        // Check if the source type is a sub type of a category and add it to the list if found
+        const sourceTypeMatch = allSourceTypeCategories
+            .flatMap((category) => category.types)
+            .find((sourceType) => sourceType.value === sourceTypeValue);
+        if (sourceTypeMatch) {
+            sourceTypes.push(sourceTypeMatch);
+        }
+    });
+    return sourceTypes;
+}
+
+function getSourceTypesFilterValue(
+    selectedSourceTypes: SourceType[],
+    allSourceTypeCategories: SourceTypeCategory[]
+): string {
+    let sourceTypesFilter = '';
+
+    if (selectedSourceTypes.length === 0) {
+        throw new Error('At least one source type must be selected');
+    }
+
+    // Only set a filter if the user did not select everything
+    if (
+        selectedSourceTypes.length !==
+        allSourceTypeCategories.flatMap((category) => category.types).length
+    ) {
+        let remainingSourceTypes = [...selectedSourceTypes];
+        allSourceTypeCategories.forEach((sourceTypeCategory) => {
+            // If the user has selected every sub option, replace them by the parent
+            if (sourceTypeCategory.types.every((type) => remainingSourceTypes.includes(type))) {
+                remainingSourceTypes = remainingSourceTypes.filter(
+                    (type) => !sourceTypeCategory.types.includes(type)
+                );
+                remainingSourceTypes.push(sourceTypeCategory);
+            }
+        });
+        sourceTypesFilter = remainingSourceTypes.map((sourceType) => sourceType.value).join(',');
+    }
+    return sourceTypesFilter;
+}
+
 export {
     createFlareIndex,
     fetchApiKey,
@@ -354,6 +436,8 @@ export {
     fetchCurrentIndexName,
     fetchIngestMetadataOnly,
     fetchSeveritiesFilter,
+    fetchSourceTypeFilters,
+    fetchSourceTypesFilter,
     fetchTenantId,
     fetchUserTenants,
     fetchVersionName,
@@ -363,4 +447,6 @@ export {
     saveConfiguration,
     getSeverityFilterValue,
     convertSeverityFilterToArray,
+    getSourceTypesFilterValue,
+    convertSourceTypeFilterToArray,
 };

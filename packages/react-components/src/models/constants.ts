@@ -17,6 +17,7 @@ export enum PasswordKeys {
     TENANT_ID = 'tenant_id',
     INGEST_METADATA_ONLY = 'ingest_metadata_only',
     SEVERITIES_FILTER = 'severities_filter',
+    SOURCE_TYPES_FILTER = 'source_types_filter',
 }
 
 export enum CollectionKeys {
