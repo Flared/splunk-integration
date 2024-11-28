@@ -8,3 +8,9 @@ export enum ConfigurationStep {
     UserPreferences = 2,
     Completed = 3,
 }
+
+export interface Severity {
+    value: string;
+    label: string;
+    color: string;
+}
