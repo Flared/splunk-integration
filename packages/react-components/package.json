@@ -9,7 +9,10 @@
     "lint": "yarn run eslint && yarn run stylelint",
     "lint:ci": "yarn run eslint:ci && yarn run stylelint",
     "start": "webpack --watch",
-    "stylelint": "stylelint \"src/**/*.{ts,tsx}\" --config stylelint.config.js"
+    "stylelint": "stylelint \"src/**/*.{ts,tsx}\" --config stylelint.config.js",
+    "test": "jest",
+    "test:ci": "yarn run test --ci",
+    "test:watch": "jest --watch"
   },
   "exports": {
     "./configuration-screen": "./ConfigurationScreen.js",
@@ -28,6 +31,7 @@
     "@splunk/webpack-configs": "^7.0.2",
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^12",
+    "@types/jest": "^29.5.14",
     "@typescript-eslint/eslint-plugin": "^4.0.0",
     "@typescript-eslint/parser": "^4.0.0",
     "babel-eslint": "^10.1.0",
@@ -42,6 +46,8 @@
     "eslint-plugin-react": "^7.21.5",
     "eslint-plugin-react-hooks": "^4.2.0",
     "html-webpack-plugin": "^5.5.3",
+    "jest": "^29.7.0",
+    "lerna": "^8.1.9",
     "react": "^16.12.0",
     "react-dom": "^16.12.0",
     "react-test-renderer": "^16.12.0",
@@ -49,6 +55,7 @@
     "style-loader": "^4.0.0",
     "styled-components": "^5.3.10",
     "stylelint": "^13.0.0",
+    "ts-jest": "^29.2.5",
     "typescript": "^4.3.0",
     "webpack": "^5.88.2",
     "webpack-cli": "^5.1.4",
