@@ -76,7 +76,10 @@ class Application(Protocol):
 
 
 def main(
-    logger: Logger, storage_passwords: StoragePasswords, kvstore: KVStoreCollections
+    logger: Logger,
+    storage_passwords: StoragePasswords,
+    kvstore: KVStoreCollections,
+    flare_api_cls: FlareAPI,
 ) -> None:
     create_collection(kvstore=kvstore)
 
@@ -107,6 +110,7 @@ def main(
         ingest_metadata_only=ingest_metadata_only,
         severities=severities_filter,
         source_types=source_types_filter,
+        flare_api_cls=flare_api_cls,
     ):
         save_last_fetched(kvstore=kvstore)
 
@@ -311,9 +315,10 @@ def fetch_feed(
     ingest_metadata_only: bool,
     severities: list[str],
     source_types: list[str],
+    flare_api_cls: FlareAPI = FlareAPI,
 ) -> Iterator[tuple[dict, str]]:
     try:
-        flare_api = FlareAPI(api_key=api_key, tenant_id=tenant_id)
+        flare_api: FlareAPI = flare_api_cls(api_key=api_key, tenant_id=tenant_id)
 
         next = get_next(kvstore=kvstore, tenant_id=tenant_id)
         start_date = get_start_date(kvstore=kvstore)
@@ -354,4 +359,5 @@ if __name__ == "__main__":
         logger=logger,
         storage_passwords=app.service.storage_passwords,
         kvstore=app.service.kvstore,
+        flare_api_cls=FlareAPI,
     )
