@@ -36,22 +36,31 @@ const SourceTypeCategoryOption: FC<{
                     onCheckChange={(checked): void => onCategoryCheckChange(checked)}
                 />
 
-                <span
-                    hidden={sourceTypeCategory.types.length <= 1}
-                    className="source-types-category-count"
-                >
-                    {selectedCategoryCount}
-                </span>
                 <div
                     hidden={sourceTypeCategory.types.length <= 1}
-                    className={`source-types-category ${
-                        isExpanded
-                            ? 'source-types-category-collapse'
-                            : 'source-types-category-expand'
-                    }`}
+                    className="source-types-category-filler"
+                />
+
+                <div
+                    className="source-types-category-count-container"
                     onClick={(): void => setExpanded(!isExpanded)}
                 >
-                    <span />
+                    <div
+                        hidden={sourceTypeCategory.types.length <= 1}
+                        className="source-types-category-count"
+                    >
+                        {selectedCategoryCount}
+                    </div>
+                    <div
+                        hidden={sourceTypeCategory.types.length <= 1}
+                        className={`source-types-category ${
+                            isExpanded
+                                ? 'source-types-category-collapse'
+                                : 'source-types-category-expand'
+                        }`}
+                    >
+                        <span />
+                    </div>
                 </div>
             </div>
             <div className="source-types-children-container" hidden={!isExpanded}>
