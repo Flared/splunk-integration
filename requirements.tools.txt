@@ -3,3 +3,4 @@ mypy==1.12.1
 ruff==0.7.0
 splunk-appinspect==3.8.0
 isort==5.13.2
+freezegun==1.5.1
