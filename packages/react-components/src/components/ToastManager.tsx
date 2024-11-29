@@ -22,19 +22,20 @@ export class ToastManager {
 
     private toasts: ToastProps[] = [];
 
-    constructor() {
-        const body = document.getElementsByTagName('body')[0] as HTMLBodyElement;
-        const toastContainer = document.createElement('div') as HTMLDivElement;
-        toastContainer.id = TOAST_CONTAINER_ID;
-        body.insertAdjacentElement('beforeend', toastContainer);
-        this.containerRef = toastContainer;
-    }
-
-    public setTheme(theme: string): void {
-        if (theme === 'dark') {
-            this.containerRef.className = theme;
-        } else {
-            this.containerRef.className = '';
+    public setup(containerId: string, theme: string): void {
+        if (!this.containerRef) {
+            const container = document.getElementById(containerId) as HTMLDivElement;
+            if (container) {
+                const toastContainer = document.createElement('div') as HTMLDivElement;
+                toastContainer.id = TOAST_CONTAINER_ID;
+                container.insertAdjacentElement('beforeend', toastContainer);
+                this.containerRef = toastContainer;
+                if (theme === 'dark') {
+                    this.containerRef.className = theme;
+                } else {
+                    this.containerRef.className = '';
+                }
+            }
         }
     }
 

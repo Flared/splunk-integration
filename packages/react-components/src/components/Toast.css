@@ -3,13 +3,14 @@
     margin-bottom: 10px;
     min-height: 2rem;
     padding: 1rem 2rem;
-    animation: slide-in 0.2s;
+    animation: toast-animation-in 0.2s;
     transition: all 0.3s ease;
     border-radius: 0.25rem;
     display: flex;
     flex-direction: row;
     gap: 1rem;
     align-items: center;
+    user-select: none;
 }
 
 .toast-success {
@@ -23,7 +24,7 @@
 }
 
 .toast-timed-out {
-    animation: slide-out 0.2s;
+    animation: toast-animation-out 0.2s;
 }
 
 .toast-text {
@@ -31,24 +32,22 @@
     overflow-wrap: anywhere;
 }
 
-@keyframes slide-in {
+@keyframes toast-animation-in {
     from {
-        transform: translateX(30rem);
+        transform: translateY(-2rem);
         opacity: 0;
     }
     to {
-        transform: translateX(0px);
+        transform: translateY(0px);
         opacity: 1;
     }
 }
 
-@keyframes slide-out {
+@keyframes toast-animation-out {
     from {
-        transform: translateX(0);
         opacity: 1;
     }
     to {
-        transform: translateX(100%);
         opacity: 0;
     }
 }

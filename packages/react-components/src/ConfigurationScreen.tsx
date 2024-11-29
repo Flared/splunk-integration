@@ -16,7 +16,7 @@ const ConfigurationScreen: FC<{ theme: string }> = ({ theme }) => {
     const [configurationStep, setConfigurationStep] = useState(ConfigurationStep.Initial);
     const [apiKey, setApiKey] = useState('');
 
-    toastManager.setTheme(theme);
+    toastManager.setup('container', theme);
 
     const handleBackButton = (): void => {
         switch (configurationStep) {
