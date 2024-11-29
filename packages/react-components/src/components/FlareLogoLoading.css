@@ -7,7 +7,10 @@
 
 .flare-logo-loading-svg {
     transform-origin: 50% 50%;
-    animation: rotate-flare-logo 0.4s linear infinite;
+    animation-name: rotate-flare-logo;
+    animation-iteration-count: infinite;
+    animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+    animation-duration: 0.8s;
 }
 
 /* Animations */
