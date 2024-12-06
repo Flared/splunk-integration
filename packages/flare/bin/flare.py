@@ -49,7 +49,7 @@ class FlareAPI(AuthBase):
         *,
         next: Optional[str] = None,
         start_date: Optional[date] = None,
-        ingest_metadata_only: bool,
+        ingest_full_event_data: bool,
         severities: list[str],
         source_types: list[str],
     ) -> Iterator[tuple[dict, str]]:
@@ -63,7 +63,7 @@ class FlareAPI(AuthBase):
             self.logger.debug(event_feed)
             next_token = event_feed["next"]
             for event in event_feed["items"]:
-                if not ingest_metadata_only:
+                if ingest_full_event_data:
                     event = self._fetch_full_event_from_uid(
                         uid=event["metadata"]["uid"]
                     )

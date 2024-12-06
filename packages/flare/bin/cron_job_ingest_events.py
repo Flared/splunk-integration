@@ -95,7 +95,9 @@ def main(
 
     api_key = get_api_key(storage_passwords=storage_passwords)
     tenant_id = get_tenant_id(storage_passwords=storage_passwords)
-    ingest_metadata_only = get_ingest_metadata_only(storage_passwords=storage_passwords)
+    ingest_full_event_data = get_ingest_full_event_data(
+        storage_passwords=storage_passwords
+    )
     severities_filter = get_severities_filter(storage_passwords=storage_passwords)
     source_types_filter = get_source_types_filter(storage_passwords=storage_passwords)
 
@@ -107,7 +109,7 @@ def main(
         kvstore=kvstore,
         api_key=api_key,
         tenant_id=tenant_id,
-        ingest_metadata_only=ingest_metadata_only,
+        ingest_full_event_data=ingest_full_event_data,
         severities=severities_filter,
         source_types=source_types_filter,
         flare_api_cls=flare_api_cls,
@@ -156,11 +158,11 @@ def get_tenant_id(storage_passwords: StoragePasswords) -> int:
     return tenant_id
 
 
-def get_ingest_metadata_only(storage_passwords: StoragePasswords) -> bool:
+def get_ingest_full_event_data(storage_passwords: StoragePasswords) -> bool:
     return (
         get_storage_password_value(
             storage_passwords=storage_passwords,
-            password_key=PasswordKeys.INGEST_METADATA_ONLY.value,
+            password_key=PasswordKeys.INGEST_FULL_EVENT_DATA.value,
         )
         == "true"
     )
@@ -312,7 +314,7 @@ def fetch_feed(
     kvstore: KVStoreCollections,
     api_key: str,
     tenant_id: int,
-    ingest_metadata_only: bool,
+    ingest_full_event_data: bool,
     severities: list[str],
     source_types: list[str],
     flare_api_cls: FlareAPI = FlareAPI,
@@ -326,7 +328,7 @@ def fetch_feed(
         for event_next in flare_api.fetch_feed_events(
             next=next,
             start_date=start_date,
-            ingest_metadata_only=ingest_metadata_only,
+            ingest_full_event_data=ingest_full_event_data,
             severities=severities,
             source_types=source_types,
         ):

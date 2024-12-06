@@ -104,7 +104,7 @@ class FakeFlareAPI:
         self,
         next: Optional[str],
         start_date: Optional[datetime],
-        ingest_metadata_only: bool,
+        ingest_full_event_data: bool,
         severities: list[str],
         source_types: list[str],
     ) -> List[tuple[dict, str]]:

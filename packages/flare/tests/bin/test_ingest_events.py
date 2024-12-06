@@ -19,6 +19,7 @@ from constants import PasswordKeys
 from cron_job_ingest_events import fetch_feed
 from cron_job_ingest_events import get_api_key
 from cron_job_ingest_events import get_collection_value
+from cron_job_ingest_events import get_ingest_full_event_data
 from cron_job_ingest_events import get_last_fetched
 from cron_job_ingest_events import get_last_ingested_tenant_id
 from cron_job_ingest_events import get_start_date
@@ -188,6 +189,12 @@ def test_get_last_fetched_expect_none(kvstore: FakeKVStoreCollections) -> None:
     assert get_last_fetched(kvstore=kvstore) is None
 
 
+def test_get_default_ingest_full_event_data_value(
+    storage_passwords: FakeStoragePasswords,
+) -> None:
+    assert get_ingest_full_event_data(storage_passwords=storage_passwords) is False
+
+
 @pytest.mark.parametrize(
     "kvstore",
     [
@@ -212,7 +219,7 @@ def test_fetch_feed_expect_exception(
         kvstore=kvstore,
         api_key="some_key",
         tenant_id=11111,
-        ingest_metadata_only=False,
+        ingest_full_event_data=True,
         severities=[],
         source_types=[],
     ):
@@ -238,7 +245,7 @@ def test_fetch_feed_expect_feed_response(
         kvstore=kvstore,
         api_key="some_key",
         tenant_id=11111,
-        ingest_metadata_only=False,
+        ingest_full_event_data=True,
         severities=[],
         source_types=[],
         flare_api_cls=FakeFlareAPI,

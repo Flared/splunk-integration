@@ -17,7 +17,7 @@ import {
     fetchCurrentIndexName,
     fetchSeverityFilters,
     fetchSourceTypeFilters,
-    fetchIngestMetadataOnly,
+    fetchIngestFullEventData,
     fetchSeveritiesFilter,
     fetchTenantId,
     fetchUserTenants,
@@ -51,13 +51,13 @@ const ConfigurationUserPreferencesStep: FC<{
     const [selectedSourceTypes, setSelectedSourceTypes] = useState<SourceType[]>([]);
     const [indexName, setIndexName] = useState('');
     const [indexNames, setIndexNames] = useState<string[]>([]);
-    const [isIngestingMetadataOnly, setIsIngestingMetadataOnly] = useState(false);
+    const [isIngestingFullEventData, setIsIngestingFullEventData] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
     const handleTenantIdChange = (e): void => setTenantId(parseInt(e.target.value, 10));
     const handleIndexNameChange = (e): void => setIndexName(e.target.value);
-    const handleIsIngestingMetadataChange = (e): void =>
-        setIsIngestingMetadataOnly(e.target.checked);
+    const handleIsIngestingFullEventDataChange = (e): void =>
+        setIsIngestingFullEventData(e.target.checked);
 
     const handleSubmitUserPreferences = (): void => {
         setIsLoading(true);
@@ -66,7 +66,7 @@ const ConfigurationUserPreferencesStep: FC<{
             apiKey,
             Number(tenantId),
             indexName,
-            isIngestingMetadataOnly,
+            isIngestingFullEventData,
             getSeverityFilterValue(selectedSeverities, severities),
             getSourceTypesFilterValue(selectedSourceTypes, sourceTypeCategories)
         )
@@ -93,7 +93,7 @@ const ConfigurationUserPreferencesStep: FC<{
         if (configurationStep === ConfigurationStep.UserPreferences) {
             Promise.all([
                 fetchTenantId(),
-                fetchIngestMetadataOnly(),
+                fetchIngestFullEventData(),
                 fetchCurrentIndexName(),
                 fetchUserTenants(apiKey),
                 fetchAvailableIndexNames(),
@@ -105,7 +105,7 @@ const ConfigurationUserPreferencesStep: FC<{
                 .then(
                     ([
                         id,
-                        ingestMetadataOnly,
+                        ingestFullEventData,
                         index,
                         userTenants,
                         availableIndexNames,
@@ -115,7 +115,7 @@ const ConfigurationUserPreferencesStep: FC<{
                         sourceTypeFilter,
                     ]) => {
                         setTenantId(id);
-                        setIsIngestingMetadataOnly(ingestMetadataOnly);
+                        setIsIngestingFullEventData(ingestFullEventData);
                         setIndexName(index);
                         if (id === undefined && userTenants.length > 0) {
                             setTenantId(userTenants[0].id);
@@ -250,18 +250,18 @@ const ConfigurationUserPreferencesStep: FC<{
                 </div>
                 <div className="form-item">
                     <div className="label-tooltip">
-                        <Label>Basic event ingestion</Label>
+                        <Label>Full event data ingestion</Label>
                         <Tooltip>
                             <div>
-                                Select this option if you want to ingest only the metadata of the
-                                events instead of the full data to it.
+                                Select this option if you want to ingest the full data of the events
+                                instead of the metadata of them.
                             </div>
                         </Tooltip>
                     </div>
                     <span className="switch-container">
                         <Switch
-                            value={isIngestingMetadataOnly}
-                            onChange={handleIsIngestingMetadataChange}
+                            value={isIngestingFullEventData}
+                            onChange={handleIsIngestingFullEventDataChange}
                         />
                     </span>
                 </div>
