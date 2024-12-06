@@ -1,12 +1,5 @@
 # Flare
 
-1.2.0
------
-* Various bug fixes
-* 'Events metadata only' option has been changed to 'Full event data' and is now off by default
-* Severity filter
-* Source type filter
-
 1.1.0
 -----
 * Various bug fixes
