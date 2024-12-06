@@ -43,7 +43,7 @@ def test_flare_full_data_without_metadata(
     for event, next_token in flare_api.fetch_feed_events(
         next=None,
         start_date=None,
-        ingest_metadata_only=True,
+        ingest_full_event_data=False,
         severities=[],
         source_types=[],
     ):
@@ -106,7 +106,7 @@ def test_flare_full_data_with_metadata(
     for event, next_token in flare_api.fetch_feed_events(
         next=None,
         start_date=None,
-        ingest_metadata_only=False,
+        ingest_full_event_data=True,
         severities=[],
         source_types=[],
     ):
@@ -150,7 +150,7 @@ def test_flare_full_data_with_metadata_and_exception(
             flare_api.fetch_feed_events(
                 next=None,
                 start_date=None,
-                ingest_metadata_only=False,
+                ingest_full_event_data=True,
                 severities=[],
                 source_types=[],
             )

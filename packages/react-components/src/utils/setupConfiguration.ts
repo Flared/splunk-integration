@@ -131,7 +131,7 @@ async function saveConfiguration(
     apiKey: string,
     tenantId: number,
     indexName: string,
-    isIngestingMetadataOnly: boolean,
+    isIngestingFullEventData: boolean,
     severitiesFilter: string,
     sourceTypesFilter: string
 ): Promise<void> {
@@ -141,8 +141,8 @@ async function saveConfiguration(
     await savePassword(storagePasswords, PasswordKeys.TENANT_ID, `${tenantId}`);
     await savePassword(
         storagePasswords,
-        PasswordKeys.INGEST_METADATA_ONLY,
-        `${isIngestingMetadataOnly}`
+        PasswordKeys.INGEST_FULL_EVENT_DATA,
+        `${isIngestingFullEventData}`
     );
     await savePassword(storagePasswords, PasswordKeys.SEVERITIES_FILTER, `${severitiesFilter}`);
     await savePassword(storagePasswords, PasswordKeys.SOURCE_TYPES_FILTER, `${sourceTypesFilter}`);
@@ -243,9 +243,9 @@ async function fetchTenantId(): Promise<number | undefined> {
     });
 }
 
-async function fetchIngestMetadataOnly(): Promise<boolean> {
-    return fetchPassword(PasswordKeys.INGEST_METADATA_ONLY).then((isIngestingMetadataOnly) => {
-        return isIngestingMetadataOnly === 'true';
+async function fetchIngestFullEventData(): Promise<boolean> {
+    return fetchPassword(PasswordKeys.INGEST_FULL_EVENT_DATA).then((isIngestingFullEventData) => {
+        return isIngestingFullEventData === 'true';
     });
 }
 
@@ -434,7 +434,7 @@ export {
     fetchSeverityFilters,
     fetchCollectionItems,
     fetchCurrentIndexName,
-    fetchIngestMetadataOnly,
+    fetchIngestFullEventData,
     fetchSeveritiesFilter,
     fetchSourceTypeFilters,
     fetchSourceTypesFilter,

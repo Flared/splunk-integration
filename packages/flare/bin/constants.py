@@ -13,7 +13,7 @@ CRON_JOB_THRESHOLD_SINCE_LAST_FETCH = timedelta(minutes=10)
 class PasswordKeys(Enum):
     API_KEY = "api_key"
     TENANT_ID = "tenant_id"
-    INGEST_METADATA_ONLY = "ingest_metadata_only"
+    INGEST_FULL_EVENT_DATA = "ingest_full_event_data"
     SEVERITIES_FILTER = "severities_filter"
     SOURCE_TYPES_FILTER = "source_types_filter"
 
