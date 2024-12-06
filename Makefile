@@ -50,7 +50,7 @@ package: packages/flare/bin/vendor
 		"flare"
 
 .PHONY: publish
-publish: flare.tar.gz
+publish: output/flare.tar.gz
 	curl -u "$(SPLUNKBASE_CREDS)" --request POST https://splunkbase.splunk.com/api/v1/app/7602/new_release/ -F "files[]=@./output/flare.tar.gz" -F "filename=flare.tar.gz" -F "splunk_versions=9.3" -F "visibility=true"
 
 .PHONY: validate
