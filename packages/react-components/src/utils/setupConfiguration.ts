@@ -6,6 +6,7 @@ import {
     KV_COLLECTION_NAME,
     KV_COLLECTION_VALUE,
     PasswordKeys,
+    SEVERITY_SAVED_SEARCH_NAME,
     STORAGE_REALM,
 } from '../models/constants';
 import { Severity, SourceType, SourceTypeCategory, Tenant } from '../models/flare';
@@ -154,7 +155,12 @@ async function saveConfiguration(
     await updateSavedSearchQuery(
         service,
         FLARE_SAVED_SEARCH_NAME,
-        `source=${APP_NAME} index=${indexName}`
+        `source=${APP_NAME} index=${indexName} earliest=-24h latest=now`
+    );
+    await updateSavedSearchQuery(
+        service,
+        SEVERITY_SAVED_SEARCH_NAME,
+        `source=${APP_NAME} index=${indexName} earliest=-24h latest=now | spath path=header.risk.score output=risk_score_str | eval risk_score = coalesce(tonumber(risk_score_str), 0)  | eval risk_label = case(risk_score == 1, "Info", risk_score == 2, "Low", risk_score == 3, "Medium", risk_score == 4, "High", risk_score == 5, "Critical")  | stats count by risk_label, risk_score | sort risk_score | fields - risk_score`
     );
     await completeSetup(service);
     await reloadApp(service);
