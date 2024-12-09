@@ -8,6 +8,7 @@ export const APPLICATION_NAMESPACE: SplunkApplicationNamespace = {
     sharing: 'app',
 };
 export const FLARE_SAVED_SEARCH_NAME = 'Flare Search';
+export const SEVERITY_SAVED_SEARCH_NAME = 'Severity';
 export const KV_COLLECTION_NAME = 'event_ingestion_collection';
 export const KV_COLLECTION_KEY = '_key';
 export const KV_COLLECTION_VALUE = 'value';
