@@ -1,8 +1,8 @@
-import { SplunkApplicationNamespace } from './splunk';
+import { ApplicationNamespace } from './splunk';
 
 export const APP_NAME = 'flare';
 export const STORAGE_REALM = 'flare_integration_realm';
-export const APPLICATION_NAMESPACE: SplunkApplicationNamespace = {
+export const APPLICATION_NAMESPACE: ApplicationNamespace = {
     owner: 'nobody',
     app: APP_NAME,
     sharing: 'app',
