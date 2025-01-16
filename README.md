@@ -3,7 +3,7 @@
 
 ## Requirements
 
-At the time of this writing, Splunk Enterprise is at version 9.3.0. This version of splunk requires Python v3.9.
+At the time of this writing, Splunk Enterprise is at version 9.4.0. This version of splunk requires Python v3.9.
 
 ## Installation
 
