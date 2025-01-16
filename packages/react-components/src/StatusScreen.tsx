@@ -1,7 +1,7 @@
 import React, { FC, useEffect, useState } from 'react';
 import Button from './components/Button';
 import './global.css';
-import { SplunkCollectionItem } from './models/splunk';
+import { KVCollectionItem } from './models/splunk';
 import './StatusScreen.css';
 import {
     fetchCollectionItems,
@@ -37,7 +37,7 @@ const StatusScreen: FC<{ theme: string }> = ({ theme }) => {
             fetchCollectionItems(),
             fetchVersionName('unknown'),
             fetchCurrentIndexName(),
-        ]).then(([id, splunkCollectionItems, version, indexName]) => {
+        ]).then(([id, kvCollectionItems, version, indexName]) => {
             const items: StatusItem[] = [
                 {
                     key: StatusItemKeys.VERSION,
@@ -57,7 +57,7 @@ const StatusScreen: FC<{ theme: string }> = ({ theme }) => {
                     value: `${id}`,
                 },
             ];
-            splunkCollectionItems.forEach((item) => {
+            kvCollectionItems.forEach((item) => {
                 if (item.key === StatusItemKeys.LAST_FETCHED) {
                     items.push({
                         key: item.key.startsWith(CollectionKeys.NEXT_PREFIX)
@@ -118,7 +118,7 @@ const StatusScreen: FC<{ theme: string }> = ({ theme }) => {
         return 'Unknown Status Item';
     }
 
-    function formatValue(item: SplunkCollectionItem): string {
+    function formatValue(item: KVCollectionItem): string {
         if (item.key === StatusItemKeys.START_DATE || item.key === StatusItemKeys.LAST_FETCHED) {
             const date = new Date(item.value);
             return date.toLocaleString();

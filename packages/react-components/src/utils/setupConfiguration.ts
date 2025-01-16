@@ -10,26 +10,21 @@ import {
     STORAGE_REALM,
 } from '../models/constants';
 import { Severity, SourceType, SourceTypeCategory, Tenant } from '../models/flare';
-import {
-    SplunkCollectionItem,
-    SplunkRequestResponse,
-    SplunkService,
-    SplunkStoragePasswordAccessors,
-} from '../models/splunk';
+import { KVCollectionItem, HTTPResponse, Service, StoragePasswords } from '../models/splunk';
 import { getConfigurationStanzaValue, updateConfigurationFile } from './configurationFileHelper';
 import { promisify } from './util';
 
-async function completeSetup(splunkService: SplunkService): Promise<void> {
+async function completeSetup(splunkService: Service): Promise<void> {
     await updateConfigurationFile(splunkService, 'app', 'install', {
         is_configured: 'true',
     });
 }
 
-async function reloadApp(splunkService: SplunkService): Promise<void> {
+async function reloadApp(splunkService: Service): Promise<void> {
     const splunkApps = splunkService.apps();
     await promisify(splunkApps.fetch)();
 
-    const currentApp = splunkApps.item(APP_NAME);
+    const currentApp = splunkApps.item(APP_NAME, APPLICATION_NAMESPACE);
     await promisify(currentApp.reload)();
 }
 
@@ -40,7 +35,7 @@ function getRedirectUrl(): string {
 async function getFlareSearchDataUrl(): Promise<string> {
     const service = createService();
     const savedSearches = await promisify(service.savedSearches().fetch)();
-    const savedSearch = savedSearches.item(FLARE_SAVED_SEARCH_NAME);
+    const savedSearch = savedSearches.item(FLARE_SAVED_SEARCH_NAME, APPLICATION_NAMESPACE);
     return `/app/${APP_NAME}/@go?s=${savedSearch.qualifiedPath}`;
 }
 
@@ -48,13 +43,12 @@ function redirectToHomepage(): void {
     window.location.href = getRedirectUrl();
 }
 
-function createService(): SplunkService {
+function createService(): Service {
     // The splunkjs is injected by Splunk
     // eslint-disable-next-line no-undef
     const http = new splunkjs.SplunkWebHttp();
     // eslint-disable-next-line no-undef
-    const service = new splunkjs.Service(http, APPLICATION_NAMESPACE);
-
+    const service: Service = new splunkjs.Service(http, APPLICATION_NAMESPACE);
     return service;
 }
 
@@ -62,7 +56,7 @@ function fetchApiKeyValidation(apiKey: string): Promise<boolean> {
     const service = createService();
     const data = { apiKey };
     return promisify(service.post)('/services/fetch_api_key_validation', data).then(
-        (response: SplunkRequestResponse) => {
+        (response: HTTPResponse) => {
             return response.status === 200;
         }
     );
@@ -72,7 +66,7 @@ function fetchUserTenants(apiKey: string): Promise<Array<Tenant>> {
     const service = createService();
     const data = { apiKey };
     return promisify(service.post)('/services/fetch_user_tenants', data).then(
-        (response: SplunkRequestResponse) => {
+        (response: HTTPResponse) => {
             return response.data.tenants;
         }
     );
@@ -82,7 +76,7 @@ function fetchSeverityFilters(apiKey: string): Promise<Array<Severity>> {
     const service = createService();
     const data = { apiKey };
     return promisify(service.post)('/services/fetch_severity_filters', data).then(
-        (response: SplunkRequestResponse) => {
+        (response: HTTPResponse) => {
             return response.data.severities;
         }
     );
@@ -92,13 +86,13 @@ function fetchSourceTypeFilters(apiKey: string): Promise<Array<SourceTypeCategor
     const service = createService();
     const data = { apiKey };
     return promisify(service.post)('/services/fetch_source_type_filters', data).then(
-        (response: SplunkRequestResponse) => {
+        (response: HTTPResponse) => {
             return response.data.categories;
         }
     );
 }
 
-function doesPasswordExist(storage: SplunkStoragePasswordAccessors, key: string): boolean {
+function doesPasswordExist(storage: StoragePasswords, key: string): boolean {
     const passwordId = `${STORAGE_REALM}:${key}:`;
 
     for (const password of storage.list()) {
@@ -109,11 +103,7 @@ function doesPasswordExist(storage: SplunkStoragePasswordAccessors, key: string)
     return false;
 }
 
-async function savePassword(
-    storage: SplunkStoragePasswordAccessors,
-    key: string,
-    value: string
-): Promise<void> {
+async function savePassword(storage: StoragePasswords, key: string, value: string): Promise<void> {
     const passwordExists = doesPasswordExist(storage, key);
     if (passwordExists) {
         const passwordId = `${STORAGE_REALM}:${key}:`;
@@ -171,7 +161,7 @@ async function saveConfiguration(
 }
 
 async function updateEventIngestionCronJobInterval(
-    service: SplunkService,
+    service: Service,
     interval: string
 ): Promise<void> {
     await updateConfigurationFile(
@@ -185,12 +175,12 @@ async function updateEventIngestionCronJobInterval(
 }
 
 async function updateSavedSearchQuery(
-    service: SplunkService,
+    service: Service,
     savedSearchName: string,
     query: string
 ): Promise<void> {
     const savedSearches = await promisify(service.savedSearches().fetch)();
-    const savedSearch = savedSearches.item(savedSearchName);
+    const savedSearch = savedSearches.item(savedSearchName, APPLICATION_NAMESPACE);
     if (savedSearch) {
         await savedSearch.update({
             search: query,
@@ -198,14 +188,14 @@ async function updateSavedSearchQuery(
     }
 }
 
-async function fetchCollectionItems(): Promise<SplunkCollectionItem[]> {
+async function fetchCollectionItems(): Promise<KVCollectionItem[]> {
     const service = createService();
     return promisify(service.get)(
         `storage/collections/data/event_ingestion_collection/${KV_COLLECTION_NAME}`,
         {}
     )
-        .then((response: SplunkRequestResponse) => {
-            const items: SplunkCollectionItem[] = [];
+        .then((response: HTTPResponse) => {
+            const items: KVCollectionItem[] = [];
             if (response.data) {
                 response.data.forEach((element) => {
                     items.push({
@@ -229,7 +219,7 @@ async function fetchPassword(passwordKey: string): Promise<string | undefined> {
 
     for (const password of storagePasswords.list()) {
         if (password.name === passwordId) {
-            return password._properties.clear_password;
+            return password.properties().clear_password;
         }
     }
     return undefined;
@@ -284,7 +274,7 @@ async function createFlareIndex(): Promise<void> {
     }
 }
 
-async function saveIndexForIngestion(service: SplunkService, indexName: string): Promise<void> {
+async function saveIndexForIngestion(service: Service, indexName: string): Promise<void> {
     await updateConfigurationFile(
         service,
         'inputs',

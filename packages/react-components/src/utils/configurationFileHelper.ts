@@ -1,9 +1,5 @@
-import {
-    ConfigurationFileAccessor,
-    ConfigurationsAccessor,
-    ConfigurationStanzaAccessor,
-    SplunkService,
-} from '../models/splunk';
+import { APPLICATION_NAMESPACE } from '../models/constants';
+import { ConfigurationFile, Configurations, Entity, HTTPResponse, Service } from '../models/splunk';
 import { promisify } from './util';
 
 // ----------------------------------
@@ -13,10 +9,10 @@ import { promisify } from './util';
 // Existence Functions
 // ---------------------
 function doesConfigurationExist(
-    configurationsAccessor: ConfigurationsAccessor,
+    configurations: Configurations,
     configurationFilename: string
 ): boolean {
-    for (const stanza of configurationsAccessor.list()) {
+    for (const stanza of configurations.list()) {
         if (stanza.name === configurationFilename) {
             return true;
         }
@@ -26,7 +22,7 @@ function doesConfigurationExist(
 }
 
 function doesStanzaExist(
-    configurationFileAccessor: ConfigurationFileAccessor,
+    configurationFileAccessor: ConfigurationFile,
     stanzaName: string
 ): boolean {
     for (const stanza of configurationFileAccessor.list()) {
@@ -42,39 +38,33 @@ function doesStanzaExist(
 // Retrieval Functions
 // ---------------------
 function getConfigurationFile(
-    configurationsAccessor: ConfigurationsAccessor,
+    configurations: Configurations,
     configurationFilename: string
-): ConfigurationFileAccessor {
-    const configurationFileAccessor = configurationsAccessor.item(configurationFilename, {
-        // Name space information not provided
-    });
-
-    return configurationFileAccessor;
+): Promise<ConfigurationFile> {
+    return promisify(configurations.item(configurationFilename, APPLICATION_NAMESPACE).fetch)();
 }
 
 function getConfigurationFileStanza(
-    configurationFileAccessor: ConfigurationFileAccessor,
+    configurationFile: ConfigurationFile,
     configurationStanzaName: string
-): ConfigurationStanzaAccessor {
-    const configurationStanzaAccessor = configurationFileAccessor.item(configurationStanzaName, {
-        // Name space information not provided
-    });
-
-    return configurationStanzaAccessor;
+): Promise<Entity> {
+    return promisify(
+        configurationFile.item(configurationStanzaName, APPLICATION_NAMESPACE).fetch
+    )();
 }
 
 function createStanza(
-    configurationFileAccessor: ConfigurationFileAccessor,
+    configurationFile: ConfigurationFile,
     newStanzaName: string
-): Promise<void> {
-    return promisify(configurationFileAccessor.create)(newStanzaName);
+): Promise<HTTPResponse> {
+    return promisify(configurationFile.create)(newStanzaName);
 }
 
 function updateStanzaProperties(
-    configurationStanzaAccessor: ConfigurationStanzaAccessor,
+    configurationStanza: Entity,
     newStanzaProperties: Record<string, string>
-): Promise<void> {
-    return promisify(configurationStanzaAccessor.update)(newStanzaProperties);
+): Promise<HTTPResponse> {
+    return promisify(configurationStanza.update)(newStanzaProperties);
 }
 
 // ---------------------
@@ -82,22 +72,20 @@ function updateStanzaProperties(
 // ---------------------
 
 function createConfigurationFile(
-    configurationsAccessor: ConfigurationsAccessor,
+    configurations: Configurations,
     configurationFilename: string
-): Promise<void> {
-    return promisify(configurationsAccessor.create)(configurationFilename);
+): Promise<HTTPResponse> {
+    return promisify(configurations.create)(configurationFilename);
 }
 
 export async function updateConfigurationFile(
-    service: SplunkService,
+    service: Service,
     configurationFilename: string,
     stanzaName: string,
     properties: Record<string, string>
 ): Promise<void> {
     // Fetch the accessor used to get a configuration file
-    let configurations = service.configurations({
-        // Name space information not provided
-    });
+    let configurations = service.configurations(APPLICATION_NAMESPACE);
     configurations = await promisify(configurations.fetch)();
 
     // Check for the existence of the configuration file
@@ -111,61 +99,53 @@ export async function updateConfigurationFile(
     }
 
     // Fetchs the configuration file accessor
-    let configurationFileAccessor = getConfigurationFile(configurations, configurationFilename);
-    configurationFileAccessor = await promisify(configurationFileAccessor.fetch)();
+    let configurationFile = await getConfigurationFile(configurations, configurationFilename);
 
     // Checks to see if the stanza where the inputs will be
     // stored exist
-    const stanzaExist = doesStanzaExist(configurationFileAccessor, stanzaName);
+    const stanzaExist = doesStanzaExist(configurationFile, stanzaName);
 
     // If the configuration stanza doesn't exist, create it
     if (!stanzaExist) {
-        await createStanza(configurationFileAccessor, stanzaName);
+        await createStanza(configurationFile, stanzaName);
+
+        // Need to update the information after the creation of the stanza
+        configurationFile = await promisify(configurationFile.fetch)();
     }
-    // Need to update the information after the creation of the stanza
-    configurationFileAccessor = await promisify(configurationFileAccessor.fetch)();
 
     // Fetchs the configuration stanza accessor
-    let configurationStanzaAccessor = getConfigurationFileStanza(
-        configurationFileAccessor,
-        stanzaName
-    );
-    configurationStanzaAccessor = await promisify(configurationStanzaAccessor.fetch)();
+    const configurationStanza = await getConfigurationFileStanza(configurationFile, stanzaName);
 
     // We don't care if the stanza property does or doesn't exist
     // This is because we can use the
     // configurationStanza.update() function to create and
     // change the information of a property
-    await updateStanzaProperties(configurationStanzaAccessor, properties);
+    await updateStanzaProperties(configurationStanza, properties);
 }
 
 export async function getConfigurationStanzaValue(
-    service: SplunkService,
+    service: Service,
     configurationFilename: string,
     stanzaName: string,
     propertyName: string,
     defaultValue: string
 ): Promise<string> {
     // Fetch the accessor used to get a configuration file
-    let configurations = service.configurations({
-        // Name space information not provided
-    });
+    let configurations = service.configurations(APPLICATION_NAMESPACE);
     configurations = await promisify(configurations.fetch)();
 
     // Fetchs the configuration file accessor
-    let configurationFileAccessor = getConfigurationFile(configurations, configurationFilename);
-    configurationFileAccessor = await promisify(configurationFileAccessor.fetch)();
+    const configurationFile = await getConfigurationFile(configurations, configurationFilename);
 
     // Fetchs the configuration stanza accessor
-    let configurationStanzaAccessor = getConfigurationFileStanza(
-        configurationFileAccessor,
+    const configurationStanzaAccessor = await getConfigurationFileStanza(
+        configurationFile,
         stanzaName
     );
-    configurationStanzaAccessor = await promisify(configurationStanzaAccessor.fetch)();
 
     let propertyValue = defaultValue;
-    if (propertyName in configurationStanzaAccessor._properties) {
-        propertyValue = configurationStanzaAccessor._properties[propertyName];
+    if (propertyName in configurationStanzaAccessor.properties()) {
+        propertyValue = configurationStanzaAccessor.properties()[propertyName];
     }
 
     return propertyValue;
