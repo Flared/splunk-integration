@@ -1,6 +1,12 @@
+import sys
+
+
+if sys.version_info < (3, 9):
+    sys.exit("Error: This application requires Python 3.9 or higher.")
+
+
 import json
 import os
-import sys
 
 from datetime import date
 from datetime import datetime
