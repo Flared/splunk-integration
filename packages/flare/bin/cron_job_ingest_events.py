@@ -343,13 +343,14 @@ def fetch_feed(
         logger.error(f"Exception={e}")
 
 
-def get_splunk_service(logger: Logger) -> Service:
+def get_splunk_service(logger: Logger, token: str) -> Service:
     try:
         splunk_service = client.connect(
             host=HOST,
             port=SPLUNK_PORT,
             app=APP_NAME,
-            token=sys.stdin.readline().strip(),
+            token=token,
+            autologin=True,
         )
     except Exception as e:
         logger.error(str(e))
@@ -360,7 +361,13 @@ def get_splunk_service(logger: Logger) -> Service:
 
 if __name__ == "__main__":
     logger = Logger(class_name=__file__)
-    splunk_service: Service = get_splunk_service(logger=logger)
+    token = sys.stdin.readline().strip()  # SEE: passAuth in https://docs.splunk.com/Documentation/Splunk/9.4.0/Admin/Inputsconf
+    if not token:
+        raise Exception(
+            "Token not found - Go through the complete app configuration to update the user token."
+        )
+
+    splunk_service: Service = get_splunk_service(logger=logger, token=token)
     app: Application = splunk_service.apps[APP_NAME]
 
     main(

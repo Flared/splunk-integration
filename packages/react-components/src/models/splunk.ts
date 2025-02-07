@@ -60,6 +60,7 @@ export interface Service {
     indexes: () => Indexes;
     savedSearches: () => Collection<Entity>;
     serverInfo: () => any;
+    currentUser: () => any;
     get: (splunkUrlPath: string, data: any) => HTTPResponse;
     post: (splunkUrlPath: string, data: any) => HTTPResponse;
 }

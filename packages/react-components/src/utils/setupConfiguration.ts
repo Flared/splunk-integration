@@ -152,6 +152,7 @@ async function saveConfiguration(
         SEVERITY_SAVED_SEARCH_NAME,
         `source=${APP_NAME} index=${indexName} earliest=-24h latest=now | spath path=header.risk.score output=risk_score_str | eval risk_score = coalesce(tonumber(risk_score_str), 0)  | eval risk_label = case(risk_score == 1, "Info", risk_score == 2, "Low", risk_score == 3, "Medium", risk_score == 4, "High", risk_score == 5, "Critical")  | stats count by risk_label, risk_score | sort risk_score | fields - risk_score`
     );
+    await updatePassAuthUsername(service);
     await completeSetup(service);
     await reloadApp(service);
     if (isFirstConfiguration) {
@@ -170,6 +171,18 @@ async function updateEventIngestionCronJobInterval(
         'script://$SPLUNK_HOME/etc/apps/flare/bin/cron_job_ingest_events.py',
         {
             interval: `${interval}`,
+        }
+    );
+}
+
+async function updatePassAuthUsername(service: Service): Promise<void> {
+    const username = await fetchCurrentUsername();
+    await updateConfigurationFile(
+        service,
+        'inputs',
+        'script://$SPLUNK_HOME/etc/apps/flare/bin/cron_job_ingest_events.py',
+        {
+            passAuth: username,
         }
     );
 }
@@ -420,6 +433,13 @@ function getSourceTypesFilterValue(
         sourceTypesFilter = remainingSourceTypes.map((sourceType) => sourceType.value).join(',');
     }
     return sourceTypesFilter;
+}
+
+function fetchCurrentUsername(): Promise<string> {
+    const service = createService();
+    return promisify(service.currentUser)().then((user) => {
+        return user.name;
+    });
 }
 
 export {
