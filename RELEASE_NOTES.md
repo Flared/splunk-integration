@@ -1,10 +1,5 @@
 # Flare
 
-1.2.1
------
-* Various bug fixes
-* Prevents use of Python 3.7
-
 1.2.0
 -----
 * Various bug fixes
