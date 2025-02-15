@@ -6,8 +6,8 @@ from conftest import FakeFlareAPI
 from conftest import FakeKVStoreCollections
 from conftest import FakeLogger
 from conftest import FakeStoragePasswords
-from datetime import date
 from datetime import datetime
+from datetime import timezone
 from freezegun import freeze_time
 
 
@@ -101,11 +101,11 @@ def test_get_start_date_expect_none(kvstore: FakeKVStoreCollections) -> None:
 
 @pytest.mark.parametrize(
     "kvstore",
-    [[(CollectionKeys.START_DATE.value, "2000-01-01")]],
+    [[(CollectionKeys.START_DATE.value, "2000-01-01T00:00:00+00:00")]],
     indirect=True,
 )
 def test_get_start_date_expect_date(kvstore: FakeKVStoreCollections) -> None:
-    assert get_start_date(kvstore) == date(2000, 1, 1)
+    assert get_start_date(kvstore) == datetime(2000, 1, 1, 0, 0, tzinfo=timezone.utc)
 
 
 def test_get_last_ingested_tenant_id_expect_none(
@@ -125,7 +125,7 @@ def test_get_last_ingested_tenant_id_expect_integer(
     assert get_last_ingested_tenant_id(kvstore=kvstore) == 11111
 
 
-@freeze_time("2000-01-01")
+@freeze_time("2000-01-01T00:00:00+00:00")
 def test_save_last_ingested_tenant_id_expect_new_tenant_id_and_new_start_date(
     kvstore: FakeKVStoreCollections,
 ) -> None:
@@ -135,7 +135,7 @@ def test_save_last_ingested_tenant_id_expect_new_tenant_id_and_new_start_date(
 
     save_last_ingested_tenant_id(kvstore=kvstore, tenant_id=11111)
     assert kvstore[KV_COLLECTION_NAME].data.query() == [
-        {"_key": CollectionKeys.START_DATE.value, "value": "2000-01-01"},
+        {"_key": CollectionKeys.START_DATE.value, "value": "1999-12-02T00:00:00+00:00"},
         {"_key": CollectionKeys.LAST_INGESTED_TENANT_ID.value, "value": 11111},
     ]
 
@@ -144,23 +144,23 @@ def test_save_last_ingested_tenant_id_expect_new_tenant_id_and_new_start_date(
     "kvstore",
     [
         [
-            (CollectionKeys.START_DATE.value, "1999-12-12"),
+            (CollectionKeys.START_DATE.value, "1999-12-12T00:00:00+00:00"),
             (CollectionKeys.LAST_INGESTED_TENANT_ID.value, 11111),
         ]
     ],
     indirect=True,
 )
-@freeze_time("2000-01-01")
+@freeze_time("2000-01-01T00:00:00+00:00")
 def test_save_last_ingested_tenant_id_expect_updated_tenant_id_and_updated_start_date(
     kvstore: FakeKVStoreCollections,
 ) -> None:
     assert kvstore[KV_COLLECTION_NAME].data.query() == [
-        {"_key": CollectionKeys.START_DATE.value, "value": "1999-12-12"},
+        {"_key": CollectionKeys.START_DATE.value, "value": "1999-12-12T00:00:00+00:00"},
         {"_key": CollectionKeys.LAST_INGESTED_TENANT_ID.value, "value": 11111},
     ]
     save_last_ingested_tenant_id(kvstore=kvstore, tenant_id=22222)
     assert kvstore[KV_COLLECTION_NAME].data.query() == [
-        {"_key": CollectionKeys.START_DATE.value, "value": "2000-01-01"},
+        {"_key": CollectionKeys.START_DATE.value, "value": "1999-12-02T00:00:00+00:00"},
         {"_key": CollectionKeys.LAST_INGESTED_TENANT_ID.value, "value": 22222},
     ]
 
@@ -311,6 +311,6 @@ def test_main_expect_normal_run(
         flare_api_cls=FakeFlareAPI,
     )
     assert logger.messages == [
-        "INFO: Fetching tenant_id=11111, next=None, start_date=FakeDate(2000, 1, 1)",
+        "INFO: Fetching tenant_id=11111, next=None, start_date=FakeDatetime(1999, 12, 2, 0, 0, tzinfo=datetime.timezone.utc)",
         "INFO: Fetched 2 events",
     ]
