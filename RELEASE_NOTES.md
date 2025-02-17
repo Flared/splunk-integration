@@ -1,5 +1,10 @@
 # Flare
 
+1.2.2
+-----
+* Various bug fixes
+* Changes start date to now - 30 days
+
 1.2.1
 -----
 * Various bug fixes
