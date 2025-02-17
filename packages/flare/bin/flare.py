@@ -8,7 +8,9 @@ if sys.version_info < (3, 9):
 import requests
 import time
 
-from datetime import date
+from datetime import datetime
+from datetime import timedelta
+from datetime import timezone
 from logger import Logger
 from typing import Any
 from typing import Dict
@@ -55,7 +57,7 @@ class FlareAPI(AuthBase):
         self,
         *,
         next: Optional[str] = None,
-        start_date: Optional[date] = None,
+        start_date: Optional[datetime] = None,
         ingest_full_event_data: bool,
         severities: list[str],
         source_types: list[str],
@@ -81,17 +83,18 @@ class FlareAPI(AuthBase):
         self,
         *,
         next: Optional[str] = None,
-        start_date: Optional[date] = None,
+        start_date: Optional[datetime] = None,
         severities: list[str],
         source_types: list[str],
     ) -> Iterator[requests.Response]:
         data: Dict[str, Any] = {
             "from": next if next else None,
+            "order": "asc",
             "filters": {
                 "materialized_at": {
                     "gte": start_date.isoformat()
                     if start_date
-                    else date.today().isoformat()
+                    else (datetime.now(timezone.utc) - timedelta(days=30)).isoformat()
                 },
             },
         }

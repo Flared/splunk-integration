@@ -8,8 +8,9 @@ if sys.version_info < (3, 9):
 import json
 import os
 
-from datetime import date
 from datetime import datetime
+from datetime import timedelta
+from datetime import timezone
 from typing import Any
 from typing import Iterator
 from typing import Optional
@@ -204,13 +205,13 @@ def get_next(kvstore: KVStoreCollections, tenant_id: int) -> Optional[str]:
     )
 
 
-def get_start_date(kvstore: KVStoreCollections) -> Optional[date]:
+def get_start_date(kvstore: KVStoreCollections) -> Optional[datetime]:
     start_date = get_collection_value(
         kvstore=kvstore, key=CollectionKeys.START_DATE.value
     )
     if start_date:
         try:
-            return date.fromisoformat(start_date)
+            return datetime.fromisoformat(start_date)
         except Exception:
             pass
     return None
@@ -255,7 +256,7 @@ def save_last_ingested_tenant_id(kvstore: KVStoreCollections, tenant_id: int) ->
         save_collection_value(
             kvstore=kvstore,
             key=CollectionKeys.START_DATE.value,
-            value=date.today().isoformat(),
+            value=(datetime.now(timezone.utc) - timedelta(days=30)).isoformat(),
         )
 
     save_collection_value(
