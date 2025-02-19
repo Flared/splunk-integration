@@ -76,7 +76,7 @@ class FlareAPI(AuthBase):
                     event = self._fetch_full_event_from_uid(
                         uid=event["metadata"]["uid"]
                     )
-                    time.sleep(1)
+                    time.sleep(1)  # Don't hit rate limit
                 yield (event, next_token)
 
     def _fetch_event_feed_metadata(
@@ -115,10 +115,20 @@ class FlareAPI(AuthBase):
             time.sleep(1)
 
     def _fetch_full_event_from_uid(self, *, uid: str) -> dict:
-        event_response = self.flare_client.get(url=f"/firework/v2/activities/{uid}")
-        event = event_response.json()["activity"]
-        self.logger.debug(event)
-        return event
+        for current_try in range(3):
+            try:
+                event_response = self.flare_client.get(
+                    url=f"/firework/v2/activities/{uid}"
+                )
+                event_response.raise_for_status()
+            except Exception as e:
+                time.sleep(1)
+                self.logger.debug(f"Failed to fetch event: {e}")
+                continue
+            return event_response.json()["activity"]
+        raise Exception(
+            f"failed to fetch full event data for {uid} after {current_try + 1} tries"
+        )
 
     def fetch_api_key_validation(self) -> requests.Response:
         return self.flare_client.get(
