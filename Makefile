@@ -17,6 +17,8 @@ venv: requirements.txt
 	@rm -rf packages/flare/bin/vendor/bin
 	@rm -rf packages/flare/bin/vendor/packaging
 	@rm -rf packages/flare/bin/vendor/*-stubs
+	@rm -rf packages/flare/bin/vendor/charset_normalizer/md.cpython-39-x86_64-linux-gnu.so
+	@rm -rf packages/flare/bin/vendor/charset_normalizer/md__mypyc.cpython-39-x86_64-linux-gnu.so
 
 venv-tools: requirements.tools.txt venv
 	rm -rf venv-tools
