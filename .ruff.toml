@@ -1,3 +1,4 @@
+[lint]
 extend-select = [
     "I",
     "C411",
@@ -25,7 +26,7 @@ ignore = [
     "F405",
 ]
 
-[isort]
+[lint.isort]
 force-single-line = true
 no-sections = true
 lines-after-imports = 2
