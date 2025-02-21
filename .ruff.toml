@@ -1,4 +1,4 @@
-extend-select = [
+lint.extend-select = [
     "I",
     "C411",
     "C413",
@@ -9,7 +9,7 @@ extend-select = [
     "RUF015",
     "E401",
 ]
-extend-safe-fixes = [
+lint.extend-safe-fixes = [
     "C411",
     "C413",
     "C414",
@@ -19,13 +19,13 @@ extend-safe-fixes = [
     "RUF015",
     "E401",
 ]
-ignore = [
+lint.ignore = [
     "E722",
     "F403",
     "F405",
 ]
 
-[isort]
+[lint.isort]
 force-single-line = true
 no-sections = true
 lines-after-imports = 2
