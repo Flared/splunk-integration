@@ -122,7 +122,6 @@ def main(
         flare_api_cls=flare_api_cls,
     ):
         save_last_fetched(kvstore=kvstore)
-
         save_next(kvstore=kvstore, tenant_id=tenant_id, next=next_token)
 
         print(json.dumps(event), flush=True)
