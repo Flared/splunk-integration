@@ -21,8 +21,8 @@ class Logger:
         self.tag_name = os.path.splitext(os.path.basename(class_name))[0]
         self._logger = logging.getLogger(f"flare-{self.tag_name}")
 
-        if os.environ.get("IS_LOCAL_BUILD"):
-            self._logger.setLevel(logging.INFO)
+        if os.environ.get("ENV") == "dev":
+            self._logger.setLevel(logging.DEBUG)
         else:
             self._logger.setLevel(logging.ERROR)
         formatter = logging.Formatter("%(asctime)s %(levelname)-5s %(message)s")

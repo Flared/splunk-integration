@@ -104,5 +104,5 @@ sl: splunk-local
 
 .PHONY: splunk-local
 splunk-local: venv setup-web
-	docker-compose up -d
+	docker compose up -d
 	yarn run start
