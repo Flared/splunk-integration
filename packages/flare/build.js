@@ -4,7 +4,7 @@ const shell = require('shelljs');
 const OS = require('os').platform().toLocaleLowerCase();
 
 const arg = process.argv[2];
-const commands = ['build', 'link', 'unlink'];
+const commands = ['build'];
 
 if (!arg) {
     shell.echo(
@@ -22,12 +22,9 @@ if (!commands.includes(arg)) {
 const runCommands = {
     win32: {
         build: () => shell.exec('set NODE_ENV=production&&.\\node_modules\\.bin\\webpack --mode=production'),
-        link: () => shell.exec('mklink /D "%SPLUNK_HOME%\\etc\\apps\\flare" "%cd%\\..\\..\\output\\flare"'),
     },
     nix: {
         build: () => shell.exec('export NODE_ENV=production && ./node_modules/.bin/webpack --mode=production'),
-        unlink: () => shell.exec('unlink $SPLUNK_HOME/etc/apps/flare || true'),
-        link: () => shell.exec('ln -s $PWD/../../output/flare $SPLUNK_HOME/etc/apps/flare'),
     },
 };
 

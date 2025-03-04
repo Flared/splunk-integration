@@ -1,0 +1,9 @@
+splunk:
+  conf:
+    - key: web
+      value:
+        directory: /opt/splunk/etc/system/local
+        content:
+          settings:
+            cacheEntriesLimit: 0
+            cacheBytesLimit: 0
