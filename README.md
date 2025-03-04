@@ -19,21 +19,14 @@ managing and publishing multiple packages in the same repository.
 
 
 ## Development
+We use an official splunk docker image for development, by binding the local folder to a folder in the container. In order for this to work, you need to have build the application before starting the docker.
 
-If you have your own Splunk Enterprise installed locally, you can use
-
+```bash
+make build
 ```
+
+Then you can start the local docker and the frontend runner.
+
+```bash
 make splunk-local
 ```
-
-to download the required dependencies, watch the file changes to re-compile on the fly and generate a symlink between the Splunk app and the Splunk Enterprise applications folder.
-
-To be able to see your changes when refreshing, add this at the end of this file:
-```
-File: /Applications/Splunk/etc/system/local/web.conf
-
-[settings]
-cacheEntriesLimit = 0
-cacheBytesLimit = 0
-```
-Then restart your Splunk Enterprise instance.

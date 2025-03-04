@@ -32,7 +32,6 @@ clean:
 	rm -rf venv
 	rm -rf venv-tools
 	rm -rf packages/flare/bin/vendor
-	@unlink "/Applications/Splunk/etc/apps/flare" || true
 	@find . -type d -name "node_modules" -exec rm -rf {} +
 	rm -rf output/flare
 	@rm -f output/flare.tar.gz
@@ -105,6 +104,5 @@ sl: splunk-local
 
 .PHONY: splunk-local
 splunk-local: venv setup-web
-	@echo "Create symlink from app to Splunk Enterprise and start watching files"
-	SPLUNK_HOME="/Applications/Splunk" yarn run link
+	docker compose up -d
 	yarn run start

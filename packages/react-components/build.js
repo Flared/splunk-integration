@@ -4,7 +4,7 @@ const shell = require('shelljs');
 const OS = require('os').platform().toLocaleLowerCase();
 
 const arg = process.argv[2];
-const commands = ['build', 'link'];
+const commands = ['build'];
 
 if (!arg) {
     shell.echo(
