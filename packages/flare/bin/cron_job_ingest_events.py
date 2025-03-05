@@ -125,6 +125,8 @@ def main(
 
         save_next(kvstore=kvstore, tenant_id=tenant_id, next=next_token)
 
+        # stdout is picked up by splunk and this is how events
+        # are ingested after being retrieved from Flare.
         print(json.dumps(event), flush=True)
 
         events_fetched_count += 1

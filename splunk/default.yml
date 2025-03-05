@@ -1,4 +1,6 @@
 splunk:
+  launch:
+    FLARE_ENV: "dev"
   conf:
     - key: web
       value:
