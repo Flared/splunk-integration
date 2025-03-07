@@ -16,7 +16,7 @@ from constants import PasswordKeys
 from cron_job_ingest_events import fetch_feed
 from cron_job_ingest_events import get_api_key
 from cron_job_ingest_events import get_ingest_full_event_data
-from cron_job_ingest_events import get_tenant_id
+from cron_job_ingest_events import get_tenant_ids
 from cron_job_ingest_events import main
 
 
@@ -32,8 +32,8 @@ def test_get_api_key_expect_exception(storage_passwords: FakeStoragePasswords) -
     indirect=True,
 )
 def test_tenant_id_expect_exception(storage_passwords: FakeStoragePasswords) -> None:
-    with pytest.raises(Exception, match="Tenant ID not found"):
-        get_tenant_id(storage_passwords=storage_passwords)
+    with pytest.raises(Exception, match="Tenant IDs not found"):
+        get_tenant_ids(storage_passwords=storage_passwords)
 
 
 @pytest.mark.parametrize(
@@ -41,7 +41,7 @@ def test_tenant_id_expect_exception(storage_passwords: FakeStoragePasswords) -> 
     [
         [
             (PasswordKeys.API_KEY.value, "some_api_key"),
-            (PasswordKeys.TENANT_ID.value, 11111),
+            (PasswordKeys.TENANT_IDS.value, "[11111,22222]"),
         ],
     ],
     indirect=True,
@@ -50,7 +50,7 @@ def test_get_api_credentials_expect_api_key_and_tenant_id(
     storage_passwords: FakeStoragePasswords,
 ) -> None:
     assert get_api_key(storage_passwords=storage_passwords) == "some_api_key"
-    assert get_tenant_id(storage_passwords=storage_passwords) == 11111
+    assert get_tenant_ids(storage_passwords=storage_passwords) == [11111, 22222]
 
 
 def test_get_default_ingest_full_event_data_value(
@@ -91,7 +91,7 @@ def test_fetch_feed_expect_feed_response(
     [
         [
             (PasswordKeys.API_KEY.value, "some_api_key"),
-            (PasswordKeys.TENANT_ID.value, 11111),
+            (PasswordKeys.TENANT_IDS.value, "[11111]"),
         ]
     ],
     indirect=True,
@@ -122,7 +122,7 @@ def test_main_expect_early_return(
     [
         [
             (PasswordKeys.API_KEY.value, "some_api_key"),
-            (PasswordKeys.TENANT_ID.value, 11111),
+            (PasswordKeys.TENANT_IDS.value, "[11111,22222]"),
         ]
     ],
     indirect=True,
@@ -141,5 +141,6 @@ def test_main_expect_normal_run(
     )
     assert logger.messages == [
         "INFO: Fetching tenant_id=11111, next=None, start_date=FakeDatetime(1999, 12, 2, 0, 0, tzinfo=datetime.timezone.utc)",
-        "INFO: Fetched 2 events",
+        "INFO: Fetching tenant_id=22222, next=None, start_date=FakeDatetime(1999, 12, 2, 0, 0, tzinfo=datetime.timezone.utc)",
+        "INFO: Fetched 4 events",
     ]

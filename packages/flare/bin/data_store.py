@@ -16,14 +16,14 @@ config_path = os.path.join(
 
 class ConfigDataStore:
     def __init__(self) -> None:
-        config_store = configparser.ConfigParser()
+        config_store = configparser.RawConfigParser()
         config_store.read(config_path)
 
         # Add data sections
         if "metadata" not in config_store.sections():
             config_store.add_section("metadata")
-        if "next_tokens" not in config_store.sections():
-            config_store.add_section("next_tokens")
+        if "tenant_data" not in config_store.sections():
+            config_store.add_section("tenant_data")
         self._store = config_store
 
     def _commit(self) -> None:
@@ -32,43 +32,6 @@ class ConfigDataStore:
 
     def _sync(self) -> None:
         self._store.read(config_path)
-
-    def get_last_tenant_id(self) -> Optional[int]:
-        self._sync()
-        last_ingested_tenant_id = self._store.get(
-            "metadata", DataStoreKeys.LAST_INGESTED_TENANT_ID.value, fallback=None
-        )
-
-        try:
-            return int(last_ingested_tenant_id) if last_ingested_tenant_id else None
-        except Exception:
-            pass
-        return None
-
-    def set_last_tenant_id(self, tenant_id: int) -> None:
-        self._store.set(
-            "metadata", DataStoreKeys.LAST_INGESTED_TENANT_ID.value, str(tenant_id)
-        )
-        self._commit()
-
-    def get_start_date(self) -> Optional[datetime]:
-        self._sync()
-        start_date = self._store.get(
-            "metadata", DataStoreKeys.START_DATE.value, fallback=None
-        )
-
-        if start_date:
-            try:
-                return datetime.fromisoformat(start_date)
-            except Exception:
-                pass
-        return None
-
-    def set_start_date(self, start_date: datetime) -> None:
-        self._store.set(
-            "metadata", DataStoreKeys.START_DATE.value, start_date.isoformat()
-        )
-        self._commit()
 
     def get_last_fetch(self) -> Optional[datetime]:
         self._sync()
@@ -94,7 +57,7 @@ class ConfigDataStore:
     def get_next_by_tenant(self, tenant_id: int) -> Optional[str]:
         self._sync()
         return self._store.get(
-            "next_tokens",
+            "tenant_data",
             DataStoreKeys.get_next_token(tenant_id=tenant_id),
             fallback=None,
         )
@@ -104,5 +67,31 @@ class ConfigDataStore:
             return
 
         self._store.set(
-            "next_tokens", DataStoreKeys.get_next_token(tenant_id=tenant_id), next
+            "tenant_data", DataStoreKeys.get_next_token(tenant_id=tenant_id), next
         )
+        self._commit()
+
+    def get_earliest_ingested_by_tenant(self, tenant_id: int) -> Optional[datetime]:
+        self._sync()
+        earliest_ingested = self._store.get(
+            "tenant_data",
+            DataStoreKeys.get_earliest_ingested(tenant_id=tenant_id),
+            fallback=None,
+        )
+
+        if earliest_ingested:
+            try:
+                return datetime.fromisoformat(earliest_ingested)
+            except Exception:
+                pass
+        return None
+
+    def set_earliest_ingested_by_tenant(
+        self, tenant_id: int, earliest_ingested: datetime
+    ) -> None:
+        self._store.set(
+            "tenant_data",
+            DataStoreKeys.get_earliest_ingested(tenant_id=tenant_id),
+            earliest_ingested.isoformat(),
+        )
+        self._commit()

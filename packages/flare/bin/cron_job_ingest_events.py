@@ -43,7 +43,7 @@ def main(
         return
 
     api_key = get_api_key(storage_passwords=storage_passwords)
-    tenant_id = get_tenant_id(storage_passwords=storage_passwords)
+    tenant_ids = get_tenant_ids(storage_passwords=storage_passwords)
     ingest_full_event_data = get_ingest_full_event_data(
         storage_passwords=storage_passwords
     )
@@ -52,36 +52,67 @@ def main(
 
     data_store.set_last_fetch(datetime.now(timezone.utc))
 
-    # If the tenant has changed, update the start date so that future requests will be based off today
-    # If you switch tenants, this will avoid the old tenant from ingesting all the events before today and the day
-    # that tenant was switched in the first place.
-    if data_store.get_last_tenant_id() != tenant_id:
-        data_store.set_start_date((datetime.now(timezone.utc) - timedelta(days=30)))
-
-    data_store.set_last_tenant_id(tenant_id)
-
     events_fetched_count = 0
-    for event, next_token in fetch_feed(
-        logger=logger,
-        api_key=api_key,
-        tenant_id=tenant_id,
-        ingest_full_event_data=ingest_full_event_data,
-        severities=severities_filter,
-        source_types=source_types_filter,
-        flare_api_cls=flare_api_cls,
-        data_store=data_store,
-    ):
-        data_store.set_last_fetch(datetime.now(timezone.utc))
 
-        data_store.set_next_by_tenant(tenant_id, next_token)
+    for tenant_id in tenant_ids:
+        # The earliest ingested date serves as a low water mark to look
+        # for identifiers 30 days prior to the day a tenant was first configured.
+        start_date = data_store.get_earliest_ingested_by_tenant(tenant_id)
+        if not start_date:
+            start_date = datetime.now(timezone.utc) - timedelta(days=30)
+            data_store.set_earliest_ingested_by_tenant(tenant_id, start_date)
 
-        # stdout is picked up by splunk and this is how events
-        # are ingested after being retrieved from Flare.
-        print(json.dumps(event), flush=True)
+        for event, next_token in fetch_feed(
+            logger=logger,
+            api_key=api_key,
+            tenant_id=tenant_id,
+            ingest_full_event_data=ingest_full_event_data,
+            severities=severities_filter,
+            source_types=source_types_filter,
+            flare_api_cls=flare_api_cls,
+            data_store=data_store,
+        ):
+            data_store.set_last_fetch(datetime.now(timezone.utc))
 
-        events_fetched_count += 1
+            data_store.set_next_by_tenant(tenant_id, next_token)
+
+            event["tenant_id"] = tenant_id
+
+            # stdout is picked up by splunk and this is how events
+            # are ingested after being retrieved from Flare.
+            print(json.dumps(event), flush=True)
+
+            events_fetched_count += 1
 
     logger.info(f"Fetched {events_fetched_count} events")
+
+
+def fetch_feed(
+    logger: Logger,
+    api_key: str,
+    tenant_id: int,
+    ingest_full_event_data: bool,
+    severities: list[str],
+    source_types: list[str],
+    flare_api_cls: type[FlareAPI],
+    data_store: ConfigDataStore,
+) -> Iterator[tuple[dict, str]]:
+    try:
+        flare_api: FlareAPI = flare_api_cls(api_key=api_key, tenant_id=tenant_id)
+
+        next = data_store.get_next_by_tenant(tenant_id)
+        start_date = data_store.get_earliest_ingested_by_tenant(tenant_id)
+        logger.info(f"Fetching {tenant_id=}, {next=}, {start_date=}")
+        for event_next in flare_api.fetch_feed_events(
+            next=next,
+            start_date=start_date,
+            ingest_full_event_data=ingest_full_event_data,
+            severities=severities,
+            source_types=source_types,
+        ):
+            yield event_next
+    except Exception as e:
+        logger.error(f"Exception={e}")
 
 
 def get_storage_password_value(
@@ -103,18 +134,20 @@ def get_api_key(storage_passwords: client.StoragePasswords) -> str:
     return api_key
 
 
-def get_tenant_id(storage_passwords: client.StoragePasswords) -> int:
-    stored_tenant_id = get_storage_password_value(
-        storage_passwords=storage_passwords, password_key=PasswordKeys.TENANT_ID.value
+def get_tenant_ids(storage_passwords: client.StoragePasswords) -> list[int]:
+    stored_tenant_ids = get_storage_password_value(
+        storage_passwords=storage_passwords, password_key=PasswordKeys.TENANT_IDS.value
     )
     try:
-        tenant_id = int(stored_tenant_id) if stored_tenant_id is not None else None
+        tenant_ids: Optional[list[int]] = (
+            json.loads(stored_tenant_ids) if stored_tenant_ids else None
+        )
     except Exception:
         pass
 
-    if not tenant_id:
-        raise Exception("Tenant ID not found")
-    return tenant_id
+    if not tenant_ids:
+        raise Exception("Tenant IDs not found")
+    return tenant_ids
 
 
 def get_ingest_full_event_data(storage_passwords: client.StoragePasswords) -> bool:
@@ -149,34 +182,6 @@ def get_source_types_filter(storage_passwords: client.StoragePasswords) -> list[
         return source_types_filter.split(",")
 
     return []
-
-
-def fetch_feed(
-    logger: Logger,
-    api_key: str,
-    tenant_id: int,
-    ingest_full_event_data: bool,
-    severities: list[str],
-    source_types: list[str],
-    flare_api_cls: type[FlareAPI],
-    data_store: ConfigDataStore,
-) -> Iterator[tuple[dict, str]]:
-    try:
-        flare_api: FlareAPI = flare_api_cls(api_key=api_key, tenant_id=tenant_id)
-
-        next = data_store.get_next_by_tenant(tenant_id)
-        start_date = data_store.get_start_date()
-        logger.info(f"Fetching {tenant_id=}, {next=}, {start_date=}")
-        for event_next in flare_api.fetch_feed_events(
-            next=next,
-            start_date=start_date,
-            ingest_full_event_data=ingest_full_event_data,
-            severities=severities,
-            source_types=source_types,
-        ):
-            yield event_next
-    except Exception as e:
-        logger.error(f"Exception={e}")
 
 
 def get_splunk_service(logger: Logger, token: str) -> client.Service:

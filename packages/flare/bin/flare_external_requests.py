@@ -90,13 +90,11 @@ class FlareIngestionStatus(splunk.rest.BaseRestHandler):
 
         data_store = ConfigDataStore()
         last_fetched_timestamp = data_store.get_last_fetch()
-        last_tenant_id = data_store.get_last_tenant_id()
 
         status_resp = {
             "last_fetched_at": last_fetched_timestamp.isoformat()
             if last_fetched_timestamp is not None
-            else None,
-            "last_tenant_id": last_tenant_id,
+            else None
         }
         logger.debug(f"FlareIngestionStatus: {status_resp}")
         self.response.setHeader("Content-Type", "application/json")

@@ -210,7 +210,6 @@ async function fetchIngestionStatus(): Promise<IngestionStatus> {
     return (
         data || {
             last_fetched_at: '',
-            last_tenant_id: '',
         }
     );
 }
@@ -230,16 +229,6 @@ async function fetchPassword(passwordKey: string): Promise<string | undefined> {
 
 async function fetchApiKey(): Promise<string> {
     return (await fetchPassword(PasswordKeys.API_KEY)) || '';
-}
-
-async function fetchTenantId(): Promise<number | undefined> {
-    return fetchPassword(PasswordKeys.TENANT_ID).then((tenantId) => {
-        if (tenantId) {
-            return parseInt(tenantId, 10);
-        }
-
-        return undefined;
-    });
 }
 
 async function fetchTenantIds(): Promise<number[]> {
@@ -457,7 +446,6 @@ export {
     fetchSeveritiesFilter,
     fetchSourceTypeFilters,
     fetchSourceTypesFilter,
-    fetchTenantId,
     fetchTenantIds,
     fetchUserTenants,
     fetchVersionName,

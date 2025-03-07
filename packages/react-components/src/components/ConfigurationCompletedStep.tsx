@@ -1,6 +1,6 @@
 import React, { FC, useEffect, useState } from 'react';
 import {
-    fetchTenantId,
+    fetchTenantIds,
     fetchUserTenants,
     getFlareSearchDataUrl,
 } from '../utils/setupConfiguration';
@@ -18,24 +18,28 @@ const ConfigurationCompletedStep: FC<{
 }> = ({ apiKey, configurationStep, onEditConfigurationClick }) => {
     const [isInitializingData, setIsInitializingData] = useState(true);
     const [flareSearchUrl, setFlareSearchUrl] = useState('');
-    const [tenantName, setTenantName] = useState('');
+    const [tenantNames, setTenantNames] = useState('');
 
     useEffect(() => {
         if (configurationStep === ConfigurationStep.Completed) {
-            Promise.all([getFlareSearchDataUrl(), fetchTenantId(), fetchUserTenants(apiKey)]).then(
-                ([url, tenantId, userTenants]) => {
+            Promise.all([getFlareSearchDataUrl(), fetchTenantIds(), fetchUserTenants(apiKey)]).then(
+                ([url, tenantIds, userTenants]) => {
                     setFlareSearchUrl(url);
-                    setTenantName(
-                        userTenants.find((tenant: Tenant) => tenant.id === tenantId)?.name ||
-                            'unknown'
-                    );
+                    const tenantNameStrings = tenantIds
+                        .map(
+                            (tenantId) =>
+                                userTenants.find((tenant: Tenant) => tenant.id === tenantId)?.name
+                        )
+                        .filter(Boolean)
+                        .join(', ');
+                    setTenantNames(tenantNameStrings || 'Unknown');
                     setIsInitializingData(false);
                 }
             );
         } else {
             setIsInitializingData(true);
             setFlareSearchUrl('');
-            setTenantName('');
+            setTenantNames('');
         }
     }, [configurationStep, apiKey]);
 
@@ -51,8 +55,8 @@ const ConfigurationCompletedStep: FC<{
         <div>
             <h5>
                 {`You can now access `}
-                <b>{tenantName}</b>
-                {`'s Flare Data in Splunk.`}
+                <b>{tenantNames}</b>
+                {` Flare Data in Splunk.`}
             </h5>
             <div className="form-group">
                 <div className="button-group">
