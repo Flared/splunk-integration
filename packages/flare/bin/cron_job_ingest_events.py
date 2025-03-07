@@ -52,9 +52,11 @@ def main(
 
     data_store.set_last_fetch(datetime.now(timezone.utc))
 
-    events_fetched_count = 0
+    total_events_fetched_count = 0
 
     for tenant_id in tenant_ids:
+        events_fetched_count = 0
+
         # The earliest ingested date serves as a low water mark to look
         # for identifiers 30 days prior to the day a tenant was first configured.
         start_date = data_store.get_earliest_ingested_by_tenant(tenant_id)
@@ -83,8 +85,10 @@ def main(
             print(json.dumps(event), flush=True)
 
             events_fetched_count += 1
+        logger.info(f"Fetched {events_fetched_count} events on tenant {tenant_id}")
+        total_events_fetched_count += events_fetched_count
 
-    logger.info(f"Fetched {events_fetched_count} events")
+    logger.info(f"Fetched {events_fetched_count} events across all tenants")
 
 
 def fetch_feed(
