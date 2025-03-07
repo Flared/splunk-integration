@@ -23,5 +23,5 @@ class DataStoreKeys(Enum):
     TIMESTAMP_LAST_FETCH = "timestamp_last_fetch"
 
     @staticmethod
-    def get_next_token(tenantId: int) -> str:
-        return f"next_{tenantId}"
+    def get_next_token(tenant_id: int) -> str:
+        return f"next_{tenant_id}"

@@ -97,7 +97,7 @@ class ConfigDataStore:
         self._sync()
         return self._store.get(
             "next_tokens",
-            DataStoreKeys.get_next_token(tenantId=tenant_id),
+            DataStoreKeys.get_next_token(tenant_id=tenant_id),
             fallback=None,
         )
 
@@ -106,5 +106,5 @@ class ConfigDataStore:
             return
 
         self._store.set(
-            "next_tokens", DataStoreKeys.get_next_token(tenantId=tenant_id), next
+            "next_tokens", DataStoreKeys.get_next_token(tenant_id=tenant_id), next
         )
