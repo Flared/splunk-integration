@@ -14,11 +14,12 @@ from urllib import parse
 
 sys.path.insert(0, os.path.dirname(__file__))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "vendor"))
+from data_store import ConfigDataStore
 from flare import FlareAPI
 from logger import Logger
 
 
-class FlareValidateApiKey(splunk.rest.BaseRestHandler):
+class FlareValidateApiKey(splunk.rest.BaseRestHandler):  # type: ignore
     def handle_POST(self) -> None:
         payload = self.request["payload"]
         params = parse.parse_qs(payload)
@@ -32,7 +33,7 @@ class FlareValidateApiKey(splunk.rest.BaseRestHandler):
         self.response.write(json.dumps({}))
 
 
-class FlareUserTenants(splunk.rest.BaseRestHandler):
+class FlareUserTenants(splunk.rest.BaseRestHandler):  # type: ignore
     def handle_POST(self) -> None:
         logger = Logger(class_name=__file__)
         payload = self.request["payload"]
@@ -49,7 +50,7 @@ class FlareUserTenants(splunk.rest.BaseRestHandler):
         self.response.write(json.dumps(response_json))
 
 
-class FlareSeverityFilters(splunk.rest.BaseRestHandler):
+class FlareSeverityFilters(splunk.rest.BaseRestHandler):  # type: ignore
     def handle_POST(self) -> None:
         logger = Logger(class_name=__file__)
         payload = self.request["payload"]
@@ -66,7 +67,7 @@ class FlareSeverityFilters(splunk.rest.BaseRestHandler):
         self.response.write(json.dumps(response_json))
 
 
-class FlareSourceTypeFilters(splunk.rest.BaseRestHandler):
+class FlareSourceTypeFilters(splunk.rest.BaseRestHandler):  # type: ignore
     def handle_POST(self) -> None:
         logger = Logger(class_name=__file__)
         payload = self.request["payload"]
@@ -81,3 +82,22 @@ class FlareSourceTypeFilters(splunk.rest.BaseRestHandler):
         logger.debug(f"FlareSourceTypeFilters: {response_json}")
         self.response.setHeader("Content-Type", "application/json")
         self.response.write(json.dumps(response_json))
+
+
+class FlareIngestionStatus(splunk.rest.BaseRestHandler):  # type: ignore
+    def handle_GET(self) -> None:
+        logger = Logger(class_name=__file__)
+
+        data_store = ConfigDataStore()
+        last_fetched_timestamp = data_store.get_last_fetch()
+        last_tenant_id = data_store.get_last_tenant_id()
+
+        status_resp = {
+            "last_fetched_at": last_fetched_timestamp.isoformat()
+            if last_fetched_timestamp is not None
+            else None,
+            "last_tenant_id": last_tenant_id,
+        }
+        logger.debug(f"FlareIngestionStatus: {status_resp}")
+        self.response.setHeader("Content-Type", "application/json")
+        self.response.write(json.dumps(status_resp))

@@ -1,6 +1,6 @@
 services:
   splunk:
-    image: splunk/splunk:9.3
+    image: splunk/splunk:latest
     container_name: splunk
     platform: linux/amd64
     restart: unless-stopped
@@ -12,3 +12,4 @@ services:
     volumes:
       - ./output/flare:/opt/splunk/etc/apps/flare
       - ./splunk/default.yml:/tmp/defaults/default.yml
+      - ./logs:/opt/splunk/var/log/splunk

@@ -1,15 +1,12 @@
 import React, { FC, useEffect, useState } from 'react';
 import Button from './components/Button';
 import './global.css';
-import { KVCollectionItem } from './models/splunk';
 import './StatusScreen.css';
 import {
-    fetchCollectionItems,
+    fetchIngestionStatus,
     fetchCurrentIndexName,
-    fetchTenantId,
     fetchVersionName,
 } from './utils/setupConfiguration';
-import { CollectionKeys } from './models/constants';
 
 enum StatusItemKeys {
     START_DATE = 'start_date',
@@ -33,51 +30,37 @@ const StatusScreen: FC<{ theme: string }> = ({ theme }) => {
 
     useEffect(() => {
         Promise.all([
-            fetchTenantId(),
-            fetchCollectionItems(),
+            fetchIngestionStatus(),
             fetchVersionName('unknown'),
             fetchCurrentIndexName(),
-        ]).then(([id, kvCollectionItems, version, indexName]) => {
-            const items: StatusItem[] = [
+        ]).then(([ingestionStatus, version, indexName]) => {
+            setStatusItem([
                 {
                     key: StatusItemKeys.VERSION,
-                    name: getItemName(StatusItemKeys.VERSION),
+                    name: 'Version',
                     value: `${version}`,
                 },
                 {
                     key: StatusItemKeys.INDEX,
-                    name: getItemName(StatusItemKeys.INDEX),
+                    name: 'Splunk Index',
                     value: `${indexName}`,
                 },
-            ];
-            const advancedItems: StatusItem[] = [
+            ]);
+
+            setAdvancedStatusItem([
                 {
                     key: StatusItemKeys.LAST_INGESTED_TENANT_ID,
-                    name: getItemName(StatusItemKeys.LAST_INGESTED_TENANT_ID),
-                    value: `${id}`,
+                    name: 'Last Tenant ID Ingested',
+                    value: ingestionStatus.last_tenant_id || 'N/A',
                 },
-            ];
-            kvCollectionItems.forEach((item) => {
-                if (item.key === StatusItemKeys.LAST_FETCHED) {
-                    items.push({
-                        key: item.key.startsWith(CollectionKeys.NEXT_PREFIX)
-                            ? StatusItemKeys.NEXT_TOKEN
-                            : (item.key as StatusItemKeys),
-                        name: getItemName(item.key),
-                        value: formatValue(item),
-                    });
-                } else {
-                    advancedItems.push({
-                        key: item.key.startsWith(CollectionKeys.NEXT_PREFIX)
-                            ? StatusItemKeys.NEXT_TOKEN
-                            : (item.key as StatusItemKeys),
-                        name: getItemName(item.key),
-                        value: formatValue(item),
-                    });
-                }
-            });
-            setStatusItem(items);
-            setAdvancedStatusItem(advancedItems);
+                {
+                    key: StatusItemKeys.LAST_FETCHED,
+                    name: 'Last moment the events were ingested',
+                    value: ingestionStatus.last_fetched_at
+                        ? new Date(ingestionStatus.last_fetched_at).toLocaleString()
+                        : 'N/A',
+                },
+            ]);
         });
     }, []);
 
@@ -88,44 +71,6 @@ const StatusScreen: FC<{ theme: string }> = ({ theme }) => {
             parentContainer.className = `parent-container ${theme === 'dark' ? 'dark' : ''}`;
         }
     }, [theme]);
-
-    function getItemName(key: string): string {
-        if (key.startsWith(CollectionKeys.NEXT_PREFIX)) {
-            const parsedTenantId = parseInt(key.substring(CollectionKeys.NEXT_PREFIX.length), 10);
-            return `Next token for Tenant ID ${parsedTenantId}`;
-        }
-
-        if (key === StatusItemKeys.START_DATE) {
-            return 'Date of the first time events were ingested';
-        }
-
-        if (key === StatusItemKeys.LAST_FETCHED) {
-            return 'Last moment the events were ingested';
-        }
-
-        if (key === StatusItemKeys.LAST_INGESTED_TENANT_ID) {
-            return 'Last Tenant ID Ingested';
-        }
-
-        if (key === StatusItemKeys.INDEX) {
-            return 'Splunk Index';
-        }
-
-        if (key === StatusItemKeys.VERSION) {
-            return 'Version';
-        }
-
-        return 'Unknown Status Item';
-    }
-
-    function formatValue(item: KVCollectionItem): string {
-        if (item.key === StatusItemKeys.START_DATE || item.key === StatusItemKeys.LAST_FETCHED) {
-            const date = new Date(item.value);
-            return date.toLocaleString();
-        }
-
-        return item.value;
-    }
 
     const toggleShowingAllItems = (): void => setShowingAllItems(!isShowingAllItems);
 

@@ -1,20 +1,17 @@
+import json
+import os
 import sys
 
 
 if sys.version_info < (3, 9):
     sys.exit("Error: This application requires Python 3.9 or higher.")
 
-
-import json
-import os
-
+from data_store import ConfigDataStore
 from datetime import datetime
 from datetime import timedelta
 from datetime import timezone
-from typing import Any
 from typing import Iterator
 from typing import Optional
-from typing import Protocol
 
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "vendor"))
@@ -23,75 +20,20 @@ import vendor.splunklib.client as client
 from constants import APP_NAME
 from constants import CRON_JOB_THRESHOLD_SINCE_LAST_FETCH
 from constants import HOST
-from constants import KV_COLLECTION_NAME
 from constants import SPLUNK_PORT
-from constants import CollectionKeys
 from constants import PasswordKeys
 from flare import FlareAPI
 from logger import Logger
-from vendor.splunklib.client import Entity
-
-
-class StoragePasswords(Protocol):
-    def list(self) -> list:
-        pass
-
-
-class KVStoreCollections(Protocol):
-    def __getitem__(self, key: str) -> Entity:
-        pass
-
-    def __contains__(self, item: str) -> bool:
-        pass
-
-    def create(self, name: str, fields: dict) -> dict:
-        pass
-
-
-class KVStoreCollectionData(Protocol):
-    def insert(self, data: str) -> dict:
-        pass
-
-    def update(self, id: str, data: str) -> dict:
-        pass
-
-    def query(self, **query: dict) -> list:
-        pass
-
-
-class Collection(Protocol):
-    def __getitem__(self, key: str) -> Entity:
-        pass
-
-
-class Service(Protocol):
-    @property
-    def apps(self) -> Collection:
-        pass
-
-    @property
-    def storage_passwords(self) -> StoragePasswords:
-        pass
-
-    @property
-    def kvstore(self) -> KVStoreCollections:
-        pass
-
-
-class Application(Protocol):
-    service: Service
 
 
 def main(
     logger: Logger,
-    storage_passwords: StoragePasswords,
-    kvstore: KVStoreCollections,
-    flare_api_cls: FlareAPI,
+    storage_passwords: client.StoragePasswords,
+    flare_api_cls: type[FlareAPI],
+    data_store: ConfigDataStore,
 ) -> None:
-    create_collection(kvstore=kvstore)
-
     # To avoid cron jobs from doing the same work at the same time, exit new cron jobs if a cron job is already doing work
-    last_fetched_timestamp = get_last_fetched(kvstore=kvstore)
+    last_fetched_timestamp = data_store.get_last_fetch()
     if last_fetched_timestamp and last_fetched_timestamp > (
         datetime.now() - CRON_JOB_THRESHOLD_SINCE_LAST_FETCH
     ):
@@ -108,22 +50,30 @@ def main(
     severities_filter = get_severities_filter(storage_passwords=storage_passwords)
     source_types_filter = get_source_types_filter(storage_passwords=storage_passwords)
 
-    save_last_fetched(kvstore=kvstore)
-    save_last_ingested_tenant_id(kvstore=kvstore, tenant_id=tenant_id)
+    data_store.set_last_fetch(datetime.now())
+
+    # If the tenant has changed, update the start date so that future requests will be based off today
+    # If you switch tenants, this will avoid the old tenant from ingesting all the events before today and the day
+    # that tenant was switched in the first place.
+    if data_store.get_last_tenant_id() != tenant_id:
+        data_store.set_start_date((datetime.now(timezone.utc) - timedelta(days=30)))
+
+    data_store.set_last_tenant_id(tenant_id)
+
     events_fetched_count = 0
     for event, next_token in fetch_feed(
         logger=logger,
-        kvstore=kvstore,
         api_key=api_key,
         tenant_id=tenant_id,
         ingest_full_event_data=ingest_full_event_data,
         severities=severities_filter,
         source_types=source_types_filter,
         flare_api_cls=flare_api_cls,
+        data_store=data_store,
     ):
-        save_last_fetched(kvstore=kvstore)
+        data_store.set_last_fetch(datetime.now())
 
-        save_next(kvstore=kvstore, tenant_id=tenant_id, next=next_token)
+        data_store.set_next_by_tenant(tenant_id, next_token)
 
         # stdout is picked up by splunk and this is how events
         # are ingested after being retrieved from Flare.
@@ -135,7 +85,7 @@ def main(
 
 
 def get_storage_password_value(
-    storage_passwords: StoragePasswords, password_key: str
+    storage_passwords: client.StoragePasswords, password_key: str
 ) -> Optional[str]:
     for item in storage_passwords.list():
         if item.content.username == password_key:
@@ -144,7 +94,7 @@ def get_storage_password_value(
     return None
 
 
-def get_api_key(storage_passwords: StoragePasswords) -> str:
+def get_api_key(storage_passwords: client.StoragePasswords) -> str:
     api_key = get_storage_password_value(
         storage_passwords=storage_passwords, password_key=PasswordKeys.API_KEY.value
     )
@@ -153,7 +103,7 @@ def get_api_key(storage_passwords: StoragePasswords) -> str:
     return api_key
 
 
-def get_tenant_id(storage_passwords: StoragePasswords) -> int:
+def get_tenant_id(storage_passwords: client.StoragePasswords) -> int:
     stored_tenant_id = get_storage_password_value(
         storage_passwords=storage_passwords, password_key=PasswordKeys.TENANT_ID.value
     )
@@ -167,7 +117,7 @@ def get_tenant_id(storage_passwords: StoragePasswords) -> int:
     return tenant_id
 
 
-def get_ingest_full_event_data(storage_passwords: StoragePasswords) -> bool:
+def get_ingest_full_event_data(storage_passwords: client.StoragePasswords) -> bool:
     return (
         get_storage_password_value(
             storage_passwords=storage_passwords,
@@ -177,7 +127,7 @@ def get_ingest_full_event_data(storage_passwords: StoragePasswords) -> bool:
     )
 
 
-def get_severities_filter(storage_passwords: StoragePasswords) -> list[str]:
+def get_severities_filter(storage_passwords: client.StoragePasswords) -> list[str]:
     severities_filter = get_storage_password_value(
         storage_passwords=storage_passwords,
         password_key=PasswordKeys.SEVERITIES_FILTER.value,
@@ -189,7 +139,7 @@ def get_severities_filter(storage_passwords: StoragePasswords) -> list[str]:
     return []
 
 
-def get_source_types_filter(storage_passwords: StoragePasswords) -> list[str]:
+def get_source_types_filter(storage_passwords: client.StoragePasswords) -> list[str]:
     source_types_filter = get_storage_password_value(
         storage_passwords=storage_passwords,
         password_key=PasswordKeys.SOURCE_TYPES_FILTER.value,
@@ -201,138 +151,21 @@ def get_source_types_filter(storage_passwords: StoragePasswords) -> list[str]:
     return []
 
 
-def get_next(kvstore: KVStoreCollections, tenant_id: int) -> Optional[str]:
-    return get_collection_value(
-        kvstore=kvstore, key=CollectionKeys.get_next_token(tenantId=tenant_id)
-    )
-
-
-def get_start_date(kvstore: KVStoreCollections) -> Optional[datetime]:
-    start_date = get_collection_value(
-        kvstore=kvstore, key=CollectionKeys.START_DATE.value
-    )
-    if start_date:
-        try:
-            return datetime.fromisoformat(start_date)
-        except Exception:
-            pass
-    return None
-
-
-def get_last_ingested_tenant_id(kvstore: KVStoreCollections) -> Optional[int]:
-    last_ingested_tenant_id = get_collection_value(
-        kvstore=kvstore, key=CollectionKeys.LAST_INGESTED_TENANT_ID.value
-    )
-    try:
-        return int(last_ingested_tenant_id) if last_ingested_tenant_id else None
-    except Exception:
-        pass
-    return None
-
-
-def get_last_fetched(kvstore: KVStoreCollections) -> Optional[datetime]:
-    timestamp_last_fetched = get_collection_value(
-        kvstore=kvstore, key=CollectionKeys.TIMESTAMP_LAST_FETCH.value
-    )
-    if timestamp_last_fetched:
-        try:
-            return datetime.fromisoformat(timestamp_last_fetched)
-        except Exception:
-            pass
-    return None
-
-
-def create_collection(kvstore: KVStoreCollections) -> None:
-    if KV_COLLECTION_NAME not in kvstore:
-        # Create the collection
-        kvstore.create(
-            name=KV_COLLECTION_NAME, fields={"_key": "string", "value": "string"}
-        )
-
-
-def save_last_ingested_tenant_id(kvstore: KVStoreCollections, tenant_id: int) -> None:
-    # If the tenant has changed, update the start date so that future requests will be based off today
-    # If you switch tenants, this will avoid the old tenant from ingesting all the events before today and the day
-    # that tenant was switched in the first place.
-    if get_last_ingested_tenant_id(kvstore=kvstore) != tenant_id:
-        save_collection_value(
-            kvstore=kvstore,
-            key=CollectionKeys.START_DATE.value,
-            value=(datetime.now(timezone.utc) - timedelta(days=30)).isoformat(),
-        )
-
-    save_collection_value(
-        kvstore=kvstore,
-        key=CollectionKeys.LAST_INGESTED_TENANT_ID.value,
-        value=tenant_id,
-    )
-
-
-def save_next(kvstore: KVStoreCollections, tenant_id: int, next: Optional[str]) -> None:
-    # If we have a new next value, update the collection for that tenant to continue searching from that point
-    if not next:
-        return
-
-    save_collection_value(
-        kvstore=kvstore,
-        key=CollectionKeys.get_next_token(tenantId=tenant_id),
-        value=next,
-    )
-
-
-def save_last_fetched(kvstore: KVStoreCollections) -> None:
-    save_collection_value(
-        kvstore=kvstore,
-        key=CollectionKeys.TIMESTAMP_LAST_FETCH.value,
-        value=datetime.now().isoformat(),
-    )
-
-
-def get_collection_value(kvstore: KVStoreCollections, key: str) -> Optional[str]:
-    # Ensure collection exists
-    create_collection(kvstore=kvstore)
-
-    data = kvstore[KV_COLLECTION_NAME].data.query()
-    for entry in data:
-        if entry["_key"] == key:
-            return entry["value"]
-
-    return None
-
-
-def save_collection_value(kvstore: KVStoreCollections, key: str, value: Any) -> None:
-    if not get_collection_value(kvstore=kvstore, key=key):
-        kvstore[KV_COLLECTION_NAME].data.insert(
-            json.dumps(
-                {
-                    "_key": key,
-                    "value": value,
-                }
-            )
-        )
-        return
-
-    kvstore[KV_COLLECTION_NAME].data.update(
-        id=key,
-        data=json.dumps({"value": value}),
-    )
-
-
 def fetch_feed(
     logger: Logger,
-    kvstore: KVStoreCollections,
     api_key: str,
     tenant_id: int,
     ingest_full_event_data: bool,
     severities: list[str],
     source_types: list[str],
-    flare_api_cls: FlareAPI = FlareAPI,
+    flare_api_cls: type[FlareAPI],
+    data_store: ConfigDataStore,
 ) -> Iterator[tuple[dict, str]]:
     try:
         flare_api: FlareAPI = flare_api_cls(api_key=api_key, tenant_id=tenant_id)
 
-        next = get_next(kvstore=kvstore, tenant_id=tenant_id)
-        start_date = get_start_date(kvstore=kvstore)
+        next = data_store.get_next_by_tenant(tenant_id)
+        start_date = data_store.get_start_date()
         logger.info(f"Fetching {tenant_id=}, {next=}, {start_date=}")
         for event_next in flare_api.fetch_feed_events(
             next=next,
@@ -346,7 +179,7 @@ def fetch_feed(
         logger.error(f"Exception={e}")
 
 
-def get_splunk_service(logger: Logger, token: str) -> Service:
+def get_splunk_service(logger: Logger, token: str) -> client.Service:
     try:
         splunk_service = client.connect(
             host=HOST,
@@ -364,18 +197,18 @@ def get_splunk_service(logger: Logger, token: str) -> Service:
 
 if __name__ == "__main__":
     logger = Logger(class_name=__file__)
+    data_store = ConfigDataStore()
     token = sys.stdin.readline().strip()  # SEE: passAuth in https://docs.splunk.com/Documentation/Splunk/9.4.0/Admin/Inputsconf
     if not token:
         raise Exception(
             "Token not found - Go through the complete app configuration to update the user token."
         )
 
-    splunk_service: Service = get_splunk_service(logger=logger, token=token)
-    app: Application = splunk_service.apps[APP_NAME]
+    splunk_service = get_splunk_service(logger=logger, token=token)
+    app: client.Application = splunk_service.apps[APP_NAME]
 
     main(
         logger=logger,
         storage_passwords=app.service.storage_passwords,
-        kvstore=app.service.kvstore,
         flare_api_cls=FlareAPI,
     )
