@@ -35,7 +35,7 @@ def main(
     # To avoid cron jobs from doing the same work at the same time, exit new cron jobs if a cron job is already doing work
     last_fetched_timestamp = data_store.get_last_fetch()
     if last_fetched_timestamp and last_fetched_timestamp > (
-        datetime.now() - CRON_JOB_THRESHOLD_SINCE_LAST_FETCH
+        datetime.now(timezone.utc) - CRON_JOB_THRESHOLD_SINCE_LAST_FETCH
     ):
         logger.info(
             f"Fetched events less than {int(CRON_JOB_THRESHOLD_SINCE_LAST_FETCH.seconds / 60)} minutes ago, exiting"
@@ -50,7 +50,7 @@ def main(
     severities_filter = get_severities_filter(storage_passwords=storage_passwords)
     source_types_filter = get_source_types_filter(storage_passwords=storage_passwords)
 
-    data_store.set_last_fetch(datetime.now())
+    data_store.set_last_fetch(datetime.now(timezone.utc))
 
     # If the tenant has changed, update the start date so that future requests will be based off today
     # If you switch tenants, this will avoid the old tenant from ingesting all the events before today and the day
@@ -71,7 +71,7 @@ def main(
         flare_api_cls=flare_api_cls,
         data_store=data_store,
     ):
-        data_store.set_last_fetch(datetime.now())
+        data_store.set_last_fetch(datetime.now(timezone.utc))
 
         data_store.set_next_by_tenant(tenant_id, next_token)
 

@@ -102,7 +102,9 @@ def test_main_expect_early_return(
     storage_passwords: FakeStoragePasswords,
     data_store: ConfigDataStore,
 ) -> None:
-    data_store.set_last_fetch(datetime.datetime.fromisoformat("2000-01-01T12:00:00"))
+    data_store.set_last_fetch(
+        datetime.datetime.fromisoformat("2000-01-01T12:00:00+00:00")
+    )
 
     main(
         logger=logger,

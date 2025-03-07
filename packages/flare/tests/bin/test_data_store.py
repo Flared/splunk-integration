@@ -1,5 +1,6 @@
 from data_store import ConfigDataStore
 from datetime import datetime
+from datetime import timezone
 
 
 def test_get_and_set_last_tenant_id(data_store: ConfigDataStore) -> None:
@@ -8,13 +9,13 @@ def test_get_and_set_last_tenant_id(data_store: ConfigDataStore) -> None:
 
 
 def test_get_and_set_start_date(data_store: ConfigDataStore) -> None:
-    date = datetime(2024, 3, 6, 12, 0, 0)
+    date = datetime(2024, 3, 6, 12, 0, 0, tzinfo=timezone.utc)
     data_store.set_start_date(date)
     assert data_store.get_start_date() == date
 
 
 def test_get_and_set_last_fetch(data_store: ConfigDataStore) -> None:
-    date = datetime(2024, 3, 6, 14, 0, 0)
+    date = datetime(2024, 3, 6, 14, 0, 0, tzinfo=timezone.utc)
     data_store.set_last_fetch(date)
     assert data_store.get_last_fetch() == date
 
