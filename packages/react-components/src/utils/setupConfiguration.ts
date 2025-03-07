@@ -117,7 +117,7 @@ async function savePassword(storage: StoragePasswords, key: string, value: strin
 
 async function saveConfiguration(
     apiKey: string,
-    tenantId: number,
+    tenantIds: number[],
     indexName: string,
     isIngestingFullEventData: boolean,
     severitiesFilter: string,
@@ -126,7 +126,7 @@ async function saveConfiguration(
     const service = createService();
     const storagePasswords = await promisify(service.storagePasswords().fetch)();
     await savePassword(storagePasswords, PasswordKeys.API_KEY, apiKey);
-    await savePassword(storagePasswords, PasswordKeys.TENANT_ID, `${tenantId}`);
+    await savePassword(storagePasswords, PasswordKeys.TENANT_IDS, JSON.stringify(tenantIds));
     await savePassword(
         storagePasswords,
         PasswordKeys.INGEST_FULL_EVENT_DATA,
@@ -239,6 +239,19 @@ async function fetchTenantId(): Promise<number | undefined> {
         }
 
         return undefined;
+    });
+}
+
+async function fetchTenantIds(): Promise<number[]> {
+    return fetchPassword(PasswordKeys.TENANT_IDS).then((tenantIds) => {
+        if (!tenantIds) {
+            return [];
+        }
+        try {
+            return JSON.parse(tenantIds);
+        } catch {
+            return [];
+        }
     });
 }
 
@@ -445,6 +458,7 @@ export {
     fetchSourceTypeFilters,
     fetchSourceTypesFilter,
     fetchTenantId,
+    fetchTenantIds,
     fetchUserTenants,
     fetchVersionName,
     getFlareSearchDataUrl,

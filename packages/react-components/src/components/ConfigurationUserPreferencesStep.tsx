@@ -19,13 +19,13 @@ import {
     fetchSourceTypeFilters,
     fetchIngestFullEventData,
     fetchSeveritiesFilter,
-    fetchTenantId,
     fetchUserTenants,
     fetchSourceTypesFilter,
     getSeverityFilterValue,
     getSourceTypesFilterValue,
     saveConfiguration,
     convertSourceTypeFilterToArray,
+    fetchTenantIds,
 } from '../utils/setupConfiguration';
 import './ConfigurationGlobalStep.css';
 import './ConfigurationUserPreferencesStep.css';
@@ -35,6 +35,7 @@ import Switch from './Switch';
 import { ToastKeys, toastManager } from './ToastManager';
 import Tooltip from './Tooltip';
 import FlareLogoLoading from './FlareLogoLoading';
+import TenantSelection from './TenantSelection';
 
 const ConfigurationUserPreferencesStep: FC<{
     configurationStep: ConfigurationStep;
@@ -43,7 +44,7 @@ const ConfigurationUserPreferencesStep: FC<{
     onUserPreferencesSaved: () => void;
 }> = ({ configurationStep, apiKey, onNavigateBackClick, onUserPreferencesSaved }) => {
     const [isInitializingData, setIsInitializingData] = useState(true);
-    const [tenantId, setTenantId] = useState<number | undefined>(undefined);
+    const [selectedTenantIds, setSelectedTenantIds] = useState<Set<number>>(new Set());
     const [tenants, setUserTenants] = useState<Tenant[]>([]);
     const [selectedSeverities, setSelectedSeverities] = useState<Severity[]>([]);
     const [severities, setSeverities] = useState<Severity[]>([]);
@@ -54,7 +55,6 @@ const ConfigurationUserPreferencesStep: FC<{
     const [isIngestingFullEventData, setIsIngestingFullEventData] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
-    const handleTenantIdChange = (e): void => setTenantId(parseInt(e.target.value, 10));
     const handleIndexNameChange = (e): void => setIndexName(e.target.value);
     const handleIsIngestingFullEventDataChange = (e): void =>
         setIsIngestingFullEventData(e.target.checked);
@@ -64,7 +64,7 @@ const ConfigurationUserPreferencesStep: FC<{
 
         saveConfiguration(
             apiKey,
-            Number(tenantId),
+            Array.from(selectedTenantIds),
             indexName,
             isIngestingFullEventData,
             getSeverityFilterValue(selectedSeverities, severities),
@@ -92,7 +92,7 @@ const ConfigurationUserPreferencesStep: FC<{
     useEffect(() => {
         if (configurationStep === ConfigurationStep.UserPreferences) {
             Promise.all([
-                fetchTenantId(),
+                fetchTenantIds(),
                 fetchIngestFullEventData(),
                 fetchCurrentIndexName(),
                 fetchUserTenants(apiKey),
@@ -104,7 +104,7 @@ const ConfigurationUserPreferencesStep: FC<{
             ])
                 .then(
                     ([
-                        id,
+                        tenantIds,
                         ingestFullEventData,
                         index,
                         userTenants,
@@ -114,12 +114,9 @@ const ConfigurationUserPreferencesStep: FC<{
                         allSourceTypeCategories,
                         sourceTypeFilter,
                     ]) => {
-                        setTenantId(id);
+                        setSelectedTenantIds(new Set(tenantIds));
                         setIsIngestingFullEventData(ingestFullEventData);
                         setIndexName(index);
-                        if (id === undefined && userTenants.length > 0) {
-                            setTenantId(userTenants[0].id);
-                        }
                         setUserTenants(userTenants);
                         setIndexNames(availableIndexNames);
                         setSeverities(allSeverities);
@@ -144,7 +141,7 @@ const ConfigurationUserPreferencesStep: FC<{
                     });
                 });
         } else {
-            setTenantId(undefined);
+            setSelectedTenantIds(new Set([]));
             setIndexName(APP_NAME);
             setIndexNames([]);
             setUserTenants([]);
@@ -159,7 +156,7 @@ const ConfigurationUserPreferencesStep: FC<{
 
     const isFormValid = (): boolean => {
         return (
-            tenantId !== undefined &&
+            selectedTenantIds.size > 0 &&
             selectedSeverities.length > 0 &&
             selectedSourceTypes.length > 0
         );
@@ -178,17 +175,20 @@ const ConfigurationUserPreferencesStep: FC<{
             <h5>Please select the Tenant you want to ingest events from</h5>
             <div className="form-group">
                 <div className="form-item">
-                    <Label>Tenant</Label>
-                    <Select id="tenants" onChange={handleTenantIdChange} value={tenantId}>
-                        {tenants.map((tenant) => {
-                            return (
-                                <option key={tenants.indexOf(tenant)} value={tenant.id}>
-                                    {tenant.name}
-                                </option>
-                            );
-                        })}
-                    </Select>
-                    <small className="note">You can only monitor one tenant at a time.</small>
+                    <Label>Tenants</Label>
+                    <TenantSelection
+                        tenants={tenants}
+                        isChecked={selectedTenantIds.size === tenants.length}
+                        selectedTenantIds={selectedTenantIds}
+                        onTenantCheckChange={(tenant: Tenant, isChecked: boolean): void => {
+                            if (isChecked) {
+                                selectedTenantIds.add(tenant.id);
+                            } else {
+                                selectedTenantIds.delete(tenant.id);
+                            }
+                            setSelectedTenantIds(new Set([...selectedTenantIds]));
+                        }}
+                    />
                 </div>
                 <div className="form-item">
                     <Label>Splunk Index for event ingestion</Label>
