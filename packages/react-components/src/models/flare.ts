@@ -25,6 +25,6 @@ export interface SourceTypeCategory extends SourceType {
 }
 
 export interface IngestionStatus {
-    "last_fetched_at": string,
-    "last_tenant_id": string,
+    last_fetched_at: string;
+    last_tenant_id: string;
 }
