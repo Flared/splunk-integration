@@ -1,18 +1,12 @@
-export interface KVCollectionItem {
-    key: string;
-    value: string;
-    user: string;
-}
-
 export interface ApplicationNamespace {
     app?: string;
     owner?: string;
     sharing?: string;
 }
 
-export interface HTTPResponse {
+export interface HTTPResponse<T = any> {
     status: number;
-    data: any;
+    data: T;
 }
 
 export interface Endpoint {

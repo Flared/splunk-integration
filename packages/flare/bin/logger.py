@@ -21,7 +21,7 @@ class Logger:
         self.tag_name = os.path.splitext(os.path.basename(class_name))[0]
         self._logger = logging.getLogger(f"flare-{self.tag_name}")
 
-        if os.environ.get("ENV") == "dev":
+        if os.environ.get("FLARE_ENV") == "dev":
             self._logger.setLevel(logging.DEBUG)
         else:
             self._logger.setLevel(logging.ERROR)

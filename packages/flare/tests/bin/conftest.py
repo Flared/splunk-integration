@@ -1,18 +1,17 @@
-import json
 import os
 import pytest
 import sys
 
 from datetime import datetime
-from pytest import FixtureRequest
-from typing import Any
-from typing import Dict
+from pathlib import Path
+from typing import Generator
 from typing import List
 from typing import Optional
+from unittest import mock
 
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../bin"))
-from constants import KV_COLLECTION_NAME
+from data_store import ConfigDataStore
 
 
 class FakeStoragePassword:
@@ -41,48 +40,6 @@ class FakeStoragePasswords:
 
     def list(self) -> List[FakeStoragePassword]:
         return self._passwords
-
-
-class FakeKVStoreCollectionData:
-    def __init__(self) -> None:
-        self._data: dict[str, str] = {}
-
-    def insert(self, data: str) -> dict[str, str]:
-        entry = json.loads(data)
-        self._data[entry["_key"]] = entry["value"]
-        return entry
-
-    def update(self, id: str, data: str) -> dict[str, str]:
-        entry = json.loads(data)
-        self._data[id] = entry["value"]
-        return entry
-
-    def query(self, **query: dict) -> List[Dict[str, str]]:
-        return [{"_key": key, "value": value} for key, value in self._data.items()]
-
-
-class FakeKVStoreCollection:
-    def __init__(self) -> None:
-        self._data = FakeKVStoreCollectionData()
-
-    @property
-    def data(self) -> FakeKVStoreCollectionData:
-        return self._data
-
-
-class FakeKVStoreCollections:
-    def __init__(self) -> None:
-        self._collections: dict[str, Any] = {}
-
-    def __getitem__(self, key: str) -> FakeKVStoreCollection:
-        return self._collections[key]
-
-    def __contains__(self, key: str) -> bool:
-        return key in self._collections
-
-    def create(self, name: str, fields: dict) -> dict[str, Any]:
-        self._collections[name] = FakeKVStoreCollection()
-        return {"headers": {}, "reason": "Created", "status": 200, "body": ""}
 
 
 class FakeLogger:
@@ -121,7 +78,7 @@ class FakeFlareAPI:
 
 
 @pytest.fixture
-def storage_passwords(request: FixtureRequest) -> FakeStoragePasswords:
+def storage_passwords(request: pytest.FixtureRequest) -> FakeStoragePasswords:
     passwords: list[FakeStoragePassword] = []
     data: list[tuple[str, str]] = request.param if hasattr(request, "param") else []
 
@@ -135,20 +92,32 @@ def storage_passwords(request: FixtureRequest) -> FakeStoragePasswords:
 
 
 @pytest.fixture
-def kvstore(request: FixtureRequest) -> FakeKVStoreCollections:
-    kvstore = FakeKVStoreCollections()
-    data: list[tuple[str, str]] = request.param if hasattr(request, "param") else []
-
-    if data:
-        kvstore.create(name=KV_COLLECTION_NAME, fields={})
-        for item in data:
-            kvstore[KV_COLLECTION_NAME].data.insert(
-                json.dumps({"_key": item[0], "value": item[1]})
-            )
-
-    return kvstore
+def logger() -> FakeLogger:
+    return FakeLogger()
 
 
 @pytest.fixture
-def logger() -> FakeLogger:
-    return FakeLogger()
+def mock_config_file(tmp_path: Path) -> Path:
+    # Creates a temporary config file for testing.
+    config_file = tmp_path / "data_store.conf"
+    with open(config_file, "w") as f:
+        f.write("[metadata]\n")
+    return config_file
+
+
+@pytest.fixture
+def mock_env(mock_config_file: Path) -> Generator[None, None, None]:
+    # Mocks environment variable and file interactions.
+    with mock.patch.dict(os.environ, {"SPLUNK_HOME": str(mock_config_file.parent)}):
+        with mock.patch("builtins.open", mock.mock_open(read_data="[metadata]\n")):
+            yield
+
+
+@pytest.fixture
+def data_store(mock_env: None) -> Generator[ConfigDataStore, None, None]:
+    # Creates an instance of ConfigDataStore with mocked dependencies.
+    with mock.patch("configparser.ConfigParser.read") as mock_read:
+        mock_read.return_value = None
+        store = ConfigDataStore()
+        store._commit = lambda: None
+        yield store

@@ -2,15 +2,12 @@ import {
     APPLICATION_NAMESPACE,
     APP_NAME,
     FLARE_SAVED_SEARCH_NAME,
-    KV_COLLECTION_KEY,
-    KV_COLLECTION_NAME,
-    KV_COLLECTION_VALUE,
     PasswordKeys,
     SEVERITY_SAVED_SEARCH_NAME,
     STORAGE_REALM,
 } from '../models/constants';
-import { Severity, SourceType, SourceTypeCategory, Tenant } from '../models/flare';
-import { KVCollectionItem, HTTPResponse, Service, StoragePasswords } from '../models/splunk';
+import { IngestionStatus, Severity, SourceType, SourceTypeCategory, Tenant } from '../models/flare';
+import { HTTPResponse, Service, StoragePasswords } from '../models/splunk';
 import { getConfigurationStanzaValue, updateConfigurationFile } from './configurationFileHelper';
 import { promisify } from './util';
 
@@ -201,28 +198,21 @@ async function updateSavedSearchQuery(
     }
 }
 
-async function fetchCollectionItems(): Promise<KVCollectionItem[]> {
+async function fetchIngestionStatus(): Promise<IngestionStatus> {
     const service = createService();
-    return promisify(service.get)(
-        `storage/collections/data/event_ingestion_collection/${KV_COLLECTION_NAME}`,
-        {}
-    )
-        .then((response: HTTPResponse) => {
-            const items: KVCollectionItem[] = [];
-            if (response.data) {
-                response.data.forEach((element) => {
-                    items.push({
-                        key: element[KV_COLLECTION_KEY],
-                        value: element[KV_COLLECTION_VALUE],
-                        user: element._user,
-                    });
-                });
-            }
-            return items;
-        })
-        .catch(() => {
-            return [];
-        });
+
+    const data = await promisify(service.get)('/services/fetch_ingestion_status', {}).then(
+        (r: HTTPResponse) => {
+            return r.data;
+        }
+    );
+
+    return (
+        data || {
+            last_fetched_at: '',
+            last_tenant_id: '',
+        }
+    );
 }
 
 async function fetchPassword(passwordKey: string): Promise<string | undefined> {
@@ -448,7 +438,7 @@ export {
     fetchApiKeyValidation,
     fetchAvailableIndexNames,
     fetchSeverityFilters,
-    fetchCollectionItems,
+    fetchIngestionStatus,
     fetchCurrentIndexName,
     fetchIngestFullEventData,
     fetchSeveritiesFilter,

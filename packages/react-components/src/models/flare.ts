@@ -23,3 +23,8 @@ export interface SourceType {
 export interface SourceTypeCategory extends SourceType {
     types: SourceType[];
 }
+
+export interface IngestionStatus {
+    last_fetched_at: string;
+    last_tenant_id: string;
+}

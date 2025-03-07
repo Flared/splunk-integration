@@ -9,7 +9,7 @@ services:
     environment:
       - SPLUNK_START_ARGS=--accept-license
       - SPLUNK_PASSWORD=a_password
-      - IS_LOCAL_BUILD=true
     volumes:
       - ./output/flare:/opt/splunk/etc/apps/flare
       - ./splunk/default.yml:/tmp/defaults/default.yml
+      - ./logs:/opt/splunk/var/log/splunk
