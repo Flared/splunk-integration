@@ -141,6 +141,8 @@ def test_main_expect_normal_run(
     )
     assert logger.messages == [
         "INFO: Fetching tenant_id=11111, next=None, start_date=FakeDatetime(1999, 12, 2, 0, 0, tzinfo=datetime.timezone.utc)",
+        "INFO: Fetched 2 events on tenant 11111",
         "INFO: Fetching tenant_id=22222, next=None, start_date=FakeDatetime(1999, 12, 2, 0, 0, tzinfo=datetime.timezone.utc)",
-        "INFO: Fetched 4 events",
+        "INFO: Fetched 2 events on tenant 22222",
+        "INFO: Fetched 2 events across all tenants",
     ]
