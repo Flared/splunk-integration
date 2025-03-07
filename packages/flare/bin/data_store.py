@@ -15,14 +15,7 @@ config_path = os.path.join(
 
 
 class ConfigDataStore:
-    _instance = None
     _store: configparser.ConfigParser
-
-    # Make ConfigDataStore a singleton
-    def __new__(cls) -> "ConfigDataStore":
-        if not cls._instance:
-            cls._instance = super(ConfigDataStore, cls).__new__(cls)
-        return cls._instance
 
     def __init__(self) -> None:
         config_store = configparser.ConfigParser()
@@ -39,7 +32,11 @@ class ConfigDataStore:
         with open(config_path, "w") as configfile:
             self._store.write(configfile)
 
+    def _sync(self) -> None:
+        self._store.read(config_path)
+
     def get_last_tenant_id(self) -> Optional[int]:
+        self._sync()
         last_ingested_tenant_id = self._store.get(
             "metadata", DataStoreKeys.LAST_INGESTED_TENANT_ID.value, fallback=None
         )
@@ -57,6 +54,7 @@ class ConfigDataStore:
         self._commit()
 
     def get_start_date(self) -> Optional[datetime]:
+        self._sync()
         start_date = self._store.get(
             "metadata", DataStoreKeys.START_DATE.value, fallback=None
         )
@@ -75,6 +73,7 @@ class ConfigDataStore:
         self._commit()
 
     def get_last_fetch(self) -> Optional[datetime]:
+        self._sync()
         last_fetched = self._store.get(
             "metadata", DataStoreKeys.TIMESTAMP_LAST_FETCH.value, fallback=None
         )
@@ -95,6 +94,7 @@ class ConfigDataStore:
         self._commit()
 
     def get_next_by_tenant(self, tenant_id: int) -> Optional[str]:
+        self._sync()
         return self._store.get(
             "next_tokens",
             DataStoreKeys.get_next_token(tenantId=tenant_id),

@@ -115,9 +115,6 @@ def mock_env(mock_config_file: Path) -> Generator[None, None, None]:
 
 @pytest.fixture
 def data_store(mock_env: None) -> Generator[ConfigDataStore, None, None]:
-    # Reset singleton instance
-    ConfigDataStore._instance = None
-
     # Creates an instance of ConfigDataStore with mocked dependencies.
     with mock.patch("configparser.ConfigParser.read") as mock_read:
         mock_read.return_value = None
