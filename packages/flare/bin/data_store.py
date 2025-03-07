@@ -15,8 +15,6 @@ config_path = os.path.join(
 
 
 class ConfigDataStore:
-    _store: configparser.ConfigParser
-
     def __init__(self) -> None:
         config_store = configparser.ConfigParser()
         config_store.read(config_path)
