@@ -102,7 +102,6 @@ class ConfigDataStore:
         )
 
     def set_next_by_tenant(self, tenant_id: int, next: Optional[str]) -> None:
-        # If we have a new next value, update the collection for that tenant to continue searching from that point
         if not next:
             return
 
