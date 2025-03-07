@@ -19,7 +19,7 @@ from flare import FlareAPI
 from logger import Logger
 
 
-class FlareValidateApiKey(splunk.rest.BaseRestHandler):  # type: ignore
+class FlareValidateApiKey(splunk.rest.BaseRestHandler):
     def handle_POST(self) -> None:
         payload = self.request["payload"]
         params = parse.parse_qs(payload)
@@ -33,7 +33,7 @@ class FlareValidateApiKey(splunk.rest.BaseRestHandler):  # type: ignore
         self.response.write(json.dumps({}))
 
 
-class FlareUserTenants(splunk.rest.BaseRestHandler):  # type: ignore
+class FlareUserTenants(splunk.rest.BaseRestHandler):
     def handle_POST(self) -> None:
         logger = Logger(class_name=__file__)
         payload = self.request["payload"]
@@ -50,7 +50,7 @@ class FlareUserTenants(splunk.rest.BaseRestHandler):  # type: ignore
         self.response.write(json.dumps(response_json))
 
 
-class FlareSeverityFilters(splunk.rest.BaseRestHandler):  # type: ignore
+class FlareSeverityFilters(splunk.rest.BaseRestHandler):
     def handle_POST(self) -> None:
         logger = Logger(class_name=__file__)
         payload = self.request["payload"]
@@ -67,7 +67,7 @@ class FlareSeverityFilters(splunk.rest.BaseRestHandler):  # type: ignore
         self.response.write(json.dumps(response_json))
 
 
-class FlareSourceTypeFilters(splunk.rest.BaseRestHandler):  # type: ignore
+class FlareSourceTypeFilters(splunk.rest.BaseRestHandler):
     def handle_POST(self) -> None:
         logger = Logger(class_name=__file__)
         payload = self.request["payload"]
@@ -84,7 +84,7 @@ class FlareSourceTypeFilters(splunk.rest.BaseRestHandler):  # type: ignore
         self.response.write(json.dumps(response_json))
 
 
-class FlareIngestionStatus(splunk.rest.BaseRestHandler):  # type: ignore
+class FlareIngestionStatus(splunk.rest.BaseRestHandler):
     def handle_GET(self) -> None:
         logger = Logger(class_name=__file__)
 

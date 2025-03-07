@@ -211,4 +211,5 @@ if __name__ == "__main__":
         logger=logger,
         storage_passwords=app.service.storage_passwords,
         flare_api_cls=FlareAPI,
+        data_store=data_store,
     )

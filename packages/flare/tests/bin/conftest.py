@@ -2,15 +2,16 @@ import os
 import pytest
 import sys
 
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../bin"))
-
-
-from data_store import ConfigDataStore
 from datetime import datetime
+from pathlib import Path
+from typing import Generator
 from typing import List
 from typing import Optional
 from unittest import mock
+
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../bin"))
+from data_store import ConfigDataStore
 
 
 class FakeStoragePassword:
@@ -96,7 +97,7 @@ def logger() -> FakeLogger:
 
 
 @pytest.fixture
-def mock_config_file(tmp_path):
+def mock_config_file(tmp_path: Path) -> Path:
     # Creates a temporary config file for testing.
     config_file = tmp_path / "data_store.conf"
     with open(config_file, "w") as f:
@@ -105,7 +106,7 @@ def mock_config_file(tmp_path):
 
 
 @pytest.fixture
-def mock_env(mock_config_file):
+def mock_env(mock_config_file: Path) -> Generator[None]:
     # Mocks environment variable and file interactions.
     with mock.patch.dict(os.environ, {"SPLUNK_HOME": str(mock_config_file.parent)}):
         with mock.patch("builtins.open", mock.mock_open(read_data="[metadata]\n")):
@@ -113,7 +114,7 @@ def mock_env(mock_config_file):
 
 
 @pytest.fixture
-def data_store(mock_env):
+def data_store(mock_env: None) -> Generator[ConfigDataStore]:
     # Reset singleton instance
     ConfigDataStore._instance = None
 

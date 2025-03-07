@@ -19,12 +19,12 @@ class ConfigDataStore:
     _store: configparser.ConfigParser
 
     # Make ConfigDataStore a singleton
-    def __new__(cls):
+    def __new__(cls) -> "ConfigDataStore":
         if not cls._instance:
             cls._instance = super(ConfigDataStore, cls).__new__(cls)
         return cls._instance
 
-    def __init__(self):
+    def __init__(self) -> None:
         config_store = configparser.ConfigParser()
         config_store.read(config_path)
 
@@ -35,7 +35,7 @@ class ConfigDataStore:
             config_store.add_section("next_tokens")
         self._store = config_store
 
-    def _commit(self):
+    def _commit(self) -> None:
         with open(config_path, "w") as configfile:
             self._store.write(configfile)
 
@@ -101,7 +101,7 @@ class ConfigDataStore:
             fallback=None,
         )
 
-    def set_next_by_tenant(self, tenant_id: int, next: Optional[str]) -> Optional[str]:
+    def set_next_by_tenant(self, tenant_id: int, next: Optional[str]) -> None:
         # If we have a new next value, update the collection for that tenant to continue searching from that point
         if not next:
             return

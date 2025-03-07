@@ -59,7 +59,9 @@ def test_get_default_ingest_full_event_data_value(
     assert get_ingest_full_event_data(storage_passwords=storage_passwords) is False
 
 
-def test_fetch_feed_expect_feed_response(logger: FakeLogger, data_store) -> None:
+def test_fetch_feed_expect_feed_response(
+    logger: FakeLogger, data_store: ConfigDataStore
+) -> None:
     first_item = ({"actor": "this guy"}, "first_next_token")
     second_item = ({"actor": "some other guy"}, "second_next_token")
     expected_items = [first_item, second_item]
@@ -127,7 +129,7 @@ def test_main_expect_early_return(
 def test_main_expect_normal_run(
     logger: FakeLogger,
     storage_passwords: FakeStoragePasswords,
-    data_store,
+    data_store: ConfigDataStore,
 ) -> None:
     main(
         logger=logger,
