@@ -20,10 +20,10 @@ class ConfigDataStore:
         config_store.read(config_path)
 
         # Add data sections
-        if "metadata" not in config_store.sections():
-            config_store.add_section("metadata")
-        if "tenant_data" not in config_store.sections():
-            config_store.add_section("tenant_data")
+        if DataStoreKeys.SECTION_METADATA.value not in config_store.sections():
+            config_store.add_section(DataStoreKeys.SECTION_METADATA.value)
+        if DataStoreKeys.SECTION_TENANT_DATA.value not in config_store.sections():
+            config_store.add_section(DataStoreKeys.SECTION_TENANT_DATA.value)
         self._store = config_store
 
     def _commit(self) -> None:
@@ -36,7 +36,9 @@ class ConfigDataStore:
     def get_last_fetch(self) -> Optional[datetime]:
         self._sync()
         last_fetched = self._store.get(
-            "metadata", DataStoreKeys.TIMESTAMP_LAST_FETCH.value, fallback=None
+            DataStoreKeys.SECTION_METADATA.value,
+            DataStoreKeys.TIMESTAMP_LAST_FETCH.value,
+            fallback=None,
         )
 
         if last_fetched:
@@ -48,7 +50,7 @@ class ConfigDataStore:
 
     def set_last_fetch(self, last_fetch: datetime) -> None:
         self._store.set(
-            "metadata",
+            DataStoreKeys.SECTION_METADATA.value,
             DataStoreKeys.TIMESTAMP_LAST_FETCH.value,
             last_fetch.isoformat(),
         )
@@ -57,7 +59,7 @@ class ConfigDataStore:
     def get_next_by_tenant(self, tenant_id: int) -> Optional[str]:
         self._sync()
         return self._store.get(
-            "tenant_data",
+            DataStoreKeys.SECTION_TENANT_DATA.value,
             DataStoreKeys.get_next_token(tenant_id=tenant_id),
             fallback=None,
         )
@@ -67,14 +69,16 @@ class ConfigDataStore:
             return
 
         self._store.set(
-            "tenant_data", DataStoreKeys.get_next_token(tenant_id=tenant_id), next
+            DataStoreKeys.SECTION_TENANT_DATA.value,
+            DataStoreKeys.get_next_token(tenant_id=tenant_id),
+            next,
         )
         self._commit()
 
     def get_earliest_ingested_by_tenant(self, tenant_id: int) -> Optional[datetime]:
         self._sync()
         earliest_ingested = self._store.get(
-            "tenant_data",
+            DataStoreKeys.SECTION_TENANT_DATA.value,
             DataStoreKeys.get_earliest_ingested(tenant_id=tenant_id),
             fallback=None,
         )
@@ -90,7 +94,7 @@ class ConfigDataStore:
         self, tenant_id: int, earliest_ingested: datetime
     ) -> None:
         self._store.set(
-            "tenant_data",
+            DataStoreKeys.SECTION_TENANT_DATA.value,
             DataStoreKeys.get_earliest_ingested(tenant_id=tenant_id),
             earliest_ingested.isoformat(),
         )

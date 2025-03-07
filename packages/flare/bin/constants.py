@@ -21,6 +21,9 @@ class DataStoreKeys(Enum):
     START_DATE = "start_date"
     TIMESTAMP_LAST_FETCH = "timestamp_last_fetch"
 
+    SECTION_METADATA = "metadata"
+    SECTION_TENANT_DATA = "tenant_data"
+
     @staticmethod
     def get_next_token(tenant_id: int) -> str:
         return f"next_{tenant_id}"
