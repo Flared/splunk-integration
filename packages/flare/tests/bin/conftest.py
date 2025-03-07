@@ -106,7 +106,7 @@ def mock_config_file(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-def mock_env(mock_config_file: Path) -> Generator[None]:
+def mock_env(mock_config_file: Path) -> Generator[None, None, None]:
     # Mocks environment variable and file interactions.
     with mock.patch.dict(os.environ, {"SPLUNK_HOME": str(mock_config_file.parent)}):
         with mock.patch("builtins.open", mock.mock_open(read_data="[metadata]\n")):
@@ -114,7 +114,7 @@ def mock_env(mock_config_file: Path) -> Generator[None]:
 
 
 @pytest.fixture
-def data_store(mock_env: None) -> Generator[ConfigDataStore]:
+def data_store(mock_env: None) -> Generator[ConfigDataStore, None, None]:
     # Reset singleton instance
     ConfigDataStore._instance = None
 
