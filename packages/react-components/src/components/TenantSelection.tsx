@@ -13,6 +13,12 @@ const TenantSelection: FC<{
 
     const selectedTenantCount = selectedTenantIds.size;
 
+    const deletedTenants = Array.from(selectedTenantIds)
+        .filter((selectedTenantId) => !tenants.find(({ id }) => id === selectedTenantId))
+        .map((tenantId) => ({ name: 'Unknown', id: tenantId } as Tenant));
+
+    const allTenants = [...tenants, ...deletedTenants];
+
     return (
         <div className="tenant-container" id="tenant-container">
             <div className="tenant-header">
@@ -23,7 +29,7 @@ const TenantSelection: FC<{
                         checked={isChecked}
                         id="all-tenants"
                         onChange={(e): void => {
-                            tenants.forEach((tenant) => {
+                            allTenants.forEach((tenant) => {
                                 onTenantCheckChange(tenant, e.target.checked);
                             });
                         }}
@@ -38,17 +44,17 @@ const TenantSelection: FC<{
                     All tenants
                 </label>
 
-                <div hidden={tenants.length <= 1} className="tenant-filler" />
+                <div hidden={allTenants.length <= 1} className="tenant-filler" />
 
                 <div
                     className="tenant-count-container"
                     onClick={(): void => setExpanded(!isExpanded)}
                 >
-                    <div hidden={tenants.length <= 1} className="tenant-count">
+                    <div hidden={allTenants.length <= 1} className="tenant-count">
                         {selectedTenantCount}
                     </div>
                     <div
-                        hidden={tenants.length <= 1}
+                        hidden={allTenants.length <= 1}
                         className={`tenant ${isExpanded ? 'tenant-collapse' : 'tenant-expand'}`}
                     >
                         <span />
@@ -56,8 +62,8 @@ const TenantSelection: FC<{
                 </div>
             </div>
             <div className="tenant-options-children-container" hidden={!isExpanded}>
-                {tenants.length > 1 &&
-                    tenants.map((tenant) => {
+                {allTenants.length > 1 &&
+                    allTenants.map((tenant) => {
                         return (
                             <label
                                 className="tenant-option-container"
@@ -74,7 +80,7 @@ const TenantSelection: FC<{
                                     }
                                 />
                                 <div className="tenant-option-checkbox" />
-                                {tenant.name}
+                                {tenant.name} ({tenant.id})
                             </label>
                         );
                     })}

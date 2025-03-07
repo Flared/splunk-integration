@@ -97,9 +97,9 @@ def fetch_feed(
     flare_api_cls: type[FlareAPI],
     data_store: ConfigDataStore,
 ) -> Iterator[tuple[dict, str]]:
-    try:
-        flare_api: FlareAPI = flare_api_cls(api_key=api_key, tenant_id=tenant_id)
+    flare_api: FlareAPI = flare_api_cls(api_key=api_key, tenant_id=tenant_id)
 
+    try:
         next = data_store.get_next_by_tenant(tenant_id)
         start_date = data_store.get_earliest_ingested_by_tenant(tenant_id)
         logger.info(f"Fetching {tenant_id=}, {next=}, {start_date=}")
