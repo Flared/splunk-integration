@@ -12,7 +12,6 @@ enum StatusItemKeys {
     START_DATE = 'start_date',
     LAST_FETCHED = 'timestamp_last_fetch',
     NEXT_TOKEN = 'next_token',
-    LAST_INGESTED_TENANT_ID = 'last_ingested_tenant_id',
     INDEX = 'index',
     VERSION = 'version',
 }
@@ -48,11 +47,6 @@ const StatusScreen: FC<{ theme: string }> = ({ theme }) => {
             ]);
 
             setAdvancedStatusItem([
-                {
-                    key: StatusItemKeys.LAST_INGESTED_TENANT_ID,
-                    name: 'Last Tenant ID Ingested',
-                    value: ingestionStatus.last_tenant_id || 'N/A',
-                },
                 {
                     key: StatusItemKeys.LAST_FETCHED,
                     name: 'Last moment the events were ingested',

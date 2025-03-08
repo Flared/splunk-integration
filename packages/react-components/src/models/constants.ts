@@ -12,7 +12,7 @@ export const SEVERITY_SAVED_SEARCH_NAME = 'Severity';
 
 export enum PasswordKeys {
     API_KEY = 'api_key',
-    TENANT_ID = 'tenant_id',
+    TENANT_IDS = 'tenant_ids',
     INGEST_FULL_EVENT_DATA = 'ingest_full_event_data',
     SEVERITIES_FILTER = 'severities_filter',
     SOURCE_TYPES_FILTER = 'source_types_filter',

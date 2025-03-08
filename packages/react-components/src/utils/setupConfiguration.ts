@@ -117,7 +117,7 @@ async function savePassword(storage: StoragePasswords, key: string, value: strin
 
 async function saveConfiguration(
     apiKey: string,
-    tenantId: number,
+    tenantIds: number[],
     indexName: string,
     isIngestingFullEventData: boolean,
     severitiesFilter: string,
@@ -126,7 +126,7 @@ async function saveConfiguration(
     const service = createService();
     const storagePasswords = await promisify(service.storagePasswords().fetch)();
     await savePassword(storagePasswords, PasswordKeys.API_KEY, apiKey);
-    await savePassword(storagePasswords, PasswordKeys.TENANT_ID, `${tenantId}`);
+    await savePassword(storagePasswords, PasswordKeys.TENANT_IDS, JSON.stringify(tenantIds));
     await savePassword(
         storagePasswords,
         PasswordKeys.INGEST_FULL_EVENT_DATA,
@@ -210,7 +210,6 @@ async function fetchIngestionStatus(): Promise<IngestionStatus> {
     return (
         data || {
             last_fetched_at: '',
-            last_tenant_id: '',
         }
     );
 }
@@ -232,13 +231,16 @@ async function fetchApiKey(): Promise<string> {
     return (await fetchPassword(PasswordKeys.API_KEY)) || '';
 }
 
-async function fetchTenantId(): Promise<number | undefined> {
-    return fetchPassword(PasswordKeys.TENANT_ID).then((tenantId) => {
-        if (tenantId) {
-            return parseInt(tenantId, 10);
+async function fetchTenantIds(): Promise<number[]> {
+    return fetchPassword(PasswordKeys.TENANT_IDS).then((tenantIds) => {
+        if (!tenantIds) {
+            return [];
         }
-
-        return undefined;
+        try {
+            return JSON.parse(tenantIds);
+        } catch {
+            return [];
+        }
     });
 }
 
@@ -444,7 +446,7 @@ export {
     fetchSeveritiesFilter,
     fetchSourceTypeFilters,
     fetchSourceTypesFilter,
-    fetchTenantId,
+    fetchTenantIds,
     fetchUserTenants,
     fetchVersionName,
     getFlareSearchDataUrl,
