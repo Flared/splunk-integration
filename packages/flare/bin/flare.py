@@ -47,7 +47,11 @@ def get_flare_api_client(
 
 class FlareAPI(AuthBase):
     def __init__(
-        self, *, api_key: str, tenant_id: Optional[int] = None, logger: Logger
+        self,
+        *,
+        api_key: str,
+        tenant_id: Optional[int] = None,
+        logger: Logger,
     ) -> None:
         self.flare_client = get_flare_api_client(
             api_key=api_key,
@@ -117,8 +121,8 @@ class FlareAPI(AuthBase):
             time.sleep(1)
 
     def _fetch_full_event_from_uid(self, *, uid: str) -> dict:
-        NUMBER_OF_RETRIES = 3
-        for current_try in range(NUMBER_OF_RETRIES):
+        number_of_retries = 3
+        for current_try in range(number_of_retries):
             try:
                 event_response = self.flare_client.get(
                     url=f"/firework/v2/activities/{uid}"
@@ -127,12 +131,12 @@ class FlareAPI(AuthBase):
             except Exception as e:
                 time.sleep(1)
                 self.logger.info(
-                    f"Failed to fetch event {current_try + 1}/{NUMBER_OF_RETRIES} retries: {e}"
+                    f"Failed to fetch event {current_try + 1}/{number_of_retries} retries: {e}"
                 )
                 continue
             return event_response.json()["activity"]
         raise Exception(
-            f"failed to fetch full event data for {uid} after {NUMBER_OF_RETRIES} tries"
+            f"failed to fetch full event data for {uid} after {number_of_retries} tries"
         )
 
     def fetch_api_key_validation(self) -> requests.Response:
