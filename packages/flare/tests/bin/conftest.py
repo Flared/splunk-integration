@@ -61,7 +61,7 @@ class FakeLogger(Logger):
 
 
 class FakeFlareAPI(FlareAPI):
-    def __init__(self, api_key: str, tenant_id: int) -> None:
+    def __init__(self, api_key: str, tenant_id: int, logger: Logger) -> None:
         pass
 
     def fetch_feed_events(

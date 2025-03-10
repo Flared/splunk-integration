@@ -101,7 +101,11 @@ def fetch_feed(
     flare_api_cls: type[FlareAPI],
     data_store: ConfigDataStore,
 ) -> Iterator[tuple[dict, str]]:
-    flare_api: FlareAPI = flare_api_cls(api_key=api_key, tenant_id=tenant_id)
+    flare_api = flare_api_cls(
+        api_key=api_key,
+        tenant_id=tenant_id,
+        logger=logger,
+    )
 
     try:
         next = data_store.get_next_by_tenant(tenant_id)

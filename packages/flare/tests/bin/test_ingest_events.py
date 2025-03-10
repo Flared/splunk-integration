@@ -13,6 +13,7 @@ from cron_job_ingest_events import get_tenant_ids
 from cron_job_ingest_events import main
 from data_store import ConfigDataStore
 from freezegun import freeze_time
+from utils import prune_empty_fields
 
 
 @pytest.mark.parametrize("storage_passwords", [[]], indirect=True)
@@ -57,8 +58,8 @@ def test_get_default_ingest_full_event_data_value(
 def test_fetch_feed_expect_feed_response(
     logger: FakeLogger, data_store: ConfigDataStore
 ) -> None:
-    first_item = ({"actor": "this guy"}, "first_next_token")
-    second_item = ({"actor": "some other guy"}, "second_next_token")
+    first_item = ({"actor": "this guy", "metadata": {}}, "first_next_token")
+    second_item = ({"actor": "some other guy", "empty_list": []}, "second_next_token")
     expected_items = [first_item, second_item]
 
     index = 0
@@ -72,7 +73,7 @@ def test_fetch_feed_expect_feed_response(
         flare_api_cls=FakeFlareAPI,
         data_store=data_store,
     ):
-        assert event == expected_items[index][0]
+        assert event == prune_empty_fields(expected_items[index][0])
         assert next_token == expected_items[index][1]
         index += 1
 
