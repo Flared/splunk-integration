@@ -1,7 +1,7 @@
 from typing import Union
 
 
-def prune_empty_fields(d: Union[dict, list]):
+def prune_empty_fields(d: Union[dict, list]) -> Union[dict, list]:
     if isinstance(d, dict):
         return {
             k: prune_empty_fields(v)
