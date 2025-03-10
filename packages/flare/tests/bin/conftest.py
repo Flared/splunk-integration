@@ -11,7 +11,11 @@ from unittest import mock
 
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../bin"))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../bin/vendor"))
 from data_store import ConfigDataStore
+from flare import FlareAPI
+from logger import Logger
+from vendor.splunklib.client import StoragePasswords
 
 
 class FakeStoragePassword:
@@ -34,7 +38,7 @@ class FakeStoragePassword:
         return self._state["clear_password"]
 
 
-class FakeStoragePasswords:
+class FakeStoragePasswords(StoragePasswords):
     def __init__(self, passwords: List[FakeStoragePassword]) -> None:
         self._passwords = passwords
 
@@ -42,9 +46,12 @@ class FakeStoragePasswords:
         return self._passwords
 
 
-class FakeLogger:
+class FakeLogger(Logger):
     def __init__(self) -> None:
+        super().__init__(class_name="Logger")
         self.messages: List[str] = []
+
+        self._mock = mock.MagicMock(spec=Logger)
 
     def info(self, message: str) -> None:
         self.messages.append(f"INFO: {message}")
@@ -53,7 +60,7 @@ class FakeLogger:
         self.messages.append(f"ERROR: {message}")
 
 
-class FakeFlareAPI:
+class FakeFlareAPI(FlareAPI):
     def __init__(self, api_key: str, tenant_id: int) -> None:
         pass
 
@@ -92,7 +99,7 @@ def storage_passwords(request: pytest.FixtureRequest) -> FakeStoragePasswords:
 
 
 @pytest.fixture
-def logger() -> FakeLogger:
+def logger() -> Logger:
     return FakeLogger()
 
 
@@ -121,3 +128,9 @@ def data_store(mock_env: None) -> Generator[ConfigDataStore, None, None]:
         store = ConfigDataStore()
         store._commit = lambda: None
         yield store
+
+
+@pytest.fixture
+def disable_sleep() -> Generator[None, None, None]:
+    with mock.patch("time.sleep", return_value=None):
+        yield

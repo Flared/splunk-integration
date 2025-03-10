@@ -1,16 +1,9 @@
 import datetime
-import os
 import pytest
-import sys
 
 from conftest import FakeFlareAPI
 from conftest import FakeLogger
 from conftest import FakeStoragePasswords
-from data_store import ConfigDataStore
-from freezegun import freeze_time
-
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../bin"))
 from constants import CRON_JOB_THRESHOLD_SINCE_LAST_FETCH
 from constants import PasswordKeys
 from cron_job_ingest_events import fetch_feed
@@ -18,6 +11,8 @@ from cron_job_ingest_events import get_api_key
 from cron_job_ingest_events import get_ingest_full_event_data
 from cron_job_ingest_events import get_tenant_ids
 from cron_job_ingest_events import main
+from data_store import ConfigDataStore
+from freezegun import freeze_time
 
 
 @pytest.mark.parametrize("storage_passwords", [[]], indirect=True)
