@@ -1,5 +1,12 @@
 # Flare
 
+1.3.0
+-----
+* Multi-tenant configuration is now supported
+* Adds retry mechanism for full event data
+* Removes dependency on KV store for improved compatibility
+* Various bug fixes
+
 1.2.2
 -----
 * Various bug fixes
