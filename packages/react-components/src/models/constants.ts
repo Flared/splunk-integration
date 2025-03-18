@@ -16,4 +16,5 @@ export enum PasswordKeys {
     INGEST_FULL_EVENT_DATA = 'ingest_full_event_data',
     SEVERITIES_FILTER = 'severities_filter',
     SOURCE_TYPES_FILTER = 'source_types_filter',
+    NUMBER_OF_DAYS_TO_BACKFILL = "number_of_days_to_backfill"
 }

@@ -121,7 +121,8 @@ async function saveConfiguration(
     indexName: string,
     isIngestingFullEventData: boolean,
     severitiesFilter: string,
-    sourceTypesFilter: string
+    sourceTypesFilter: string,
+    numberOfDaysToBackfill?: string,
 ): Promise<void> {
     const service = createService();
     const storagePasswords = await promisify(service.storagePasswords().fetch)();
@@ -132,6 +133,8 @@ async function saveConfiguration(
         PasswordKeys.INGEST_FULL_EVENT_DATA,
         `${isIngestingFullEventData}`
     );
+    debugger
+    await savePassword(storagePasswords, PasswordKeys.NUMBER_OF_DAYS_TO_BACKFILL, numberOfDaysToBackfill ?? '');
     await savePassword(storagePasswords, PasswordKeys.SEVERITIES_FILTER, `${severitiesFilter}`);
     await savePassword(storagePasswords, PasswordKeys.SOURCE_TYPES_FILTER, `${sourceTypesFilter}`);
     await saveIndexForIngestion(service, indexName);
@@ -219,6 +222,8 @@ async function fetchPassword(passwordKey: string): Promise<string | undefined> {
     const storagePasswords = await promisify(service.storagePasswords().fetch)();
     const passwordId = `${STORAGE_REALM}:${passwordKey}:`;
 
+    console.log(storagePasswords.list())
+
     for (const password of storagePasswords.list()) {
         if (password.name === passwordId) {
             return password.properties().clear_password;
@@ -241,6 +246,12 @@ async function fetchTenantIds(): Promise<number[]> {
         } catch {
             return [];
         }
+    });
+}
+
+async function fetchNumberOfDaysToBackfill(): Promise<string | undefined> {
+    return fetchPassword(PasswordKeys.NUMBER_OF_DAYS_TO_BACKFILL).then((numberOfDaysToBackfill) => {
+        return numberOfDaysToBackfill
     });
 }
 
@@ -446,6 +457,7 @@ export {
     fetchSeveritiesFilter,
     fetchSourceTypeFilters,
     fetchSourceTypesFilter,
+    fetchNumberOfDaysToBackfill,
     fetchTenantIds,
     fetchUserTenants,
     fetchVersionName,

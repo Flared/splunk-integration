@@ -77,10 +77,17 @@ input {
     border: 1px solid var(--secondary-text-color);
     border-radius: 40px;
     margin-top: 0.5rem;
+
+    &:disabled {
+        cursor: not-allowed;
+        color: var(--secondary-text-color);
+    }
 }
 
 input:hover {
-    border: 1px solid var(--button-bg-color);
+    :not(:disabled){
+        border: 1px solid var(--button-bg-color);
+    }
 }
 
 input::placeholder {

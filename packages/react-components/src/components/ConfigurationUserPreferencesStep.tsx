@@ -26,6 +26,7 @@ import {
     saveConfiguration,
     convertSourceTypeFilterToArray,
     fetchTenantIds,
+    fetchNumberOfDaysToBackfill,
 } from '../utils/setupConfiguration';
 import './ConfigurationGlobalStep.css';
 import './ConfigurationUserPreferencesStep.css';
@@ -36,6 +37,7 @@ import { ToastKeys, toastManager } from './ToastManager';
 import Tooltip from './Tooltip';
 import FlareLogoLoading from './FlareLogoLoading';
 import TenantSelection from './TenantSelection';
+import Input from './Input';
 
 const ConfigurationUserPreferencesStep: FC<{
     configurationStep: ConfigurationStep;
@@ -54,6 +56,8 @@ const ConfigurationUserPreferencesStep: FC<{
     const [indexNames, setIndexNames] = useState<string[]>([]);
     const [isIngestingFullEventData, setIsIngestingFullEventData] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [numberOfDaysToBackfill, setNumberOfDaysToBackfill] = useState<string>();
+    const [isFirstSetup, setIsFirstSetup] = useState(false);
 
     const handleIndexNameChange = (e): void => setIndexName(e.target.value);
     const handleIsIngestingFullEventDataChange = (e): void =>
@@ -68,7 +72,8 @@ const ConfigurationUserPreferencesStep: FC<{
             indexName,
             isIngestingFullEventData,
             getSeverityFilterValue(selectedSeverities, severities),
-            getSourceTypesFilterValue(selectedSourceTypes, sourceTypeCategories)
+            getSourceTypesFilterValue(selectedSourceTypes, sourceTypeCategories),
+            numberOfDaysToBackfill
         )
             .then(() => {
                 setIsLoading(false);
@@ -101,6 +106,7 @@ const ConfigurationUserPreferencesStep: FC<{
                 fetchSeveritiesFilter(),
                 fetchSourceTypeFilters(apiKey),
                 fetchSourceTypesFilter(),
+                fetchNumberOfDaysToBackfill(),
             ])
                 .then(
                     ([
@@ -113,7 +119,14 @@ const ConfigurationUserPreferencesStep: FC<{
                         severitiesFilter,
                         allSourceTypeCategories,
                         sourceTypeFilter,
+                        numberOfDaysToBackfillSaved,
                     ]) => {
+                        // The form can't be submitted without any tenant ids
+                        // so the absence of tenant ids indicates that it is the first setup.
+                        if (!tenantIds) {
+                            setIsFirstSetup(true);
+                        }
+                        setNumberOfDaysToBackfill(numberOfDaysToBackfillSaved ?? '');
                         setSelectedTenantIds(new Set(tenantIds));
                         setIsIngestingFullEventData(ingestFullEventData);
                         setIndexName(index);
@@ -264,6 +277,25 @@ const ConfigurationUserPreferencesStep: FC<{
                             onChange={handleIsIngestingFullEventDataChange}
                         />
                     </span>
+                </div>
+                <div className="form-item">
+                    <div className="label-tooltip">
+                        <Label>Number of days to backfill events</Label>
+                        <Tooltip>
+                            <div>
+                                This field can only be set when setting up the app for the first
+                                time.
+                            </div>
+                        </Tooltip>
+                    </div>
+                    <Input
+                        onChange={(e): void => setNumberOfDaysToBackfill(e.target.value)}
+                        value={numberOfDaysToBackfill}
+                        min="0"
+                        type="number"
+                        placeholder="30"
+                        disabled={!isFirstSetup}
+                    />
                 </div>
                 <div className="button-group">
                     <Button onClick={(): void => onNavigateBackClick()} isSecondary>
