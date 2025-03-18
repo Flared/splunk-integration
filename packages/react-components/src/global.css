@@ -85,7 +85,7 @@ input {
 }
 
 input:hover {
-    :not(:disabled){
+    :not(:disabled) {
         border: 1px solid var(--button-bg-color);
     }
 }
