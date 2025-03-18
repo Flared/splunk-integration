@@ -1,5 +1,4 @@
 import json
-from optparse import Option
 import os
 import sys
 
@@ -150,7 +149,7 @@ def get_number_of_days_to_backfill(storage_passwords: client.StoragePasswords) -
 
     try:
         return int(number_of_days_to_backfill) if number_of_days_to_backfill else 30
-    finally:
+    except:
         raise Exception("Number of days to backfill not a number")
 
 

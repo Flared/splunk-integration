@@ -123,7 +123,7 @@ const ConfigurationUserPreferencesStep: FC<{
                     ]) => {
                         // The form can't be submitted without any tenant ids
                         // so the absence of tenant ids indicates that it is the first setup.
-                        if (!tenantIds) {
+                        if (!tenantIds.length) {
                             setIsFirstSetup(true);
                         }
                         setNumberOfDaysToBackfill(numberOfDaysToBackfillSaved ?? '');

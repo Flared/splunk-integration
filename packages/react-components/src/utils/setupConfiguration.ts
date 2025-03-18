@@ -133,7 +133,6 @@ async function saveConfiguration(
         PasswordKeys.INGEST_FULL_EVENT_DATA,
         `${isIngestingFullEventData}`
     );
-    debugger
     await savePassword(storagePasswords, PasswordKeys.NUMBER_OF_DAYS_TO_BACKFILL, numberOfDaysToBackfill ?? '');
     await savePassword(storagePasswords, PasswordKeys.SEVERITIES_FILTER, `${severitiesFilter}`);
     await savePassword(storagePasswords, PasswordKeys.SOURCE_TYPES_FILTER, `${sourceTypesFilter}`);
