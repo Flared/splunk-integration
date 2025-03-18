@@ -155,8 +155,8 @@ def get_number_of_days_to_backfill(storage_passwords: client.StoragePasswords) -
 
     try:
         return int(number_of_days_to_backfill) if number_of_days_to_backfill else 30
-    except:
-        raise Exception("Number of days to backfill not a number")
+    except Exception as e:
+        raise Exception("Number of days to backfill not a number") from e
 
 
 def get_tenant_ids(storage_passwords: client.StoragePasswords) -> list[int]:
