@@ -61,7 +61,12 @@ def main(
         # for identifiers 30 days prior to the day a tenant was first configured.
         start_date = data_store.get_earliest_ingested_by_tenant(tenant_id)
         if not start_date:
-            start_date = datetime.now(timezone.utc) - timedelta(days=30)
+            number_of_days_to_backfill = get_number_of_days_to_backfill(
+                storage_passwords=storage_passwords
+            )
+            start_date = datetime.now(timezone.utc) - timedelta(
+                days=number_of_days_to_backfill
+            )
             data_store.set_earliest_ingested_by_tenant(tenant_id, start_date)
 
         for event, next_token in fetch_feed(
@@ -140,6 +145,18 @@ def get_api_key(storage_passwords: client.StoragePasswords) -> str:
     if not api_key:
         raise Exception("API key not found")
     return api_key
+
+
+def get_number_of_days_to_backfill(storage_passwords: client.StoragePasswords) -> int:
+    number_of_days_to_backfill = get_storage_password_value(
+        storage_passwords=storage_passwords,
+        password_key=PasswordKeys.NUMBER_OF_DAYS_TO_BACKFILL.value,
+    )
+
+    try:
+        return int(number_of_days_to_backfill) if number_of_days_to_backfill else 30
+    except Exception as e:
+        raise Exception("Number of days to backfill not a number") from e
 
 
 def get_tenant_ids(storage_passwords: client.StoragePasswords) -> list[int]:
