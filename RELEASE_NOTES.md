@@ -1,4 +1,7 @@
 # Flare
+1.3.1
+-----
+* Adds support for custom number of days to backfill
 
 1.3.0
 -----
