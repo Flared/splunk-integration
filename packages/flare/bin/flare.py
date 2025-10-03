@@ -78,12 +78,18 @@ class FlareAPI(AuthBase):
             self.logger.debug(event_feed)
             next_token = event_feed["next"]
             for event in event_feed["items"]:
-                if ingest_full_event_data:
-                    event = self._fetch_full_event_from_uid(
-                        uid=event["metadata"]["uid"]
-                    )
-                    time.sleep(1)  # Don't hit rate limit
-                yield (event, next_token)
+                try:
+                    if ingest_full_event_data:
+                        event = self._fetch_full_event_from_uid(
+                            uid=event["metadata"]["uid"]
+                        )
+                        time.sleep(1)  # Don't hit rate limit
+                except:
+                    # There is already logging in the _fetch_full_event_from_uid
+                    # we want to continue getting the other events even if one fails.
+                    pass
+                finally:
+                    yield (event, next_token)
 
     def _fetch_event_feed_metadata(
         self,

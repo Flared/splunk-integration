@@ -9,6 +9,7 @@ services:
     environment:
       - SPLUNK_START_ARGS=--accept-license
       - SPLUNK_PASSWORD=a_password
+      - SPLUNK_GENERAL_TERMS=--accept-sgt-current-at-splunk-com
     volumes:
       - ./output/flare:/opt/splunk/etc/apps/flare
       - ./splunk/default.yml:/tmp/defaults/default.yml
