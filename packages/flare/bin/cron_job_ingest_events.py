@@ -47,6 +47,9 @@ def main(
     ingest_full_event_data = get_ingest_full_event_data(
         storage_passwords=storage_passwords
     )
+    number_of_days_to_backfill = get_number_of_days_to_backfill(
+        storage_passwords=storage_passwords
+    )
     severities_filter = get_severities_filter(storage_passwords=storage_passwords)
     source_types_filter = get_source_types_filter(storage_passwords=storage_passwords)
 
@@ -61,9 +64,6 @@ def main(
         # for identifiers 30 days prior to the day a tenant was first configured.
         start_date = data_store.get_earliest_ingested_by_tenant(tenant_id)
         if not start_date:
-            number_of_days_to_backfill = get_number_of_days_to_backfill(
-                storage_passwords=storage_passwords
-            )
             start_date = datetime.now(timezone.utc) - timedelta(
                 days=number_of_days_to_backfill
             )
@@ -93,7 +93,7 @@ def main(
         logger.info(f"Fetched {events_fetched_count} events on tenant {tenant_id}")
         total_events_fetched_count += events_fetched_count
 
-    logger.info(f"Fetched {events_fetched_count} events across all tenants")
+    logger.info(f"Fetched {total_events_fetched_count} events across all tenants")
 
 
 def fetch_feed(
@@ -163,14 +163,13 @@ def get_tenant_ids(storage_passwords: client.StoragePasswords) -> list[int]:
     stored_tenant_ids = get_storage_password_value(
         storage_passwords=storage_passwords, password_key=PasswordKeys.TENANT_IDS.value
     )
+    tenant_ids = None
     try:
-        tenant_ids: Optional[list[int]] = (
-            json.loads(stored_tenant_ids) if stored_tenant_ids else None
-        )
+        tenant_ids = json.loads(stored_tenant_ids) if stored_tenant_ids else None
     except Exception:
         pass
 
-    if not tenant_ids:
+    if tenant_ids is None:
         raise Exception("Tenant IDs not found")
     return tenant_ids
 

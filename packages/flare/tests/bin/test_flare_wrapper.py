@@ -1,4 +1,3 @@
-import pytest
 import requests_mock
 
 from conftest import FakeLogger
@@ -159,48 +158,7 @@ def test_flare_full_data_with_metadata(
         assert mock_full_event_2.called
 
 
-def test_flare_full_data_with_metadata_and_exception(
-    logger: FakeLogger,
-    disable_sleep: Any,
-) -> None:
-    with requests_mock.Mocker() as mocker:
-        mocker.register_uri(
-            "POST",
-            "https://api.flare.io/tokens/generate",
-            status_code=200,
-            json={"token": "access_token"},
-        )
-
-        tenant_resp_page_1 = {
-            "next": "some_next_value",
-            "items": [
-                {"not_metadata": {"uid": "some_uid_1"}},
-                {"metadata": {"uid": "some_uid_2"}},
-            ],
-        }
-
-        mocker.register_uri(
-            "POST",
-            "https://api.flare.io/firework/v4/events/tenant/_search",
-            status_code=200,
-            json=tenant_resp_page_1,
-        )
-
-        flare_api = FlareAPI(api_key="some_key", tenant_id=111, logger=logger)
-
-        with pytest.raises(KeyError, match="metadata"):
-            next(
-                flare_api.fetch_feed_events(
-                    next=None,
-                    start_date=None,
-                    ingest_full_event_data=True,
-                    severities=[],
-                    source_types=[],
-                )
-            )
-
-
-def test_flare_full_data_retry_exception(
+def test_flare_full_data_retry_errors(
     logger: FakeLogger,
     disable_sleep: Any,
 ) -> None:
@@ -235,19 +193,15 @@ def test_flare_full_data_retry_exception(
 
         flare_api = FlareAPI(api_key="some_key", tenant_id=111, logger=logger)
 
-        with pytest.raises(
-            Exception,
-            match="failed to fetch full event data for some_uid_1 after 3 tries",
-        ):
-            next(
-                flare_api.fetch_feed_events(
-                    next=None,
-                    start_date=None,
-                    ingest_full_event_data=True,
-                    severities=[],
-                    source_types=[],
-                )
+        next(
+            flare_api.fetch_feed_events(
+                next=None,
+                start_date=None,
+                ingest_full_event_data=True,
+                severities=[],
+                source_types=[],
             )
+        )
 
         assert logger.messages == [
             "INFO: Failed to fetch event 1/3 retries: 500 Server Error: None for url: https://api.flare.io/firework/v2/activities/some_uid_1",

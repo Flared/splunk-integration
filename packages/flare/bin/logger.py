@@ -24,7 +24,7 @@ class Logger:
         if os.environ.get("FLARE_ENV") == "dev":
             self._logger.setLevel(logging.DEBUG)
         else:
-            self._logger.setLevel(logging.ERROR)
+            self._logger.setLevel(logging.INFO)
         formatter = logging.Formatter("%(asctime)s %(levelname)-5s %(message)s")
         handler = TimedRotatingFileHandler(
             log_filepath, when="d", interval=1, backupCount=5

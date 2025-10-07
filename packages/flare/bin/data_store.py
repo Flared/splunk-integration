@@ -33,6 +33,10 @@ class ConfigDataStore:
     def _sync(self) -> None:
         self._store.read(config_path)
 
+    def reset(self) -> None:
+        self._store.clear()
+        self._commit()
+
     def get_last_fetch(self) -> Optional[datetime]:
         self._sync()
         last_fetched = self._store.get(
