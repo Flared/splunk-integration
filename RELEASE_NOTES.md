@@ -1,4 +1,8 @@
 # Flare
+1.3.2
+-----
+* Improve debugging and fix an issue where ingestion would terminate when an exception occurs.
+
 1.3.1
 -----
 * Adds support for custom number of days to backfill
