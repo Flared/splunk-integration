@@ -1,4 +1,8 @@
 # Flare
+1.3.3
+-----
+* Bump the version number and to update the splunkbase listing to support Splunk v10. 
+
 1.3.2
 -----
 * Improve debugging and fix an issue where ingestion would terminate when an exception occurs.
