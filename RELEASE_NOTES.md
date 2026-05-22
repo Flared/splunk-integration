@@ -1,4 +1,8 @@
 # Flare
+1.3.4
+-----
+* Update the minimum version of the Flare SDK. 
+
 1.3.3
 -----
 * Bump the version number and to update the splunkbase listing to support Splunk v10. 
