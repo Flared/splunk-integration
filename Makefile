@@ -58,8 +58,9 @@ publish: output/flare.tar.gz
 validate: venv-tools
 	@echo "Running Splunk AppInspect..."
 	@echo "If you get an error about \"libmagic\", run \"brew install libmagic\""
-	@venv-tools/bin/splunk-appinspect inspect --ci "output/flare" || \
-	if test  "$$?" -eq "102" || "$$?" -eq "103" ; then \
+	@venv-tools/bin/splunk-appinspect inspect --ci "output/flare" ; \
+	status=$$? ; \
+	if [ "$$status" -eq 0 ] || [ "$$status" -eq 102 ] || [ "$$status" -eq 103 ] ; then \
 		exit 0 ; \
 	else \
 		exit 1 ; \
