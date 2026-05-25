@@ -17,8 +17,7 @@ venv: requirements.txt
 	@rm -rf packages/flare/bin/vendor/bin
 	@rm -rf packages/flare/bin/vendor/packaging
 	@rm -rf packages/flare/bin/vendor/*-stubs
-	@rm -rf packages/flare/bin/vendor/charset_normalizer/md.cpython-39-x86_64-linux-gnu.so
-	@rm -rf packages/flare/bin/vendor/charset_normalizer/md__mypyc.cpython-39-x86_64-linux-gnu.so
+	@find packages/flare/bin/vendor -type f -name "*x86_64-linux-gnu.so" -delete
 
 venv-tools: requirements.tools.txt venv
 	rm -rf venv-tools
@@ -58,8 +57,9 @@ publish: output/flare.tar.gz
 validate: venv-tools
 	@echo "Running Splunk AppInspect..."
 	@echo "If you get an error about \"libmagic\", run \"brew install libmagic\""
-	@venv-tools/bin/splunk-appinspect inspect --ci "output/flare" || \
-	if test  "$$?" -eq "102" || "$$?" -eq "103" ; then \
+	@venv-tools/bin/splunk-appinspect inspect --ci "output/flare" ; \
+	status=$$? ; \
+	if [ "$$status" -eq 0 ] || [ "$$status" -eq 102 ] || [ "$$status" -eq 103 ] ; then \
 		exit 0 ; \
 	else \
 		exit 1 ; \

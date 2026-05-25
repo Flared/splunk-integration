@@ -33,6 +33,11 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     steps:
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+            python-version: '3.9'
+
       - name: Download Build Artifact
         uses: actions/download-artifact@v4
         with:
