@@ -1,16 +1,5 @@
-*.DS_Store
-flare.tar.gz
-venv
-venv-tools
-packages/flare/local
-packages/flare/metadata/local.meta
-__pycache__/
-.vscode/
-
-packages/flare/bin/vendor/*
 .DS_Store
 .idea/
-lerna-debug.log
 node_modules
 npm-debug.log
 test-reports
@@ -20,5 +9,27 @@ licenses.json
 functional-temp
 splunktional-temp
 
-output/
-logs/
+# Build output
+dist/
+build/
+
+# OS files
+desktop.ini
+
+# Python / Splunk
+__pycache__/
+*.py[cod]
+local/
+*local.meta
+*.log
+
+# Environment variables
+.env
+.env.local
+packages/flare/src/main/resources/splunk/bin/test_ingest.py
+SpecterOps BloodHound Splunk Addon Installation and User Guide.md
+Installation Guide and User Guide for Flare Splunk .md
+mock_flare_server.py
+test_checkpoint.json
+test_mock_ingestion.py
+test_sdk.py
