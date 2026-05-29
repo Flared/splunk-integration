@@ -22,7 +22,7 @@ __pycache__/
 local/
 *local.meta
 *.log
-packages/flare/src/main/resources/splunk/bin/lib/*
+packages/flare/src/main/resources/splunk/bin/lib
 
 # Environment variables
 .env
