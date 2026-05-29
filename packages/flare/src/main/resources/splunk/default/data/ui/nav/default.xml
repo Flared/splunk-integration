@@ -1,11 +1,6 @@
-<nav search_view="search" color="#272735">
-  <view name="search" default="true" />
-  <view name="configuration" />
-  <view name="status" />
-  <a href="https://docs.flare.io/splunk-app-integration" target="_blank">Documentation</a>
-  <a href="https://app.flare.io/" target="_blank">Flare Platform</a>
-  <collection label="Saved Searches">
-    <saved name="Flare Search" />
-    <saved name="Severity" />
-  </collection>
+<nav>
+    <view name="configuration"  label="Configuration"/>
+    <view name="dashboard" default="true" label="Dashboard"/>
+    <view name="search" label="Search"/>
+    <view name="app_logs" label="Application Logs"/>
 </nav>

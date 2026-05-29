@@ -1,0 +1,75 @@
+<?xml version="1.0"?>
+<dashboard version="1.1" theme="light">
+    <label>Application Logs</label>
+    <description>Flare app internal logs for troubleshooting</description>
+
+    <!-- Base Search for all panels -->
+    <search id="base_search_logs">
+        <query>index=_internal source="*flare_cron_job.log" | search log_level="$log_level_filter$"</query>
+        <earliest>$log_time.earliest$</earliest>
+        <latest>$log_time.latest$</latest>
+    </search>
+
+    <fieldset submitButton="false">
+        <input type="time" token="log_time">
+            <label>Time Range</label>
+            <default>
+                <earliest>-24h@h</earliest>
+                <latest>now</latest>
+            </default>
+        </input>
+        <input type="dropdown" token="log_level_filter">
+            <label>Log Level</label>
+            <choice value="*">All</choice>
+            <choice value="INFO">INFO</choice>
+            <choice value="WARNING">WARNING</choice>
+            <choice value="ERROR">ERROR</choice>
+            <choice value="DEBUG">DEBUG</choice>
+            <choice value="CRITICAL">CRITICAL</choice>
+            <default>*</default>
+        </input>
+    </fieldset>
+
+    <!-- Log Level Trend Line Chart -->
+    <row>
+        <panel>
+            <title>Log Level Trend</title>
+            <chart>
+                <search base="base_search_logs">
+                    <query>| timechart span=1h count by log_level</query>
+                </search>
+                <option name="charting.chart">line</option>
+                <option name="charting.chart.nullValueMode">zero</option>
+                <option name="charting.chart.showMarkers">true</option>
+                <option name="charting.axisTitleX.text">Time</option>
+                <option name="charting.axisTitleY.text">Log Count</option>
+                <option name="charting.legend.placement">bottom</option>
+                <option name="charting.fieldColors">{"CRITICAL": 0x8b0000, "ERROR": 0xff0000, "WARNING": 0xffcc00, "INFO": 0x0073e6, "DEBUG": 0x808080}</option>
+                <drilldown>
+                    <condition>
+                        <!-- Disable drilldown: do not navigate to search page on click -->
+                    </condition>
+                </drilldown>
+            </chart>
+        </panel>
+    </row>
+
+    <row>
+        <panel>
+            <title>Application Logs</title>
+            <table>
+                <search base="base_search_logs">
+                    <query>| eval Time = strftime(_time, "%Y-%m-%d %H:%M:%S")
+| eval log_message = coalesce(log_message, _raw)
+| table Time, log_level, log_message
+| rename log_level as "Log Level", log_message as "Message"
+| sort -Time</query>
+                </search>
+                <option name="count">20</option>
+                <option name="drilldown">none</option>
+                <option name="wrap">true</option>
+                <option name="link.exportResults.visible">true</option>
+            </table>
+        </panel>
+    </row>
+</dashboard>
