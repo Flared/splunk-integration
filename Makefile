@@ -81,14 +81,10 @@ test: venv-tools
 
 .PHONY: format setup-web
 format: venv-tools
-	venv-tools/bin/ruff check --fix --unsafe-fixes
-	venv-tools/bin/ruff format
 	yarn run format
 
 .PHONY: format-check
 format-check: venv-tools
-	venv-tools/bin/ruff check
-	venv-tools/bin/ruff format --check
 	yarn run format:verify
 
 .PHONY: lint

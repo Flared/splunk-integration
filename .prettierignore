@@ -1,0 +1,24 @@
+# Dependencies and Python tooling
+node_modules/
+venv/
+venv-tools/
+
+# Build output and CI artifacts
+dist/
+build/
+output/
+coverage_report/
+test-reports/
+functional-temp/
+splunktional-temp/
+
+# Lockfiles and generated reports
+yarn.lock
+licenses.json
+
+# Vendored Python dependencies
+packages/flare/bin/vendor/
+
+# Splunk runtime / local state
+**/local/
+*.log
