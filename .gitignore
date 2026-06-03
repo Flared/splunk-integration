@@ -27,8 +27,7 @@ packages/flare/src/main/resources/splunk/bin/lib
 # Environment variables
 .env
 .env.local
-packages/flare/src/main/resources/splunk/bin/test_ingest.py
-SpecterOps BloodHound Splunk Addon Installation and User Guide.md
+
 Installation Guide and User Guide for Flare Splunk .md
 mock_flare_server.py
 test_checkpoint.json
