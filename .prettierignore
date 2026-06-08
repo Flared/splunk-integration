@@ -13,7 +13,7 @@ functional-temp/
 splunktional-temp/
 
 # Lockfiles and generated reports
-yarn.lock
+pnpm-lock.yaml
 licenses.json
 
 # Vendored Python dependencies

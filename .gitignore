@@ -4,7 +4,7 @@ node_modules
 npm-debug.log
 test-reports
 coverage_report
-yarn-error.log
+pnpm-debug.log
 licenses.json
 functional-temp
 splunktional-temp
@@ -28,8 +28,3 @@ packages/flare/src/main/resources/splunk/bin/lib
 .env
 .env.local
 
-Installation Guide and User Guide for Flare Splunk .md
-mock_flare_server.py
-test_checkpoint.json
-test_mock_ingestion.py
-test_sdk.py
