@@ -12,7 +12,7 @@ The **Flare Splunk Integration** is a specialized app designed to seamlessly pul
 
 **Prerequisites:**
 - **Node.js**: `>= 22` (required by project configuration)
-- **Yarn**: `1.x` (Classic) for workspace dependency management
+- **pnpm**: `9.x` or later for workspace dependency management
 
 Once the required versions are installed, you can proceed to install the project dependencies:
 

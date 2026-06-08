@@ -3,24 +3,21 @@
   "license": "UNLICENSED",
   "private": true,
   "scripts": {
-    "build": "yarn workspaces run build",
-    "format": "yarn format:python && yarn format:prettier",
-    "format:verify": "yarn format:python:verify && yarn format:prettier:verify",
+    "build": "pnpm -r build",
+    "format": "pnpm format:python && pnpm format:prettier",
+    "format:verify": "pnpm format:python:verify && pnpm format:prettier:verify",
     "format:prettier": "prettier --write .",
     "format:prettier:verify": "prettier --check .",
     "format:python": "node scripts/format-python.cjs",
     "format:python:verify": "node scripts/format-python.cjs --check",
-    "lint": "yarn workspaces run lint",
-    "setup": "yarn && yarn build",
-    "test": "yarn workspaces run test",
-    "start": "yarn workspace @splunk/flare run start"
+    "lint": "pnpm -r lint",
+    "setup": "pnpm install && pnpm run build",
+    "test": "pnpm -r test",
+    "start": "pnpm --filter @splunk/flare run start"
   },
   "devDependencies": {
     "prettier": "^3.6.2"
   },
-  "workspaces": [
-    "packages/*"
-  ],
   "engines": {
     "node": ">=22"
   }

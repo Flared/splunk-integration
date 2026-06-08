@@ -3,21 +3,21 @@
   "version": "0.0.1",
   "license": "UNLICENSED",
   "scripts": {
-    "build": "node bin/build.js build && yarn types:build",
+    "build": "node bin/build.js build && pnpm types:build",
     "eslint": "eslint src --ext \".ts,.tsx,.js,.jsx\"",
-    "eslint:ci": "yarn run eslint -f junit -o test-reports/lint-results.xml",
+    "eslint:ci": "pnpm run eslint -f junit -o test-reports/lint-results.xml",
     "eslint:fix": "eslint src --ext \".ts,.tsx,.js,.jsx\" --fix",
     "link:app": "node bin/build.js link",
-    "lint": "yarn run eslint && yarn run stylelint",
-    "lint:ci": "yarn run eslint:ci && yarn run stylelint",
+    "lint": "pnpm run eslint && pnpm run stylelint",
+    "lint:ci": "pnpm run eslint:ci && pnpm run stylelint",
     "start:app": "webpack --watch --config demo/webpack.splunkapp.config.js",
     "start:demo": "node bin/build.js demo",
     "stylelint": "stylelint \"src/**/*.{ts,tsx,js,jsx}\" --config stylelint.config.js",
     "test": "jest",
-    "test:ci": "JEST_JUNIT_OUTPUT_DIR=./test-reports JEST_JUNIT_OUTPUT_NAME=unit-results.xml JEST_JUNIT_CLASSNAME=unit yarn run test --ci --reporters=default jest-junit --coverage --coverageDirectory=coverage_report/coverage_maps_unit --coverageReporters=cobertura",
+    "test:ci": "JEST_JUNIT_OUTPUT_DIR=./test-reports JEST_JUNIT_OUTPUT_NAME=unit-results.xml JEST_JUNIT_CLASSNAME=unit pnpm run test --ci --reporters=default jest-junit --coverage --coverageDirectory=coverage_report/coverage_maps_unit --coverageReporters=cobertura",
     "test:watch": "jest --watch",
     "types:build": "tsc",
-    "types:start": "yarn types:build --watch"
+    "types:start": "pnpm types:build --watch"
   },
   "main": "src/index.ts",
   "dependencies": {

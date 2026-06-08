@@ -3,17 +3,17 @@
   "version": "0.0.1",
   "license": "UNLICENSED",
   "scripts": {
-    "build": "node bin/build.js build && yarn types:build",
+    "build": "node bin/build.js build && pnpm types:build",
     "eslint": "eslint src --ext \".ts,.tsx,.js,.jsx\"",
-    "eslint:ci": "yarn run eslint -f junit -o test-reports/lint-results.xml",
+    "eslint:ci": "pnpm run eslint -f junit -o test-reports/lint-results.xml",
     "eslint:fix": "eslint src --ext \".ts,.tsx,.js,.jsx\" --fix",
     "link:app": "node bin/build.js link",
-    "lint": "yarn run eslint && yarn run stylelint",
-    "lint:ci": "yarn run eslint:ci && yarn run stylelint",
+    "lint": "pnpm run eslint && pnpm run stylelint",
+    "lint:ci": "pnpm run eslint:ci && pnpm run stylelint",
     "start": "webpack --watch",
     "stylelint": "stylelint \"src/**/*.{ts,tsx,js,jsx}\" --config stylelint.config.js",
     "types:build": "tsc",
-    "types:start": "yarn types:build --watch"
+    "types:start": "pnpm types:build --watch"
   },
   "dependencies": {
     "@splunk/react-page": "^8.2.1",
@@ -22,7 +22,7 @@
     "@splunk/themes": "^1.6.0",
     "react": "^18.2.0",
     "styled-components": "^5.3.10",
-    "@splunk/configuration": "^0.0.1"
+    "@splunk/configuration": "workspace:*"
   },
   "devDependencies": {
     "@babel/core": "^7.28.0",
