@@ -17,7 +17,7 @@ The **Flare Splunk Integration** is a specialized app designed to seamlessly pul
 Once the required versions are installed, you can proceed to install the project dependencies:
 
 ```bash
-$ yarn setup
+$ pnpm run setup
 ```
 
 You’ll have two main directories, one for the created React page and one for the created Splunk app.
@@ -34,7 +34,7 @@ Splunk demo will allow you to view your new app inside your local Splunk instanc
 $ cd packages/flare
 
 # link the app to your local Splunk instance
-$ yarn link:app
+$ pnpm run link:app
 
 # check that the link is set (optional)
 $ ls -l $SPLUNK_HOME/etc/apps/flare
@@ -46,7 +46,7 @@ $ splunk restart
 $ cd ../../
 
 # start the Splunk app
-$ yarn start
+$ pnpm run start
 ```
 
 This will watch both your `flare` and `configuration` folders for changes and rebundle.

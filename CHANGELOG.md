@@ -9,3 +9,4 @@
 - Implemented **dynamic links** from the result table to the corresponding Flare event in the Flare UI.
 - Improved tenant extraction and filtering across search results and dashboards.
 - Refreshed documentation to describe the new UI tabs and configuration options.
+- Migrated workspace dependency management from Yarn to pnpm for improved performance and reliability.
