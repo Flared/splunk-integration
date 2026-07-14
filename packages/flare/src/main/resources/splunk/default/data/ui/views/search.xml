@@ -1,0 +1,148 @@
+<?xml version="1.0"?>
+<dashboard version="1.1" theme="light">
+    <label>Search</label>
+
+    <fieldset autoRun="true" submitButton="false">
+        <input type="time" token="time_range">
+            <label>Time Range</label>
+            <default>
+                <earliest>-30d@d</earliest>
+                <latest>now</latest>
+            </default>
+        </input>
+        <input type="dropdown" token="severity_filter" searchWhenChanged="true">
+            <label>Severity</label>
+            <choice value="*">All</choice>
+            <default>*</default>
+            <search>
+                <query>`flare_index` sourcetype=flare_json | dedup metadata_severity | table metadata_severity | sort metadata_severity</query>
+                <earliest>-30d@d</earliest>
+                <latest>now</latest>
+            </search>
+            <fieldForLabel>metadata_severity</fieldForLabel>
+            <fieldForValue>metadata_severity</fieldForValue>
+        </input>
+        <input type="dropdown" token="event_type_filter" searchWhenChanged="true">
+            <label>Event Type</label>
+            <choice value="*">All</choice>
+            <default>*</default>
+            <search>
+                <query>`flare_index` sourcetype=flare_json | dedup event_type | table event_type | sort event_type</query>
+                <earliest>-30d@d</earliest>
+                <latest>now</latest>
+            </search>
+            <fieldForLabel>event_type</fieldForLabel>
+            <fieldForValue>event_type</fieldForValue>
+        </input>
+        <input type="dropdown" token="tenant_filter" searchWhenChanged="true">
+            <label>Tenant</label>
+            <choice value="*">All</choice>
+            <default>*</default>
+            <search>
+                <query>`flare_index` sourcetype=flare_json | eval Tenant = coalesce(tenant_name, tenant_id) | dedup Tenant | table Tenant | sort Tenant</query>
+                <earliest>-30d@d</earliest>
+                <latest>now</latest>
+            </search>
+            <fieldForLabel>Tenant</fieldForLabel>
+            <fieldForValue>Tenant</fieldForValue>
+        </input>
+    </fieldset>
+
+    
+    <!-- ROW 1: Saved Searches — Quick Access Links                   -->
+    
+    <row>
+        <panel>
+            <title>Saved Searches</title>
+            <html>
+                <style>
+                    .saved-search-grid {
+                        display: flex;
+                        flex-wrap: wrap;
+                        gap: 10px;
+                        padding: 8px 0;
+                    }
+                    .saved-search-grid a {
+                        display: inline-block;
+                        padding: 8px 16px;
+                        background: #ffffffff;
+                        border: 1px solid #3c444d;
+                        border-radius: 4px;
+                        color: #000000ff;
+                        text-decoration: none;
+                        font-size: 13px;
+                        transition: background 0.2s;
+                    }
+                </style>
+                <div class="saved-search-grid">
+                    <a href="/app/search/report?s=%2FservicesNS%2Fnobody%2Fflare%2Fsaved%2Fsearches%2FFlare%20-%20All%20Unique%20Events" target="_blank">All Unique Events</a>
+                    <a href="/app/search/report?s=%2FservicesNS%2Fnobody%2Fflare%2Fsaved%2Fsearches%2FFlare%20-%20Critical%20and%20High%20Severity%20Events" target="_blank">Critical &amp; High Severity</a>
+                    <a href="/app/search/report?s=%2FservicesNS%2Fnobody%2Fflare%2Fsaved%2Fsearches%2FFlare%20-%20Leaked%20Credentials%20Report" target="_blank">Leaked Credentials</a>
+                    <a href="/app/search/report?s=%2FservicesNS%2Fnobody%2Fflare%2Fsaved%2Fsearches%2FFlare%20-%20Daily%20Event%20Volume%20Trend" target="_blank">Daily Volume Trend</a>
+                    <a href="/app/search/report?s=%2FservicesNS%2Fnobody%2Fflare%2Fsaved%2Fsearches%2FFlare%20-%20Severity%20Distribution" target="_blank">Severity Distribution</a>
+                    <a href="/app/search/report?s=%2FservicesNS%2Fnobody%2Fflare%2Fsaved%2Fsearches%2FFlare%20-%20Ingestion%20Health%20Check" target="_blank">Ingestion Health</a>
+                    <a href="/app/search/report?s=%2FservicesNS%2Fnobody%2Fflare%2Fsaved%2Fsearches%2FFlare%20-%20Ingestion%20Errors" target="_blank">Ingestion Errors</a>
+                </div>
+            </html>
+        </panel>
+    </row>
+    
+    <row>
+        <panel>
+            <title>Flare Events</title>
+            <table>
+                <search>
+                    <query>`flare_index` sourcetype=flare_json metadata_severity="$severity_filter$" event_type="$event_type_filter$"
+| eval Tenant = coalesce(tenant_name, tenant_id)
+| search Tenant="$tenant_filter$"
+| dedup metadata_uid
+| eval Time = strftime(_time, "%Y-%m-%d %H:%M:%S")
+| eval Tenant = mvindex(Tenant, 0)
+| table Time, event_type, metadata_severity, Tenant, metadata_flare_url
+| rename Time as "Time", event_type as "Category", metadata_severity as "Severity", Tenant as "Tenant", metadata_flare_url as "Flare URL"
+| sort -Time</query>
+                    <earliest>$time_range.earliest$</earliest>
+                    <latest>$time_range.latest$</latest>
+                </search>
+                <option name="count">20</option>
+                <option name="drilldown">cell</option>
+                <option name="wrap">true</option>
+                <option name="rowNumbers">true</option>
+                <drilldown>
+                    <condition field="Flare URL">
+                        <link target="_blank">$row.Flare URL|n$</link>
+                    </condition>
+                    <condition field="*">
+                        <!-- Do nothing for all other columns -->
+                    </condition>
+                </drilldown>
+            </table>
+        </panel>
+    </row>
+
+    
+    <!-- ROW 4: Event Timeline                                         -->
+    <!-- ============================================================ -->
+    <row>
+        <panel>
+            <title>Event Timeline</title>
+            <chart>
+                <search>
+                    <query>`flare_index` sourcetype=flare_json metadata_severity="$severity_filter$" event_type="$event_type_filter$"
+| eval Tenant = coalesce(tenant_name, tenant_id)
+| search Tenant="$tenant_filter$"
+| timechart span=1d count by event_type</query>
+                    <earliest>$time_range.earliest$</earliest>
+                    <latest>$time_range.latest$</latest>
+                </search>
+                <option name="charting.chart">column</option>
+                <option name="charting.chart.stackMode">stacked</option>
+                <option name="charting.axisTitleX.text">Date</option>
+                <option name="charting.axisTitleY.text"># of Events</option>
+                <option name="charting.legend.placement">bottom</option>
+                <option name="charting.drilldown">none</option>
+            </chart>
+        </panel>
+    </row>
+
+</dashboard>

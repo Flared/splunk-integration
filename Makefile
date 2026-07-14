@@ -5,8 +5,8 @@ build:
 	$(MAKE) setup-web
 
 .PHONY: setup-web
-setup-web: venv yarn.lock
-	yarn run setup
+setup-web: venv pnpm-lock.yaml
+	pnpm run setup
 
 venv: requirements.txt
 	python -m venv venv
@@ -77,23 +77,19 @@ inspect-tags:
 .PHONY: test
 test: venv-tools
 	venv-tools/bin/pytest ./packages/flare/tests/**/*.py -vv ;
-	yarn run test:ci
+	pnpm run test:ci
 
 .PHONY: format setup-web
 format: venv-tools
-	venv-tools/bin/ruff check --fix --unsafe-fixes
-	venv-tools/bin/ruff format
-	yarn run format
+	pnpm run format
 
 .PHONY: format-check
 format-check: venv-tools
-	venv-tools/bin/ruff check
-	venv-tools/bin/ruff format --check
-	yarn run format:verify
+	pnpm run format:verify
 
 .PHONY: lint
 lint: setup-web venv-tools mypy format-check
-	yarn run lint
+	pnpm run lint
 
 .PHONY: mypy
 mypy: venv-tools
@@ -105,4 +101,4 @@ sl: splunk-local
 .PHONY: splunk-local
 splunk-local: venv setup-web
 	docker compose up -d
-	yarn run start
+	pnpm run start

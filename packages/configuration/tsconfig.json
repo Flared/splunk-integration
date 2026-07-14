@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "esModuleInterop": true,
+    "jsx": "react",
+    "lib": ["es2020", "dom"],
+    "downlevelIteration": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "types": ["@testing-library/jest-dom", "@testing-library/react", "jest", "webpack-env"],
+    "rootDir": ".",
+    "emitDeclarationOnly": true,
+    "declaration": true,
+    "declarationDir": "./types"
+  },
+  "include": ["unit-test-setup-testing-library.ts", "src"]
+}
+

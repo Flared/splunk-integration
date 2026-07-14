@@ -5,6 +5,6 @@
       "ignore": ["*.md"]
     }
   },
-  "npmClient": "yarn",
+  "npmClient": "pnpm",
   "useWorkspaces": true
 }
