@@ -11,6 +11,8 @@ set -e   # Stop script on errors
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 PACKAGE_DIR=$SCRIPT_DIR/dist
 TA_VERSION_FILE="$SCRIPT_DIR/ta_version.txt"
+REQUIREMENTS_FILE="$SCRIPT_DIR/requirements.txt"
+PYTHON="${PYTHON:-python}"
 
 # Clean previous builds
 rm -rf $PACKAGE_DIR/*
@@ -40,12 +42,24 @@ echo "Sync complete."
 # ─────────────────────────────────────────────────────────────────────────────
 
 # ─── VENDOR PYTHON DEPENDENCIES ──────────────────────────────────────────────
-# Install the official flareio SDK into bin/lib/ so the .tgz is self-contained.
-echo "Vendoring flareio SDK into stage/bin/lib..."
-pip install flareio "urllib3<2" "requests<2.32.0" --target="$SRC_DIR/bin/lib" --quiet --upgrade
+# Install the runtime dependencies (requirements.txt) into bin/lib/ so the app
+# is self-contained. bin/lib is the exact path the Python modules add to sys.path.
+echo "Vendoring runtime dependencies into stage/bin/lib..."
+"$PYTHON" -m pip install -r "$REQUIREMENTS_FILE" --target="$SRC_DIR/bin/lib" --quiet --upgrade
 
-echo "SDK vendored successfully."
+echo "Runtime dependencies vendored successfully."
 # ─────────────────────────────────────────────────────────────────────────────
+
+# For local development we only need the assembled, runnable app in stage/ —
+# skip building the distributable tarball.
+if [ -n "${SKIP_TARBALL:-}" ]; then
+    find "$SRC_DIR" -name '__pycache__' -type d -exec rm -rf {} + 2>/dev/null || true
+    find "$SRC_DIR" -name '*.pyc' -delete 2>/dev/null || true
+    echo "----------------------------------------------------------------"
+    echo "SKIP_TARBALL set — runnable app assembled at: $SRC_DIR"
+    echo "----------------------------------------------------------------"
+    exit 0
+fi
 
 cp -R $SRC_DIR/* $FULLAPP_DIR/
 

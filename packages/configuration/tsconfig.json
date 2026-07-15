@@ -13,6 +13,5 @@
     "declaration": true,
     "declarationDir": "./types"
   },
-  "include": ["unit-test-setup-testing-library.ts", "src"]
+  "include": ["src"]
 }
-

@@ -12,12 +12,16 @@ splunktional-temp
 # Build output
 dist/
 build/
+venv-tools/
+packages/flare/stage/
 
 # OS files
 desktop.ini
 
 # Python / Splunk
 __pycache__/
+.mypy_cache/
+.pytest_cache/
 *.py[cod]
 local/
 *local.meta

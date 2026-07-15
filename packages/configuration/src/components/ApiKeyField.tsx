@@ -13,7 +13,12 @@ interface ApiKeyFieldProps {
 /**
  * Flare API Key input field with inline red error and validation spinner.
  */
-export function ApiKeyField({ apiKey, apiKeyError, isValidatingApiKey, onChange }: ApiKeyFieldProps) {
+export function ApiKeyField({
+    apiKey,
+    apiKeyError,
+    isValidatingApiKey,
+    onChange,
+}: ApiKeyFieldProps) {
     return (
         <ControlGroup
             label="Flare API Key"
@@ -32,7 +37,16 @@ export function ApiKeyField({ apiKey, apiKeyError, isValidatingApiKey, onChange 
                     error={apiKeyError.length > 0}
                 />
                 {isValidatingApiKey && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: '8px', fontSize: '12px', color: '#6c757d' }}>
+                    <div
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 6,
+                            marginTop: '8px',
+                            fontSize: '12px',
+                            color: '#6c757d',
+                        }}
+                    >
                         <WaitSpinner size="small" />
                         <span>Validating API key…</span>
                     </div>

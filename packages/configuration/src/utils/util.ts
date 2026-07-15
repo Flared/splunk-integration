@@ -1,5 +1,5 @@
 function promisify<T extends (...args: any[]) => void>(
-    fn: T
+    fn: T,
 ): (...args: Parameters<T>) => Promise<ReturnType<T> extends void ? void : ReturnType<T>> {
     return (...args: Parameters<T>): Promise<ReturnType<T> extends void ? void : ReturnType<T>> => {
         return new Promise((resolve, reject) => {

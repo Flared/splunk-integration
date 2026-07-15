@@ -1,8 +1,9 @@
-import os
 import json
 import logging
+import os
 
-logger = logging.getLogger('flare_cron_job')
+
+logger = logging.getLogger("flare_cron_job")
 
 
 def _get_checkpoint_path() -> str:
@@ -17,6 +18,7 @@ def _get_checkpoint_path() -> str:
     os.makedirs(checkpoint_dir, exist_ok=True)
     return os.path.join(checkpoint_dir, "checkpoint.json")
 
+
 def load_checkpoint() -> dict:
     """Load the checkpoint file."""
     path = _get_checkpoint_path()
@@ -25,12 +27,13 @@ def load_checkpoint() -> dict:
         return {}
     try:
         with open(path, "r", encoding="utf-8") as f:
-             data = json.load(f)
+            data = json.load(f)
         logger.debug("Checkpoint loaded from %s", path)
         return data
     except (json.JSONDecodeError, IOError) as e:
         logger.warning("Failed to read checkpoint file, starting fresh: %s", e)
         return {}
+
 
 def save_checkpoint(data: dict) -> None:
     """Save the checkpoint data to disk atomically."""
@@ -51,7 +54,9 @@ def save_checkpoint(data: dict) -> None:
             pass
 
 
-def reconcile_checkpoint_with_config(checkpoint: dict, backfill_days: int, index_name: str) -> dict:
+def reconcile_checkpoint_with_config(
+    checkpoint: dict, backfill_days: int, index_name: str
+) -> dict:
     """
     Compares the current config against what was saved in the checkpoint.
     If backfill_days or index_name changed, clears the checkpoint to force a full re-ingest.
@@ -62,18 +67,23 @@ def reconcile_checkpoint_with_config(checkpoint: dict, backfill_days: int, index
 
     config_changed = False
     if saved_backfill is not None and saved_backfill != backfill_days:
-        logger.info("Backfill range changed from %d to %d days. Clearing checkpoint.", saved_backfill, backfill_days)
+        logger.info(
+            "Backfill range changed from %d to %d days. Clearing checkpoint.",
+            saved_backfill,
+            backfill_days,
+        )
         config_changed = True
 
     if saved_index is not None and saved_index != index_name:
-        logger.info("Target index changed from %s to %s. Clearing checkpoint.", saved_index, index_name)
+        logger.info(
+            "Target index changed from %s to %s. Clearing checkpoint.",
+            saved_index,
+            index_name,
+        )
         config_changed = True
 
     if config_changed:
         checkpoint = {}
 
-    checkpoint["_config"] = {
-        "backfill_days": backfill_days,
-        "index_name": index_name
-    }
+    checkpoint["_config"] = {"backfill_days": backfill_days, "index_name": index_name}
     return checkpoint

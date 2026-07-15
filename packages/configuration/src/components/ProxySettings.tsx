@@ -62,11 +62,7 @@ export function ProxySettings({
                 labelPosition="left"
                 help="Validates HTTPS certificates. Default is ON."
             >
-                <Switch
-                    selected={sslVerify}
-                    onClick={onSslVerifyChange}
-                    appearance="toggle"
-                />
+                <Switch selected={sslVerify} onClick={onSslVerifyChange} appearance="toggle" />
             </ControlGroup>
 
             {proxyEnabled && (
@@ -95,7 +91,9 @@ export function ProxySettings({
                                 error={hostMissing}
                             />
                             {hostMissing && (
-                                <div style={{ color: '#d93f3c', marginTop: '8px', fontSize: '12px' }}>
+                                <div
+                                    style={{ color: '#d93f3c', marginTop: '8px', fontSize: '12px' }}
+                                >
                                     Proxy host is required when proxy is enabled.
                                 </div>
                             )}
@@ -117,7 +115,9 @@ export function ProxySettings({
                                 error={portInvalid}
                             />
                             {portInvalid && (
-                                <div style={{ color: '#d93f3c', marginTop: '8px', fontSize: '12px' }}>
+                                <div
+                                    style={{ color: '#d93f3c', marginTop: '8px', fontSize: '12px' }}
+                                >
                                     Invalid proxy port. Must be a number between 1 and 65535.
                                 </div>
                             )}
@@ -129,7 +129,11 @@ export function ProxySettings({
                         labelPosition="top"
                         help="Leave blank if no authentication is required."
                     >
-                        <Text value={proxyUsername} onChange={onProxyUsernameChange} placeholder="proxy_user" />
+                        <Text
+                            value={proxyUsername}
+                            onChange={onProxyUsernameChange}
+                            placeholder="proxy_user"
+                        />
                     </ControlGroup>
 
                     <ControlGroup

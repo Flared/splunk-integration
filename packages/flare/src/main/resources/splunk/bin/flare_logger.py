@@ -1,8 +1,8 @@
+import flare_constants as const
 import logging
 import logging.handlers
 import os
 
-import flare_constants as const
 
 def setup_logger() -> logging.Logger:
     """Configure a centralized rotating file logger for the Flare integration."""
@@ -35,5 +35,5 @@ def setup_logger() -> logging.Logger:
     )
     handler.setFormatter(formatter)
     logger.addHandler(handler)
-    
+
     return logger

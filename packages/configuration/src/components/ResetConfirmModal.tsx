@@ -27,12 +27,18 @@ export function ResetConfirmModal({
             <Modal.Header title="Confirm Removal" />
             <Modal.Body>
                 <Message appearance="fill" type="warning">
-                    Are you sure you want to remove all configuration values? This will clear your API key,
-                    disable the integration, and immediately stop all Flare data ingestion into Splunk.
+                    Are you sure you want to remove all configuration values? This will clear your
+                    API key, disable the integration, and immediately stop all Flare data ingestion
+                    into Splunk.
                 </Message>
             </Modal.Body>
             <Modal.Footer>
-                <Button appearance="secondary" onClick={onCancel} label="Cancel" disabled={isRemoving} />
+                <Button
+                    appearance="secondary"
+                    onClick={onCancel}
+                    label="Cancel"
+                    disabled={isRemoving}
+                />
                 <Button
                     appearance="primary"
                     onClick={onConfirm}

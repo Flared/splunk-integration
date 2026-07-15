@@ -30,11 +30,11 @@ export function SaveConfirmModal({
                 {showMacroWarning && (
                     <div style={{ marginTop: 16 }}>
                         <Message appearance="fill" type="warning">
-                            <strong>Action Required:</strong> Since you changed the destination index, you must
-                            manually update the <code>flare_index</code> search macro to point to{' '}
-                            <code>index="{indexName}"</code> under{' '}
-                            <strong>Settings &gt; Advanced Search &gt; Search Macros</strong>. Your dashboards
-                            will show blank data until you update it!
+                            <strong>Action Required:</strong> Since you changed the destination
+                            index, you must manually update the <code>flare_index</code> search
+                            macro to point to <code>index=&quot;{indexName}&quot;</code> under{' '}
+                            <strong>Settings &gt; Advanced Search &gt; Search Macros</strong>. Your
+                            dashboards will show blank data until you update it!
                         </Message>
                     </div>
                 )}

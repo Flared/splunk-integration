@@ -9,5 +9,6 @@ This application requires an **API key** and your **tenant ID** from https://app
 5. In the next page, select the Tenant you want to ingest data from and press Submit.
 
 # Binary File Declaration
-bin/vendor/charset_normalizer/md__mypyc.cpython-39-x86_64-linux-gnu.so
+
+bin/vendor/charset_normalizer/md\_\_mypyc.cpython-39-x86_64-linux-gnu.so
 bin/vendor/charset_normalizer/md.cpython-39-x86_64-linux-gnu.so

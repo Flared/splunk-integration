@@ -13,21 +13,38 @@ import { SplunkThemeProvider } from '@splunk/themes';
 import { Severity, SourceType, SourceTypeCategory, Tenant } from './models/flare';
 import { LOG_LEVEL_OPTIONS } from './models/constants';
 import {
-    fetchApiKey, fetchIngestionInterval, fetchLogLevel, fetchTenantIds,
-    saveConfiguration, fetchAvailableIndexNames, fetchCurrentIndexName,
-    fetchIngestFullEventData, fetchNumberOfDaysToBackfill,
-    fetchSeveritiesFilter, fetchSourceTypesFilter,
-    createFlareIndex, getSeverityFilterValue, getSourceTypesFilterValue,
-    fetchProxyEnabled, fetchProxyHost, fetchProxyPort, fetchProxyType,
-    fetchProxyUsername, fetchProxyPassword, fetchSslVerify, disableIngestion,
+    fetchApiKey,
+    fetchIngestionInterval,
+    fetchLogLevel,
+    fetchTenantIds,
+    saveConfiguration,
+    fetchAvailableIndexNames,
+    fetchCurrentIndexName,
+    fetchIngestFullEventData,
+    fetchNumberOfDaysToBackfill,
+    fetchSeveritiesFilter,
+    fetchSourceTypesFilter,
+    createFlareIndex,
+    getSeverityFilterValue,
+    getSourceTypesFilterValue,
+    fetchProxyEnabled,
+    fetchProxyHost,
+    fetchProxyPort,
+    fetchProxyType,
+    fetchProxyUsername,
+    fetchProxyPassword,
+    fetchSslVerify,
+    disableIngestion,
 } from './utils/setupConfiguration';
 
 import { useMessages } from './hooks/useMessages';
 import { useApiKeyValidation } from './hooks/useApiKeyValidation';
 import { useFormHandlers } from './hooks/useFormHandlers';
 import {
-    validateInterval, validateBackfill, isProxyHostMissing,
-    isProxyPortInvalid, isProxyValid, isFormValid as checkFormValid,
+    validateInterval,
+    validateBackfill,
+    isProxyValid,
+    isFormValid as checkFormValid,
 } from './validation/formValidation';
 import { ApiKeyField } from './components/ApiKeyField';
 import { TenantSelect } from './components/TenantSelect';
@@ -64,7 +81,7 @@ const Configuration = () => {
     const [indexNames, setIndexNames] = useState<string[]>([]);
     const [isIngestingFullEventData, setIsIngestingFullEventData] = useState(false);
     const [numberOfDaysToBackfill, setNumberOfDaysToBackfill] = useState('5');
-    const [isFirstSetup, setIsFirstSetup] = useState(false);
+    const [, setIsFirstSetup] = useState(false);
 
     // ── Proxy state ───────────────────────────────────────────────────
     const [proxyEnabled, setProxyEnabled] = useState(false);
@@ -82,102 +99,170 @@ const Configuration = () => {
     const [selectedSourceTypes, setSelectedSourceTypes] = useState<SourceType[]>([]);
 
     // ── Hooks ─────────────────────────────────────────────────────────
-    const { successMessage, setSuccessMessage, errorMessage, setErrorMessage, showSuccess, showError, clearMessages } = useMessages();
+    const {
+        setSuccessMessage,
+        errorMessage,
+        setErrorMessage,
+        showSuccess,
+        showError,
+        clearMessages,
+    } = useMessages();
 
     const {
-        isValidatingApiKey, isApiKeyValidated, setIsApiKeyValidated,
-        apiKeyError, setApiKeyError, validateApiKeyOnly, loadApiKeyDependentData,
-    } = useApiKeyValidation(
-        prevApiKeyRef,
-        proxyEnabledRef,
-        clearMessages,
-        showError,
-        { setTenants, setSeverities, setSourceTypeCategories, setSelectedSeverities, setSelectedSourceTypes, setSelectedTenantIds }
-    );
+        isValidatingApiKey,
+        isApiKeyValidated,
+        setIsApiKeyValidated,
+        apiKeyError,
+        setApiKeyError,
+        validateApiKeyOnly,
+        loadApiKeyDependentData,
+    } = useApiKeyValidation(prevApiKeyRef, proxyEnabledRef, clearMessages, showError, {
+        setTenants,
+        setSeverities,
+        setSourceTypeCategories,
+        setSelectedSeverities,
+        setSelectedSourceTypes,
+        setSelectedTenantIds,
+    });
 
-    const handlers = useFormHandlers(
-        proxyEnabledRef,
-        selectedSeverities,
-        selectedSourceTypes,
-        {
-            setApiKey, setApiKeyError, setSelectedTenantIds, setLogLevel,
-            setIngestionInterval, setIndexName, setNumberOfDaysToBackfill,
-            setIsIngestingFullEventData, setSelectedSeverities, setSelectedSourceTypes,
-            setSourceTypeCategories, setProxyEnabled, setProxyType, setProxyHost,
-            setProxyPort, setProxyUsername, setProxyPassword, setSslVerify,
-            setIsDirty, clearMessages,
-        }
-    );
+    const handlers = useFormHandlers(proxyEnabledRef, selectedSeverities, selectedSourceTypes, {
+        setApiKey,
+        setApiKeyError,
+        setSelectedTenantIds,
+        setLogLevel,
+        setIngestionInterval,
+        setIndexName,
+        setNumberOfDaysToBackfill,
+        setIsIngestingFullEventData,
+        setSelectedSeverities,
+        setSelectedSourceTypes,
+        setSourceTypeCategories,
+        setProxyEnabled,
+        setProxyType,
+        setProxyHost,
+        setProxyPort,
+        setProxyUsername,
+        setProxyPassword,
+        setSslVerify,
+        setIsDirty,
+        clearMessages,
+    });
 
     // ── Derived validation ────────────────────────────────────────────
     const isIntervalValid = validateInterval(ingestionInterval);
     const isBackfillValid = validateBackfill(numberOfDaysToBackfill);
     const proxyValid = isProxyValid(proxyEnabled, proxyHost, proxyPort);
     const formValid = checkFormValid({
-        apiKey, isApiKeyValidated,
-        selectedTenantIds, selectedSeveritiesCount: selectedSeverities.length,
+        apiKey,
+        isApiKeyValidated,
+        selectedTenantIds,
+        selectedSeveritiesCount: selectedSeverities.length,
         selectedSourceTypesCount: selectedSourceTypes.length,
-        interval: ingestionInterval, backfill: numberOfDaysToBackfill,
-        proxyEnabled, proxyHost, proxyPort,
+        interval: ingestionInterval,
+        backfill: numberOfDaysToBackfill,
+        proxyEnabled,
+        proxyHost,
+        proxyPort,
     });
 
     // ── Initialization: load saved configuration ──────────────────────
     useEffect(() => {
         Promise.all([
-            fetchApiKey(), createFlareIndex(), fetchAvailableIndexNames(),
-            fetchCurrentIndexName(), fetchTenantIds(), fetchIngestFullEventData(),
-            fetchNumberOfDaysToBackfill(), fetchIngestionInterval(), fetchLogLevel(),
-            fetchSeveritiesFilter(), fetchSourceTypesFilter(),
-            fetchProxyEnabled(), fetchProxyType(), fetchProxyHost(), fetchProxyPort(),
-            fetchProxyUsername(), fetchProxyPassword(), fetchSslVerify(),
+            fetchApiKey(),
+            createFlareIndex(),
+            fetchAvailableIndexNames(),
+            fetchCurrentIndexName(),
+            fetchTenantIds(),
+            fetchIngestFullEventData(),
+            fetchNumberOfDaysToBackfill(),
+            fetchIngestionInterval(),
+            fetchLogLevel(),
+            fetchSeveritiesFilter(),
+            fetchSourceTypesFilter(),
+            fetchProxyEnabled(),
+            fetchProxyType(),
+            fetchProxyHost(),
+            fetchProxyPort(),
+            fetchProxyUsername(),
+            fetchProxyPassword(),
+            fetchSslVerify(),
         ])
-            .then(([
-                savedApiKey, , availableIndexNames, currentIndex, savedTenantIds,
-                ingestFullEvent, backfillDays, interval, savedLogLevel,
-                savedSeveritiesFilter, savedSourceTypesFilter,
-                savedProxyEnabled, savedProxyType, savedProxyHost, savedProxyPort,
-                savedProxyUsername, savedProxyPassword, savedSslVerify,
-            ]) => {
-                setIsSaveModalOpen(false);
-                setIsResetModalOpen(false);
-                setSuccessMessage('');
-                setErrorMessage('');
+            .then(
+                ([
+                    savedApiKey,
+                    ,
+                    availableIndexNames,
+                    currentIndex,
+                    savedTenantIds,
+                    ingestFullEvent,
+                    backfillDays,
+                    interval,
+                    savedLogLevel,
+                    savedSeveritiesFilter,
+                    savedSourceTypesFilter,
+                    savedProxyEnabled,
+                    savedProxyType,
+                    savedProxyHost,
+                    savedProxyPort,
+                    savedProxyUsername,
+                    savedProxyPassword,
+                    savedSslVerify,
+                ]) => {
+                    setIsSaveModalOpen(false);
+                    setIsResetModalOpen(false);
+                    setSuccessMessage('');
+                    setErrorMessage('');
 
-                setApiKey(savedApiKey);
-                prevApiKeyRef.current = savedApiKey;
-                setIndexNames(availableIndexNames);
-                setIndexName(currentIndex || 'flare');
-                setInitialIndexName(currentIndex || 'flare');
-                setSelectedTenantIds(savedTenantIds);
-                setIsIngestingFullEventData(ingestFullEvent);
-                setNumberOfDaysToBackfill(backfillDays || '5');
-                setIngestionInterval(interval ? String(Math.max(1, Math.floor(parseInt(interval, 10) / 60))) : '1440');
-                setLogLevel(savedLogLevel);
-                setProxyEnabled(savedProxyEnabled);
-                proxyEnabledRef.current = savedProxyEnabled;
-                setProxyType(savedProxyType);
-                setProxyHost(savedProxyHost);
-                setProxyPort(savedProxyPort);
-                setProxyUsername(savedProxyUsername);
-                setProxyPassword(savedProxyPassword);
-                setSslVerify(savedSslVerify);
+                    setApiKey(savedApiKey);
+                    prevApiKeyRef.current = savedApiKey;
+                    setIndexNames(availableIndexNames);
+                    setIndexName(currentIndex || 'flare');
+                    setInitialIndexName(currentIndex || 'flare');
+                    setSelectedTenantIds(savedTenantIds);
+                    setIsIngestingFullEventData(ingestFullEvent);
+                    setNumberOfDaysToBackfill(backfillDays || '5');
+                    setIngestionInterval(
+                        interval
+                            ? String(Math.max(1, Math.floor(parseInt(interval, 10) / 60)))
+                            : '1440',
+                    );
+                    setLogLevel(savedLogLevel);
+                    setProxyEnabled(savedProxyEnabled);
+                    proxyEnabledRef.current = savedProxyEnabled;
+                    setProxyType(savedProxyType);
+                    setProxyHost(savedProxyHost);
+                    setProxyPort(savedProxyPort);
+                    setProxyUsername(savedProxyUsername);
+                    setProxyPassword(savedProxyPassword);
+                    setSslVerify(savedSslVerify);
 
-                savedSeveritiesFilterRef.current = savedSeveritiesFilter;
-                savedSourceTypesFilterRef.current = savedSourceTypesFilter;
+                    savedSeveritiesFilterRef.current = savedSeveritiesFilter;
+                    savedSourceTypesFilterRef.current = savedSourceTypesFilter;
 
-                if (!savedTenantIds.length) setIsFirstSetup(true);
+                    if (!savedTenantIds.length) {
+                        setIsFirstSetup(true);
+                    }
 
-                if (savedApiKey && savedApiKey.length > 0) {
-                    const proxyConfig = {
-                        proxyEnabled: savedProxyEnabled, proxyType: savedProxyType,
-                        proxyHost: savedProxyHost, proxyPort: savedProxyPort,
-                        proxyUsername: savedProxyUsername, proxyPassword: savedProxyPassword,
-                    };
-                    loadApiKeyDependentData(savedApiKey, savedSeveritiesFilter, savedSourceTypesFilter, proxyConfig);
-                }
+                    if (savedApiKey && savedApiKey.length > 0) {
+                        const proxyConfig = {
+                            proxyEnabled: savedProxyEnabled,
+                            proxyType: savedProxyType,
+                            proxyHost: savedProxyHost,
+                            proxyPort: savedProxyPort,
+                            proxyUsername: savedProxyUsername,
+                            proxyPassword: savedProxyPassword,
+                        };
+                        loadApiKeyDependentData(
+                            savedApiKey,
+                            savedSeveritiesFilter,
+                            savedSourceTypesFilter,
+                            proxyConfig,
+                        );
+                    }
 
-                setIsInitializing(false);
-            })
+                    setIsInitializing(false);
+                },
+            )
             .catch(() => {
                 setIsInitializing(false);
                 showError('Failed to load configuration. Please refresh the page.');
@@ -186,25 +271,41 @@ const Configuration = () => {
 
     // ── Debounced API key auto-validation ─────────────────────────────
     useEffect(() => {
-        if (isInitializing) return;
+        if (isInitializing) {
+            return undefined;
+        }
         if (!apiKey || apiKey.length === 0) {
             setIsApiKeyValidated(false);
             setTenants([]);
             setSelectedTenantIds([]);
             setApiKeyError('');
             prevApiKeyRef.current = apiKey;
-            return;
+            return undefined;
         }
 
         const timerId = setTimeout(() => {
             const isNewApiKey = apiKey !== prevApiKeyRef.current;
             prevApiKeyRef.current = apiKey;
 
-            const currentProxyConfig = { proxyEnabled, proxyType, proxyHost, proxyPort, proxyUsername, proxyPassword };
+            const currentProxyConfig = {
+                proxyEnabled,
+                proxyType,
+                proxyHost,
+                proxyPort,
+                proxyUsername,
+                proxyPassword,
+            };
 
             const parsedPort = parseInt(proxyPort, 10);
-            const proxyIsInvalid = proxyEnabled && (proxyHost.trim() === '' || isNaN(parsedPort) || parsedPort < 1 || parsedPort > 65535);
-            if (proxyIsInvalid) return;
+            const proxyIsInvalid =
+                proxyEnabled &&
+                (proxyHost.trim() === '' ||
+                    Number.isNaN(parsedPort) ||
+                    parsedPort < 1 ||
+                    parsedPort > 65535);
+            if (proxyIsInvalid) {
+                return;
+            }
 
             validateApiKeyOnly(apiKey, currentProxyConfig).then((isValid) => {
                 if (isValid && (isNewApiKey || tenants.length === 0)) {
@@ -212,7 +313,7 @@ const Configuration = () => {
                         apiKey,
                         isNewApiKey ? undefined : savedSeveritiesFilterRef.current,
                         isNewApiKey ? undefined : savedSourceTypesFilterRef.current,
-                        currentProxyConfig
+                        currentProxyConfig,
                     );
                 }
             });
@@ -220,8 +321,16 @@ const Configuration = () => {
 
         return () => clearTimeout(timerId);
     }, [
-        apiKey, validateApiKeyOnly, loadApiKeyDependentData, isInitializing,
-        proxyEnabled, proxyType, proxyHost, proxyPort, proxyUsername, proxyPassword,
+        apiKey,
+        validateApiKeyOnly,
+        loadApiKeyDependentData,
+        isInitializing,
+        proxyEnabled,
+        proxyType,
+        proxyHost,
+        proxyPort,
+        proxyUsername,
+        proxyPassword,
     ]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // ── Save handler ──────────────────────────────────────────────────
@@ -230,31 +339,52 @@ const Configuration = () => {
         setIsSaving(true);
 
         const proceedWithSave = () => {
-            if (!isApiKeyValidated || !proxyValid || selectedTenantIds.length === 0 ||
-                selectedSeverities.length === 0 || selectedSourceTypes.length === 0 ||
-                !isIntervalValid || !isBackfillValid) {
+            if (
+                !isApiKeyValidated ||
+                !proxyValid ||
+                selectedTenantIds.length === 0 ||
+                selectedSeverities.length === 0 ||
+                selectedSourceTypes.length === 0 ||
+                !isIntervalValid ||
+                !isBackfillValid
+            ) {
                 setIsSaving(false);
                 return;
             }
             const hasIndexChanged = indexName !== initialIndexName;
             const tenantNamesMap: Record<string, string> = {};
-            tenants.forEach((t) => { if (selectedTenantIds.includes(t.id)) tenantNamesMap[String(t.id)] = t.name; });
+            tenants.forEach((t) => {
+                if (selectedTenantIds.includes(t.id)) {
+                    tenantNamesMap[String(t.id)] = t.name;
+                }
+            });
 
             saveConfiguration(
-                apiKey, selectedTenantIds, tenantNamesMap, indexName,
+                apiKey,
+                selectedTenantIds,
+                tenantNamesMap,
+                indexName,
                 isIngestingFullEventData,
                 getSeverityFilterValue(selectedSeverities, severities),
                 getSourceTypesFilterValue(selectedSourceTypes, sourceTypeCategories),
                 ingestionInterval ? String(parseInt(ingestionInterval, 10) * 60) : '60',
-                numberOfDaysToBackfill, logLevel,
-                proxyEnabled, proxyHost, proxyPort, proxyType,
-                proxyUsername, proxyPassword, sslVerify
+                numberOfDaysToBackfill,
+                logLevel,
+                proxyEnabled,
+                proxyHost,
+                proxyPort,
+                proxyType,
+                proxyUsername,
+                proxyPassword,
+                sslVerify,
             )
                 .then(() => {
                     setIsSaving(false);
                     setIsDirty(false);
                     setShowMacroWarningModal(hasIndexChanged);
-                    if (hasIndexChanged) setInitialIndexName(indexName);
+                    if (hasIndexChanged) {
+                        setInitialIndexName(indexName);
+                    }
                     setIsSaveModalOpen(true);
                 })
                 .catch((e: any) => {
@@ -264,21 +394,52 @@ const Configuration = () => {
         };
 
         if (proxyEnabled) {
-            const proxyConfig = { proxyEnabled, proxyType, proxyHost, proxyPort, proxyUsername, proxyPassword };
+            const proxyConfig = {
+                proxyEnabled,
+                proxyType,
+                proxyHost,
+                proxyPort,
+                proxyUsername,
+                proxyPassword,
+            };
             validateApiKeyOnly(apiKey, proxyConfig).then((isValid) => {
-                if (isValid) proceedWithSave();
-                else setIsSaving(false);
+                if (isValid) {
+                    proceedWithSave();
+                } else {
+                    setIsSaving(false);
+                }
             });
         } else {
             proceedWithSave();
         }
     }, [
-        apiKey, selectedTenantIds, tenants, indexName, initialIndexName, isIngestingFullEventData,
-        selectedSeverities, severities, selectedSourceTypes, sourceTypeCategories,
-        ingestionInterval, numberOfDaysToBackfill, logLevel,
-        proxyEnabled, proxyHost, proxyPort, proxyType, proxyUsername, proxyPassword, sslVerify,
-        isApiKeyValidated, proxyValid, isIntervalValid, isBackfillValid,
-        clearMessages, showError, validateApiKeyOnly,
+        apiKey,
+        selectedTenantIds,
+        tenants,
+        indexName,
+        initialIndexName,
+        isIngestingFullEventData,
+        selectedSeverities,
+        severities,
+        selectedSourceTypes,
+        sourceTypeCategories,
+        ingestionInterval,
+        numberOfDaysToBackfill,
+        logLevel,
+        proxyEnabled,
+        proxyHost,
+        proxyPort,
+        proxyType,
+        proxyUsername,
+        proxyPassword,
+        sslVerify,
+        isApiKeyValidated,
+        proxyValid,
+        isIntervalValid,
+        isBackfillValid,
+        clearMessages,
+        showError,
+        validateApiKeyOnly,
     ]);
 
     // ── Remove configuration handler ──────────────────────────────────
@@ -286,16 +447,49 @@ const Configuration = () => {
         setIsRemoving(true);
         clearMessages();
 
-        saveConfiguration('', [], {}, indexName, false, '', '', '60', '', 'INFO', false, '', '', 'http', '', '', true)
+        saveConfiguration(
+            '',
+            [],
+            {},
+            indexName,
+            false,
+            '',
+            '',
+            '60',
+            '',
+            'INFO',
+            false,
+            '',
+            '',
+            'http',
+            '',
+            '',
+            true,
+        )
             .then(() => disableIngestion())
             .then(() => {
-                setApiKey(''); setSelectedTenantIds([]); setTenants([]); setLogLevel('INFO');
-                setIngestionInterval(''); setNumberOfDaysToBackfill(''); setIsIngestingFullEventData(false);
-                setIsApiKeyValidated(false); setSelectedSeverities([]); setSelectedSourceTypes([]);
-                setSeverities([]); setSourceTypeCategories([]); setApiKeyError('');
-                setProxyEnabled(false); setProxyType('http'); setProxyHost(''); setProxyPort('');
-                setProxyUsername(''); setProxyPassword('');
-                setIsRemoving(false); setIsResetModalOpen(false); setIsDirty(false);
+                setApiKey('');
+                setSelectedTenantIds([]);
+                setTenants([]);
+                setLogLevel('INFO');
+                setIngestionInterval('');
+                setNumberOfDaysToBackfill('');
+                setIsIngestingFullEventData(false);
+                setIsApiKeyValidated(false);
+                setSelectedSeverities([]);
+                setSelectedSourceTypes([]);
+                setSeverities([]);
+                setSourceTypeCategories([]);
+                setApiKeyError('');
+                setProxyEnabled(false);
+                setProxyType('http');
+                setProxyHost('');
+                setProxyPort('');
+                setProxyUsername('');
+                setProxyPassword('');
+                setIsRemoving(false);
+                setIsResetModalOpen(false);
+                setIsDirty(false);
                 showSuccess('Configuration removed successfully. Data ingestion has been stopped.');
             })
             .catch((e: any) => {
@@ -320,9 +514,10 @@ const Configuration = () => {
     return (
         <SplunkThemeProvider family="enterprise" colorScheme="light" density="comfortable">
             <div style={{ maxWidth: 720, margin: '0 auto', padding: '24px 16px' }}>
-
                 <div style={{ position: 'relative', marginBottom: 24 }}>
-                    <Heading level={2} style={{ margin: 0 }}>Configure Flare Account</Heading>
+                    <Heading level={2} style={{ margin: 0 }}>
+                        Configure Flare Account
+                    </Heading>
                     {/* Scoped style: keeps the link identical across :link/:visited/:active states */}
                     <style>{`
                         #flare-learn-more-link,
@@ -341,7 +536,13 @@ const Configuration = () => {
                         href="https://docs.flare.io/splunk-app"
                         target="_blank"
                         rel="noopener noreferrer"
-                        style={{ position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)', fontSize: '0.9em' }}
+                        style={{
+                            position: 'absolute',
+                            right: 0,
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            fontSize: '0.9em',
+                        }}
                     >
                         Learn More
                     </a>
@@ -354,7 +555,11 @@ const Configuration = () => {
                     help="Select the Splunk index where Flare data will be ingested."
                     tooltip="When you change this index, you must also manually update the 'flare_index' Macro in Splunk Settings so dashboards work properly!"
                 >
-                    <Select value={indexName} onChange={handlers.handleIndexChange} disabled={!isApiKeyValidated || isSaving}>
+                    <Select
+                        value={indexName}
+                        onChange={handlers.handleIndexChange}
+                        disabled={!isApiKeyValidated || isSaving}
+                    >
                         {indexNames.map((name) => (
                             <Select.Option key={name} label={name} value={name} />
                         ))}
@@ -380,11 +585,13 @@ const Configuration = () => {
                 />
 
                 {/* Remaining fields — disabled until API key is validated */}
-                <div style={{
-                    opacity: (isApiKeyValidated && !isSaving) ? 1 : 0.6,
-                    pointerEvents: (isApiKeyValidated && !isSaving) ? 'auto' : 'none',
-                    marginTop: 32,
-                }}>
+                <div
+                    style={{
+                        opacity: isApiKeyValidated && !isSaving ? 1 : 0.6,
+                        pointerEvents: isApiKeyValidated && !isSaving ? 'auto' : 'none',
+                        marginTop: 32,
+                    }}
+                >
                     {/* Severity & Categories */}
                     <SeverityFilter
                         severities={severities}
@@ -424,7 +631,9 @@ const Configuration = () => {
                                 error={!isBackfillValid}
                             />
                             {!isBackfillValid && (
-                                <div style={{ color: '#d93f3c', marginTop: '8px', fontSize: '12px' }}>
+                                <div
+                                    style={{ color: '#d93f3c', marginTop: '8px', fontSize: '12px' }}
+                                >
                                     Invalid backfill range. Must be between 0 and 180 days.
                                 </div>
                             )}
@@ -448,7 +657,9 @@ const Configuration = () => {
                                 error={!isIntervalValid}
                             />
                             {!isIntervalValid && (
-                                <div style={{ color: '#d93f3c', marginTop: '8px', fontSize: '12px' }}>
+                                <div
+                                    style={{ color: '#d93f3c', marginTop: '8px', fontSize: '12px' }}
+                                >
                                     Invalid ingestion interval. Must be between 1 and 2880 minutes.
                                 </div>
                             )}
@@ -463,15 +674,25 @@ const Configuration = () => {
                                 onClick={handlers.handleIngestFullEventToggle}
                                 appearance="checkbox"
                             />
-                            <span style={{ fontWeight: 500, color: '#141414', marginTop: 1 }}>Ingest Full Event Data</span>
+                            <span style={{ fontWeight: 500, color: '#141414', marginTop: 1 }}>
+                                Ingest Full Event Data
+                            </span>
                         </div>
                     </ControlGroup>
 
                     {/* Log Level */}
-                    <ControlGroup label="Log Level" labelPosition="top" help="Application logging verbosity.">
+                    <ControlGroup
+                        label="Log Level"
+                        labelPosition="top"
+                        help="Application logging verbosity."
+                    >
                         <Select value={logLevel} onChange={handlers.handleLogLevelChange}>
                             {LOG_LEVEL_OPTIONS.map((opt) => (
-                                <Select.Option key={opt.value} label={opt.label} value={opt.value} />
+                                <Select.Option
+                                    key={opt.value}
+                                    label={opt.label}
+                                    value={opt.value}
+                                />
                             ))}
                         </Select>
                     </ControlGroup>
@@ -496,7 +717,15 @@ const Configuration = () => {
                 />
 
                 {/* Action buttons */}
-                <div style={{ display: 'flex', gap: 12, marginTop: 24, paddingTop: 24, borderTop: '1px solid #ccc' }}>
+                <div
+                    style={{
+                        display: 'flex',
+                        gap: 12,
+                        marginTop: 24,
+                        paddingTop: 24,
+                        borderTop: '1px solid #ccc',
+                    }}
+                >
                     <Button
                         ref={saveBtnRef}
                         label={isSaving ? 'Saving...' : 'Save Configuration'}
@@ -537,7 +766,6 @@ const Configuration = () => {
                     onCancel={() => setIsResetModalOpen(false)}
                     onConfirm={handleRemoveConfiguration}
                 />
-
             </div>
         </SplunkThemeProvider>
     );

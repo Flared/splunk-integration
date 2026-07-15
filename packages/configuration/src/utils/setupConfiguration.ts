@@ -62,33 +62,42 @@ function appendProxyToData(data: any, proxyConfig?: ProxyValidationConfig) {
     return data;
 }
 
-function fetchUserTenants(apiKey: string, proxyConfig?: ProxyValidationConfig): Promise<Array<Tenant>> {
+function fetchUserTenants(
+    apiKey: string,
+    proxyConfig?: ProxyValidationConfig,
+): Promise<Array<Tenant>> {
     const service = createService();
     const data = appendProxyToData({ apiKey }, proxyConfig);
     return promisify(service.post)('/services/fetch_user_tenants', data).then(
         (response: HTTPResponse) => {
             return response.data.tenants;
-        }
+        },
     );
 }
 
-function fetchSeverityFilters(apiKey: string, proxyConfig?: ProxyValidationConfig): Promise<Array<Severity>> {
+function fetchSeverityFilters(
+    apiKey: string,
+    proxyConfig?: ProxyValidationConfig,
+): Promise<Array<Severity>> {
     const service = createService();
     const data = appendProxyToData({ apiKey }, proxyConfig);
     return promisify(service.post)('/services/fetch_severity_filters', data).then(
         (response: HTTPResponse) => {
             return response.data.severities;
-        }
+        },
     );
 }
 
-function fetchSourceTypeFilters(apiKey: string, proxyConfig?: ProxyValidationConfig): Promise<Array<SourceTypeCategory>> {
+function fetchSourceTypeFilters(
+    apiKey: string,
+    proxyConfig?: ProxyValidationConfig,
+): Promise<Array<SourceTypeCategory>> {
     const service = createService();
     const data = appendProxyToData({ apiKey }, proxyConfig);
     return promisify(service.post)('/services/fetch_source_type_filters', data).then(
         (response: HTTPResponse) => {
             return response.data.categories;
-        }
+        },
     );
 }
 
@@ -98,17 +107,24 @@ export interface ApiKeyValidationResult {
     error_type?: 'proxy_error' | 'connection_error' | 'auth_error' | 'unknown';
 }
 
-function validateApiKey(apiKey: string, proxyConfig?: ProxyValidationConfig): Promise<ApiKeyValidationResult> {
+function validateApiKey(
+    apiKey: string,
+    proxyConfig?: ProxyValidationConfig,
+): Promise<ApiKeyValidationResult> {
     const service = createService();
     const data = appendProxyToData({ apiKey }, proxyConfig);
-    
+
     return promisify(service.post)('/services/validate_api_key', data)
         .then((response: HTTPResponse) => {
             return response.data as ApiKeyValidationResult;
         })
         .catch((err: any) => {
             console.error('[Flare Setup] API Key validation error:', err);
-            let errorData: ApiKeyValidationResult = { valid: false, error: 'Unknown error', error_type: 'unknown' };
+            let errorData: ApiKeyValidationResult = {
+                valid: false,
+                error: 'Unknown error',
+                error_type: 'unknown',
+            };
 
             // Attempt to parse Splunk's error response
             let responseString = '';
@@ -137,7 +153,11 @@ function validateApiKey(apiKey: string, proxyConfig?: ProxyValidationConfig): Pr
                     };
                 }
             } catch (e) {
-                console.error('[Flare Setup] Error parsing validation failure string:', e, responseString);
+                console.error(
+                    '[Flare Setup] Error parsing validation failure string:',
+                    e,
+                    responseString,
+                );
             }
             return errorData;
         });
@@ -185,7 +205,7 @@ async function saveConfiguration(
     proxyType?: string,
     proxyUsername?: string,
     proxyPassword?: string,
-    sslVerify: boolean = true
+    sslVerify: boolean = true,
 ): Promise<void> {
     const service = createService();
     const storagePasswords = await promisify(service.storagePasswords().fetch)();
@@ -195,25 +215,17 @@ async function saveConfiguration(
     await savePassword(
         storagePasswords,
         PasswordKeys.INGEST_FULL_EVENT_DATA,
-        `${isIngestingFullEventData}`
+        `${isIngestingFullEventData}`,
     );
     await savePassword(
         storagePasswords,
         PasswordKeys.NUMBER_OF_DAYS_TO_BACKFILL,
-        numberOfDaysToBackfill ?? ''
+        numberOfDaysToBackfill ?? '',
     );
     await savePassword(storagePasswords, PasswordKeys.SEVERITIES_FILTER, `${severitiesFilter}`);
     await savePassword(storagePasswords, PasswordKeys.SOURCE_TYPES_FILTER, `${sourceTypesFilter}`);
-    await savePassword(
-        storagePasswords,
-        PasswordKeys.INGESTION_INTERVAL,
-        ingestionInterval ?? ''
-    );
-    await savePassword(
-        storagePasswords,
-        PasswordKeys.LOG_LEVEL,
-        logLevel ?? 'INFO'
-    );
+    await savePassword(storagePasswords, PasswordKeys.INGESTION_INTERVAL, ingestionInterval ?? '');
+    await savePassword(storagePasswords, PasswordKeys.LOG_LEVEL, logLevel ?? 'INFO');
     await savePassword(storagePasswords, PasswordKeys.PROXY_ENABLED, `${proxyEnabled ?? false}`);
     await savePassword(storagePasswords, PasswordKeys.PROXY_HOST, proxyHost ?? '');
     await savePassword(storagePasswords, PasswordKeys.PROXY_PORT, proxyPort ?? '');
@@ -223,17 +235,34 @@ async function saveConfiguration(
     await savePassword(storagePasswords, PasswordKeys.SSL_VERIFY, `${sslVerify}`);
     await savePassword(storagePasswords, PasswordKeys.INDEX_NAME, indexName);
 
-
-
-    const isFirstConfiguration = await fetchIsFirstConfiguration();
-    const activeInterval = ingestionInterval && ingestionInterval.trim().length > 0 ? ingestionInterval : '60';
+    await fetchIsFirstConfiguration();
+    const activeInterval =
+        ingestionInterval && ingestionInterval.trim().length > 0 ? ingestionInterval : '60';
 
     // ── Batched inputs.conf update ──────────────────────────────
     // when something has actually changed.
     const inputsStanza = `script://$SPLUNK_HOME/etc/apps/${APP_NAME}/bin/cron_job_ingest_events.py`;
-    const currentIndex = await getConfigurationStanzaValue(service, 'inputs', inputsStanza, 'index', '');
-    const currentInterval = await getConfigurationStanzaValue(service, 'inputs', inputsStanza, 'interval', '');
-    const currentDisabled = await getConfigurationStanzaValue(service, 'inputs', inputsStanza, 'disabled', 'true');
+    const currentIndex = await getConfigurationStanzaValue(
+        service,
+        'inputs',
+        inputsStanza,
+        'index',
+        '',
+    );
+    const currentInterval = await getConfigurationStanzaValue(
+        service,
+        'inputs',
+        inputsStanza,
+        'interval',
+        '',
+    );
+    const currentDisabled = await getConfigurationStanzaValue(
+        service,
+        'inputs',
+        inputsStanza,
+        'disabled',
+        'true',
+    );
 
     const inputsNeedUpdate =
         currentIndex !== indexName ||
@@ -247,11 +276,11 @@ async function saveConfiguration(
             interval: activeInterval,
             disabled: 'false',
         });
-        
+
         try {
             await promisify(service.get)(`/services/apps/local/${APP_NAME}/_reload`, {});
         } catch (err) {
-            console.warn("Could not actively reload Splunk App configuration engine", err);
+            console.warn('Could not actively reload Splunk App configuration engine', err);
         }
     }
 
@@ -259,7 +288,7 @@ async function saveConfiguration(
     if (apiKey && apiKey.trim() !== '' && tenantIds && tenantIds.length > 0) {
         await completeSetup(service);
     } else {
-        // If the user clears the configuration, forcefully flag the app as unconfigured 
+        // If the user clears the configuration, forcefully flag the app as unconfigured
         // safely dropping them back into the setup capture screen
         await updateConfigurationFile(service, 'app', 'install', {
             is_configured: 'false',
@@ -271,15 +300,14 @@ async function saveConfiguration(
 // have been consolidated into the batched inputs.conf update inside
 // saveConfiguration() to prevent burst-spawning of script processes.
 
-
 export async function fetchSslVerify(): Promise<boolean> {
     const service = createService();
     const storagePasswords = await promisify(service.storagePasswords().fetch)();
-    
+
     // Default to true if not found for strict security posture natively
     let sslVerify = true;
     const passwordId = `${STORAGE_REALM}:${PasswordKeys.SSL_VERIFY}:`;
-    
+
     for (const password of storagePasswords.list()) {
         if (password.name === passwordId) {
             sslVerify = password.properties().clear_password === 'true';
@@ -295,7 +323,7 @@ async function fetchIngestionStatus(): Promise<IngestionStatus> {
     const data = await promisify(service.get)('/services/fetch_ingestion_status', {}).then(
         (r: HTTPResponse) => {
             return r.data;
-        }
+        },
     );
 
     return (
@@ -428,7 +456,7 @@ async function disableIngestion(): Promise<void> {
             `script://$SPLUNK_HOME/etc/apps/${APP_NAME}/bin/cron_job_ingest_events.py`,
             {
                 disabled: 'true',
-            }
+            },
         );
     } catch (e) {
         console.warn('Splunk inputs stanza may not exist yet to disable.', e);
@@ -456,7 +484,7 @@ async function fetchIsFirstConfiguration(): Promise<boolean> {
             'app',
             'install',
             'is_configured',
-            'unknown'
+            'unknown',
         )) !== '1'
     );
 }
@@ -468,7 +496,7 @@ async function fetchCurrentIndexName(): Promise<string> {
         'inputs',
         `script://$SPLUNK_HOME/etc/apps/${APP_NAME}/bin/cron_job_ingest_events.py`,
         'index',
-        'main'
+        'main',
     );
 }
 
@@ -479,7 +507,7 @@ async function fetchVersionName(defaultValue: string): Promise<string> {
 
 function convertSeverityFilterToArray(
     severitiesFilter: string[],
-    allSeverities: Severity[]
+    allSeverities: Severity[],
 ): Severity[] {
     // If no filter is specified, add every severities
     if (severitiesFilter.length === 0) {
@@ -497,7 +525,10 @@ function convertSeverityFilterToArray(
     return severities;
 }
 
-function getSeverityFilterValue(selectedSeverities: Severity[], allSeverities: Severity[]): string {
+function getSeverityFilterValue(
+    selectedSeverities: Severity[],
+    _allSeverities: Severity[],
+): string {
     let severitiesFilter = '';
 
     if (selectedSeverities.length === 0) {
@@ -511,14 +542,14 @@ function getSeverityFilterValue(selectedSeverities: Severity[], allSeverities: S
 
 function convertSourceTypeFilterToArray(
     sourceTypesFilter: string[],
-    allSourceTypeCategories: SourceTypeCategory[]
+    allSourceTypeCategories: SourceTypeCategory[],
 ): SourceType[] {
     // If no filter is specified, add every sub source types
     if (sourceTypesFilter.length === 0) {
         return [
             ...allSourceTypeCategories.reduce(
                 (acc, category) => acc.concat(category.types),
-                [] as SourceType[]
+                [] as SourceType[],
             ),
         ];
     }
@@ -528,7 +559,7 @@ function convertSourceTypeFilterToArray(
     sourceTypesFilter.forEach((sourceTypeValue) => {
         // Check if the source type is actually a category and if so, add all of their subtypes
         const sourceTypeCategoryMatch = allSourceTypeCategories.find(
-            (sourceTypeCategory) => sourceTypeCategory.value === sourceTypeValue
+            (sourceTypeCategory) => sourceTypeCategory.value === sourceTypeValue,
         );
         if (sourceTypeCategoryMatch) {
             sourceTypes.push(...sourceTypeCategoryMatch.types);
@@ -547,10 +578,8 @@ function convertSourceTypeFilterToArray(
 
 function getSourceTypesFilterValue(
     selectedSourceTypes: SourceType[],
-    allSourceTypeCategories: SourceTypeCategory[]
+    allSourceTypeCategories: SourceTypeCategory[],
 ): string {
-    let sourceTypesFilter = '';
-
     if (selectedSourceTypes.length === 0) {
         return '';
     }
@@ -567,7 +596,6 @@ function getSourceTypesFilterValue(
 
     return Array.from(values).join(',');
 }
-
 
 export {
     createFlareIndex,
