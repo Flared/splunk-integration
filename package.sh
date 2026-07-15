@@ -47,6 +47,11 @@ echo "Sync complete."
 echo "Vendoring runtime dependencies into stage/bin/lib..."
 "$PYTHON" -m pip install -r "$REQUIREMENTS_FILE" --target="$SRC_DIR/bin/lib" --quiet --upgrade
 
+# Strip compiled binaries (e.g. charset_normalizer's mypyc .so files): AppInspect
+# rejects undeclared binaries, and the packages fall back to their pure-Python .py
+# sources. Platform-specific binaries wouldn't run on the Splunk server anyway.
+find "$SRC_DIR/bin/lib" \( -name '*.so' -o -name '*.pyd' -o -name '*.dylib' \) -delete
+
 echo "Runtime dependencies vendored successfully."
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -90,7 +95,9 @@ fi
 # Creating the tarball (.tgz)
 cd $PACKAGE_DIR
 FILENAME="splunk-$APP_FOLDER-app-v${APP_VERSION}-${COMMIT_ID}.tgz"
-tar -czf $FILENAME $APP_FOLDER
+# COPYFILE_DISABLE/--no-xattrs: keep macOS bsdtar from emitting AppleDouble
+# ._* entries (from xattrs like com.apple.provenance), which fail AppInspect
+COPYFILE_DISABLE=1 tar --no-xattrs -czf $FILENAME $APP_FOLDER
 
 # Cleanup the temporary folder after zipping
 rm -rf $FULLAPP_DIR
