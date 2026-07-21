@@ -4,6 +4,10 @@ STAGE       := packages/flare/stage
 DIST        := dist
 APP_BIN_LIB := packages/flare/src/main/resources/splunk/bin/lib
 
+# Splunk versions declared to Splunkbase on publish. Override per release:
+#   make publish SPLUNK_VERSIONS=9.3,...
+SPLUNK_VERSIONS ?= 9.3,9.4,10.0,10.1,10.2,10.3,10.4,10.5
+
 # ─── Aggregate pipeline (mirrors CI: produce then verify) ────────────────────
 .PHONY: ci
 ci: package venv-tools lint validate test
@@ -43,7 +47,7 @@ publish:
 		https://splunkbase.splunk.com/api/v1/app/7602/new_release/ \
 		-F "files[]=@$$pkg" \
 		-F "filename=flare.tgz" \
-		-F "splunk_versions=9.3,9.4" \
+		-F "splunk_versions=$(SPLUNK_VERSIONS)" \
 		-F "visibility=true"
 
 .PHONY: validate

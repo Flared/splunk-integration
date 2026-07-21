@@ -10,7 +10,6 @@ set -e   # Stop script on errors
 # Set up build variables
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 PACKAGE_DIR=$SCRIPT_DIR/dist
-TA_VERSION_FILE="$SCRIPT_DIR/ta_version.txt"
 REQUIREMENTS_FILE="$SCRIPT_DIR/requirements.txt"
 PYTHON="${PYTHON:-python}"
 
@@ -84,17 +83,9 @@ find "$FULLAPP_DIR" -name '__pycache__' -type d -exec rm -rf {} + 2>/dev/null ||
 find "$FULLAPP_DIR" -name '*.pyc' -delete 2>/dev/null || true
 # ─────────────────────────────────────────────────────────────────────────────
 
-# Get version from File
-if [ -f "$TA_VERSION_FILE" ]; then
-    APP_VERSION=$(<$TA_VERSION_FILE)
-else
-    APP_VERSION="1.0.0"
-    echo "Warning: $TA_VERSION_FILE not found, defaulting to $APP_VERSION"
-fi
-
 # Creating the tarball (.tgz)
 cd $PACKAGE_DIR
-FILENAME="splunk-$APP_FOLDER-app-v${APP_VERSION}-${COMMIT_ID}.tgz"
+FILENAME="$APP_FOLDER-${COMMIT_ID}.tgz"
 # COPYFILE_DISABLE/--no-xattrs: keep macOS bsdtar from emitting AppleDouble
 # ._* entries (from xattrs like com.apple.provenance), which fail AppInspect
 COPYFILE_DISABLE=1 tar --no-xattrs -czf $FILENAME $APP_FOLDER
