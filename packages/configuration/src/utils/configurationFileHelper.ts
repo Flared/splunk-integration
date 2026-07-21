@@ -6,7 +6,7 @@ import { promisify } from './util';
 // Existence Functions
 function doesConfigurationExist(
     configurations: Configurations,
-    configurationFilename: string
+    configurationFilename: string,
 ): boolean {
     for (const stanza of configurations.list()) {
         if (stanza.name === configurationFilename) {
@@ -19,7 +19,7 @@ function doesConfigurationExist(
 
 function doesStanzaExist(
     configurationFileAccessor: ConfigurationFile,
-    stanzaName: string
+    stanzaName: string,
 ): boolean {
     for (const stanza of configurationFileAccessor.list()) {
         if (stanza.name === stanzaName) {
@@ -30,42 +30,42 @@ function doesStanzaExist(
     return false;
 }
 
-// 
+//
 // Retrieval Functions
-// 
+//
 function getConfigurationFile(
     configurations: Configurations,
-    configurationFilename: string
+    configurationFilename: string,
 ): Promise<ConfigurationFile> {
     return promisify(configurations.item(configurationFilename, APPLICATION_NAMESPACE).fetch)();
 }
 
 function getConfigurationFileStanza(
     configurationFile: ConfigurationFile,
-    configurationStanzaName: string
+    configurationStanzaName: string,
 ): Promise<Entity> {
     return promisify(
-        configurationFile.item(configurationStanzaName, APPLICATION_NAMESPACE).fetch
+        configurationFile.item(configurationStanzaName, APPLICATION_NAMESPACE).fetch,
     )();
 }
 
 function createStanza(
     configurationFile: ConfigurationFile,
-    newStanzaName: string
+    newStanzaName: string,
 ): Promise<HTTPResponse> {
     return promisify(configurationFile.create)(newStanzaName);
 }
 
 function updateStanzaProperties(
     configurationStanza: Entity,
-    newStanzaProperties: Record<string, string>
+    newStanzaProperties: Record<string, string>,
 ): Promise<HTTPResponse> {
     return promisify(configurationStanza.update)(newStanzaProperties);
 }
 
 function createConfigurationFile(
     configurations: Configurations,
-    configurationFilename: string
+    configurationFilename: string,
 ): Promise<HTTPResponse> {
     return promisify(configurations.create)(configurationFilename);
 }
@@ -74,7 +74,7 @@ export async function updateConfigurationFile(
     service: Service,
     configurationFilename: string,
     stanzaName: string,
-    properties: Record<string, string>
+    properties: Record<string, string>,
 ): Promise<void> {
     // Fetch the accessor used to get a configuration file
     let configurations = service.configurations(APPLICATION_NAMESPACE);
@@ -120,7 +120,7 @@ export async function getConfigurationStanzaValue(
     configurationFilename: string,
     stanzaName: string,
     propertyName: string,
-    defaultValue: string
+    defaultValue: string,
 ): Promise<string> {
     // Fetch the accessor used to get a configuration file
     let configurations = service.configurations(APPLICATION_NAMESPACE);
@@ -132,7 +132,7 @@ export async function getConfigurationStanzaValue(
     // Fetchs the configuration stanza accessor
     const configurationStanzaAccessor = await getConfigurationFileStanza(
         configurationFile,
-        stanzaName
+        stanzaName,
     );
 
     let propertyValue = defaultValue;

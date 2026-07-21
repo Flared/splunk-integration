@@ -8,7 +8,7 @@ const commands = ['build', 'link', 'demo'];
 
 if (!arg) {
     shell.echo(
-        `No command received, please supply a command to run. \nCommands: ${commands.join(', ')}`
+        `No command received, please supply a command to run. \nCommands: ${commands.join(', ')}`,
     );
     shell.exit(1);
 }

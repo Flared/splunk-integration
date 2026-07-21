@@ -12,7 +12,7 @@ getUserTheme()
             </StyledContainer>,
             {
                 theme,
-            }
+            },
         );
     })
     .catch((e) => {

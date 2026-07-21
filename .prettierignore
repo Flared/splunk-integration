@@ -1,12 +1,15 @@
 # Dependencies and Python tooling
 node_modules/
-venv/
 venv-tools/
+.mypy_cache/
+.pytest_cache/
 
 # Build output and CI artifacts
 dist/
 build/
-output/
+packages/flare/stage/
+packages/*/types/
+packages/configuration/*.js
 coverage_report/
 test-reports/
 functional-temp/
@@ -17,7 +20,7 @@ pnpm-lock.yaml
 licenses.json
 
 # Vendored Python dependencies
-packages/flare/bin/vendor/
+packages/flare/src/main/resources/splunk/bin/lib/
 
 # Splunk runtime / local state
 **/local/

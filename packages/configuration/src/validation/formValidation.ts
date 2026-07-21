@@ -5,12 +5,12 @@
 
 export function validateInterval(value: string): boolean {
     const n = parseInt(value, 10);
-    return value !== '' && !isNaN(n) && n >= 1 && n <= 2880;
+    return value !== '' && !Number.isNaN(n) && n >= 1 && n <= 2880;
 }
 
 export function validateBackfill(value: string): boolean {
     const n = parseInt(value, 10);
-    return value !== '' && !isNaN(n) && n >= 0 && n <= 180;
+    return value !== '' && !Number.isNaN(n) && n >= 0 && n <= 180;
 }
 
 export function isProxyHostMissing(enabled: boolean, host: string): boolean {
@@ -19,7 +19,7 @@ export function isProxyHostMissing(enabled: boolean, host: string): boolean {
 
 export function isProxyPortInvalid(enabled: boolean, port: string): boolean {
     const n = parseInt(port, 10);
-    return enabled && (port.trim() === '' || isNaN(n) || n < 1 || n > 65535);
+    return enabled && (port.trim() === '' || Number.isNaN(n) || n < 1 || n > 65535);
 }
 
 export function isProxyValid(enabled: boolean, host: string, port: string): boolean {

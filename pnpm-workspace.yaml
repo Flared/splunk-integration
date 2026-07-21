@@ -1,4 +1,4 @@
 packages:
-  - 'packages/*'
+    - 'packages/*'
 allowBuilds:
-  unrs-resolver: true
+    unrs-resolver: true

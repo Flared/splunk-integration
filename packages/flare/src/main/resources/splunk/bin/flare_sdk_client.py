@@ -9,9 +9,11 @@ This replaces the custom api_client.py. The SDK handles:
 Proxy and SSL settings are applied via a custom requests.Session
 passed to FlareApiClient(session=...).
 """
+
+import logging
 import os
 import sys
-import logging
+
 
 # Ensure the vendored lib directory is on the path
 _LIB_DIR = os.path.join(os.path.dirname(__file__), "lib")
@@ -19,11 +21,12 @@ if _LIB_DIR not in sys.path:
     sys.path.insert(0, _LIB_DIR)
 
 import requests
-from requests.adapters import HTTPAdapter
-from urllib3.util import Retry
-from flareio import FlareApiClient
 
+from flareio import FlareApiClient
+from requests.adapters import HTTPAdapter
 from typing import Optional
+from urllib3.util import Retry
+
 
 logger = logging.getLogger("flare_cron_job")
 
@@ -53,7 +56,7 @@ def _build_session(
         allowed_methods={"GET", "POST"},
     )
     if hasattr(retry, "backoff_max"):
-        retry.backoff_max = 15  # type: ignore[attr-defined]
+        retry.backoff_max = 15
 
     session.mount("https://", HTTPAdapter(max_retries=retry))
 

@@ -31,7 +31,7 @@ export function useApiKeyValidation(
     proxyEnabledRef: MutableRefObject<boolean>,
     clearMessages: () => void,
     showError: (msg: string) => void,
-    setters: ApiKeyValidationSetters
+    setters: ApiKeyValidationSetters,
 ) {
     const [isValidatingApiKey, setIsValidatingApiKey] = useState(false);
     const [isApiKeyValidated, setIsApiKeyValidated] = useState(false);
@@ -47,7 +47,12 @@ export function useApiKeyValidation(
     } = setters;
 
     const loadApiKeyDependentData = useCallback(
-        (key: string, savedSevsFilter?: string[], savedTypesFilter?: string[], proxyConfig?: ProxyValidationConfig): void => {
+        (
+            key: string,
+            savedSevsFilter?: string[],
+            savedTypesFilter?: string[],
+            proxyConfig?: ProxyValidationConfig,
+        ): void => {
             setIsValidatingApiKey(true);
             setApiKeyError('');
             clearMessages();
@@ -58,8 +63,12 @@ export function useApiKeyValidation(
                 fetchSourceTypeFilters(key, proxyConfig),
             ])
                 .then(([userTenants, fetchedSeverities, fetchedSourceTypes]) => {
-                    if (key !== prevApiKeyRef.current) return;
-                    if (proxyConfig && proxyConfig.proxyEnabled !== proxyEnabledRef.current) return;
+                    if (key !== prevApiKeyRef.current) {
+                        return;
+                    }
+                    if (proxyConfig && proxyConfig.proxyEnabled !== proxyEnabledRef.current) {
+                        return;
+                    }
                     setApiKeyError('');
                     clearMessages();
                     setTenants(userTenants);
@@ -69,13 +78,17 @@ export function useApiKeyValidation(
                     setIsValidatingApiKey(false);
 
                     if (savedSevsFilter !== undefined) {
-                        setSelectedSeverities(convertSeverityFilterToArray(savedSevsFilter, fetchedSeverities));
+                        setSelectedSeverities(
+                            convertSeverityFilterToArray(savedSevsFilter, fetchedSeverities),
+                        );
                     } else {
                         setSelectedSeverities(fetchedSeverities);
                     }
 
                     if (savedTypesFilter !== undefined) {
-                        setSelectedSourceTypes(convertSourceTypeFilterToArray(savedTypesFilter, fetchedSourceTypes));
+                        setSelectedSourceTypes(
+                            convertSourceTypeFilterToArray(savedTypesFilter, fetchedSourceTypes),
+                        );
                     } else {
                         const allTypes: SourceType[] = [];
                         fetchedSourceTypes.forEach((category) => {
@@ -85,8 +98,12 @@ export function useApiKeyValidation(
                     }
                 })
                 .catch(() => {
-                    if (key !== prevApiKeyRef.current) return;
-                    if (proxyConfig && proxyConfig.proxyEnabled !== proxyEnabledRef.current) return;
+                    if (key !== prevApiKeyRef.current) {
+                        return;
+                    }
+                    if (proxyConfig && proxyConfig.proxyEnabled !== proxyEnabledRef.current) {
+                        return;
+                    }
                     setApiKeyError('Invalid API key or network error');
                     setIsApiKeyValidated(false);
                     setIsValidatingApiKey(false);
@@ -97,7 +114,18 @@ export function useApiKeyValidation(
                     showError('Invalid API key.');
                 });
         },
-        [clearMessages, showError, prevApiKeyRef, proxyEnabledRef, setTenants, setSeverities, setSourceTypeCategories, setSelectedSeverities, setSelectedSourceTypes, setSelectedTenantIds]
+        [
+            clearMessages,
+            showError,
+            prevApiKeyRef,
+            proxyEnabledRef,
+            setTenants,
+            setSeverities,
+            setSourceTypeCategories,
+            setSelectedSeverities,
+            setSelectedSourceTypes,
+            setSelectedTenantIds,
+        ],
     );
 
     const validateApiKeyOnly = useCallback(
@@ -108,8 +136,12 @@ export function useApiKeyValidation(
 
             return validateApiKey(key, proxyConfig)
                 .then((result) => {
-                    if (key !== prevApiKeyRef.current) return false;
-                    if (proxyConfig && proxyConfig.proxyEnabled !== proxyEnabledRef.current) return false;
+                    if (key !== prevApiKeyRef.current) {
+                        return false;
+                    }
+                    if (proxyConfig && proxyConfig.proxyEnabled !== proxyEnabledRef.current) {
+                        return false;
+                    }
 
                     setIsValidatingApiKey(false);
 
@@ -121,12 +153,16 @@ export function useApiKeyValidation(
 
                     if (result.error_type === 'proxy_error') {
                         setApiKeyError('Proxy connection failed');
-                        showError('Failed to connect through the configured proxy. Please verify your proxy host, port, and credentials.');
+                        showError(
+                            'Failed to connect through the configured proxy. Please verify your proxy host, port, and credentials.',
+                        );
                         // Deliberately NOT setting setIsApiKeyValidated(false) — a proxy/network
                         // error shouldn't discard the user's previously loaded tenants/filters.
                     } else if (result.error_type === 'connection_error') {
                         setApiKeyError('Connection error');
-                        showError('Unable to reach the Flare API. Please check your network connection.');
+                        showError(
+                            'Unable to reach the Flare API. Please check your network connection.',
+                        );
                     } else if (result.error_type === 'auth_error') {
                         setApiKeyError('Invalid API key');
                         showError('Invalid API key. Please check and re-enter your Flare API key.');
@@ -139,15 +175,19 @@ export function useApiKeyValidation(
                     return false;
                 })
                 .catch(() => {
-                    if (key !== prevApiKeyRef.current) return false;
-                    if (proxyConfig && proxyConfig.proxyEnabled !== proxyEnabledRef.current) return false;
+                    if (key !== prevApiKeyRef.current) {
+                        return false;
+                    }
+                    if (proxyConfig && proxyConfig.proxyEnabled !== proxyEnabledRef.current) {
+                        return false;
+                    }
                     setIsValidatingApiKey(false);
                     setApiKeyError('Validation failed');
                     showError('API key validation failed. Please try again.');
                     return false;
                 });
         },
-        [clearMessages, showError, prevApiKeyRef, proxyEnabledRef]
+        [clearMessages, showError, prevApiKeyRef, proxyEnabledRef],
     );
 
     return {

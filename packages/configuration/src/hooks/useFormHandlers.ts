@@ -33,14 +33,28 @@ export function useFormHandlers(
     proxyEnabledRef: MutableRefObject<boolean>,
     selectedSeverities: Severity[],
     selectedSourceTypes: SourceType[],
-    setters: FormSetters
+    setters: FormSetters,
 ) {
     const {
-        setApiKey, setApiKeyError, setSelectedTenantIds, setLogLevel,
-        setIngestionInterval, setIndexName, setNumberOfDaysToBackfill,
-        setIsIngestingFullEventData, setSelectedSeverities, setSelectedSourceTypes,
-        setProxyEnabled, setProxyType, setProxyHost, setProxyPort,
-        setProxyUsername, setProxyPassword, setSslVerify, setIsDirty, clearMessages,
+        setApiKey,
+        setApiKeyError,
+        setSelectedTenantIds,
+        setLogLevel,
+        setIngestionInterval,
+        setIndexName,
+        setNumberOfDaysToBackfill,
+        setIsIngestingFullEventData,
+        setSelectedSeverities,
+        setSelectedSourceTypes,
+        setProxyEnabled,
+        setProxyType,
+        setProxyHost,
+        setProxyPort,
+        setProxyUsername,
+        setProxyPassword,
+        setSslVerify,
+        setIsDirty,
+        clearMessages,
     } = setters;
 
     // ── Basic field handlers ────────────────────────────────────────────
@@ -52,7 +66,7 @@ export function useFormHandlers(
             setApiKey(value);
             setIsDirty(true);
         },
-        [setApiKeyError, clearMessages, setApiKey, setIsDirty]
+        [setApiKeyError, clearMessages, setApiKey, setIsDirty],
     );
 
     const handleTenantChange = useCallback(
@@ -60,7 +74,7 @@ export function useFormHandlers(
             setSelectedTenantIds(values.map((v) => Number(v)));
             setIsDirty(true);
         },
-        [setSelectedTenantIds, setIsDirty]
+        [setSelectedTenantIds, setIsDirty],
     );
 
     const handleLogLevelChange = useCallback(
@@ -68,7 +82,7 @@ export function useFormHandlers(
             setLogLevel(String(value));
             setIsDirty(true);
         },
-        [setLogLevel, setIsDirty]
+        [setLogLevel, setIsDirty],
     );
 
     const handleIngestionIntervalChange = useCallback(
@@ -81,7 +95,7 @@ export function useFormHandlers(
             }
             setIsDirty(true);
         },
-        [setIngestionInterval, setIsDirty]
+        [setIngestionInterval, setIsDirty],
     );
 
     const handleIndexChange = useCallback(
@@ -89,7 +103,7 @@ export function useFormHandlers(
             setIndexName(String(value));
             setIsDirty(true);
         },
-        [setIndexName, setIsDirty]
+        [setIndexName, setIsDirty],
     );
 
     const handleBackfillChange = useCallback(
@@ -102,7 +116,7 @@ export function useFormHandlers(
             }
             setIsDirty(true);
         },
-        [setNumberOfDaysToBackfill, setIsDirty]
+        [setNumberOfDaysToBackfill, setIsDirty],
     );
 
     const handleIngestFullEventToggle = useCallback(
@@ -110,14 +124,14 @@ export function useFormHandlers(
             setIsIngestingFullEventData(!selected);
             setIsDirty(true);
         },
-        [setIsIngestingFullEventData, setIsDirty]
+        [setIsIngestingFullEventData, setIsDirty],
     );
 
     // ── Severity filter handlers ────────────────────────────────────────
 
     const isSeveritySelected = useCallback(
         (severity: Severity): boolean => selectedSeverities.some((s) => s.value === severity.value),
-        [selectedSeverities]
+        [selectedSeverities],
     );
 
     const handleSeverityToggle = useCallback(
@@ -128,7 +142,7 @@ export function useFormHandlers(
                 setSelectedSeverities([...selectedSeverities, severity]);
             }
         },
-        [selectedSeverities, isSeveritySelected, setSelectedSeverities]
+        [selectedSeverities, isSeveritySelected, setSelectedSeverities],
     );
 
     const handleSeverityToggleWithDirty = useCallback(
@@ -136,14 +150,15 @@ export function useFormHandlers(
             handleSeverityToggle(severity);
             setIsDirty(true);
         },
-        [handleSeverityToggle, setIsDirty]
+        [handleSeverityToggle, setIsDirty],
     );
 
     // ── Source type / category handlers ────────────────────────────────
 
     const isSourceTypeSelected = useCallback(
-        (sourceType: SourceType): boolean => selectedSourceTypes.some((s) => s.value === sourceType.value),
-        [selectedSourceTypes]
+        (sourceType: SourceType): boolean =>
+            selectedSourceTypes.some((s) => s.value === sourceType.value),
+        [selectedSourceTypes],
     );
 
     const isCategoryFullySelected = useCallback(
@@ -153,19 +168,21 @@ export function useFormHandlers(
             }
             return category.types.every((t) => isSourceTypeSelected(t));
         },
-        [isSourceTypeSelected]
+        [isSourceTypeSelected],
     );
 
     const handleSourceTypeToggle = useCallback(
         (sourceType: SourceType): void => {
             if (isSourceTypeSelected(sourceType)) {
-                setSelectedSourceTypes(selectedSourceTypes.filter((s) => s.value !== sourceType.value));
+                setSelectedSourceTypes(
+                    selectedSourceTypes.filter((s) => s.value !== sourceType.value),
+                );
             } else {
                 setSelectedSourceTypes([...selectedSourceTypes, sourceType]);
             }
             setIsDirty(true);
         },
-        [selectedSourceTypes, isSourceTypeSelected, setSelectedSourceTypes, setIsDirty]
+        [selectedSourceTypes, isSourceTypeSelected, setSelectedSourceTypes, setIsDirty],
     );
 
     const handleCategoryToggle = useCallback(
@@ -176,7 +193,9 @@ export function useFormHandlers(
             }
             if (isCategoryFullySelected(category)) {
                 setSelectedSourceTypes(
-                    selectedSourceTypes.filter((s) => !category.types.some((t) => t.value === s.value))
+                    selectedSourceTypes.filter(
+                        (s) => !category.types.some((t) => t.value === s.value),
+                    ),
                 );
             } else {
                 const allTypes = [...selectedSourceTypes];
@@ -189,7 +208,13 @@ export function useFormHandlers(
             }
             setIsDirty(true);
         },
-        [selectedSourceTypes, isCategoryFullySelected, handleSourceTypeToggle, setSelectedSourceTypes, setIsDirty]
+        [
+            selectedSourceTypes,
+            isCategoryFullySelected,
+            handleSourceTypeToggle,
+            setSelectedSourceTypes,
+            setIsDirty,
+        ],
     );
 
     // ── Proxy handlers ─────────────────────────────────────────────────
@@ -201,37 +226,55 @@ export function useFormHandlers(
             setProxyEnabled(newValue);
             setIsDirty(true);
         },
-        [proxyEnabledRef, setProxyEnabled, setIsDirty]
+        [proxyEnabledRef, setProxyEnabled, setIsDirty],
     );
 
     const handleProxyTypeChange = useCallback(
-        (_e: unknown, { value }: { value: string | number | boolean }) => { setProxyType(String(value)); setIsDirty(true); },
-        [setProxyType, setIsDirty]
+        (_e: unknown, { value }: { value: string | number | boolean }) => {
+            setProxyType(String(value));
+            setIsDirty(true);
+        },
+        [setProxyType, setIsDirty],
     );
 
     const handleProxyHostChange = useCallback(
-        (_e: unknown, { value }: { value: string }) => { setProxyHost(value); setIsDirty(true); },
-        [setProxyHost, setIsDirty]
+        (_e: unknown, { value }: { value: string }) => {
+            setProxyHost(value);
+            setIsDirty(true);
+        },
+        [setProxyHost, setIsDirty],
     );
 
     const handleProxyPortChange = useCallback(
-        (_e: unknown, { value }: { value: string }) => { setProxyPort(value); setIsDirty(true); },
-        [setProxyPort, setIsDirty]
+        (_e: unknown, { value }: { value: string }) => {
+            setProxyPort(value);
+            setIsDirty(true);
+        },
+        [setProxyPort, setIsDirty],
     );
 
     const handleProxyUsernameChange = useCallback(
-        (_e: unknown, { value }: { value: string }) => { setProxyUsername(value); setIsDirty(true); },
-        [setProxyUsername, setIsDirty]
+        (_e: unknown, { value }: { value: string }) => {
+            setProxyUsername(value);
+            setIsDirty(true);
+        },
+        [setProxyUsername, setIsDirty],
     );
 
     const handleProxyPasswordChange = useCallback(
-        (_e: unknown, { value }: { value: string }) => { setProxyPassword(value); setIsDirty(true); },
-        [setProxyPassword, setIsDirty]
+        (_e: unknown, { value }: { value: string }) => {
+            setProxyPassword(value);
+            setIsDirty(true);
+        },
+        [setProxyPassword, setIsDirty],
     );
 
     const handleSslVerifyChange = useCallback(
-        (_e: unknown, { selected }: { selected: boolean }) => { setSslVerify(!selected); setIsDirty(true); },
-        [setSslVerify, setIsDirty]
+        (_e: unknown, { selected }: { selected: boolean }) => {
+            setSslVerify(!selected);
+            setIsDirty(true);
+        },
+        [setSslVerify, setIsDirty],
     );
 
     return {

@@ -1,6 +1,8 @@
 """Flare API wrappers and Splunk REST handlers for the Flare integration."""
+
 import os
 import sys
+
 
 if sys.version_info < (3, 7):
     sys.exit("Error: This application requires Python 3.7 or higher.")
@@ -12,10 +14,11 @@ if _LIB_DIR not in sys.path:
 
 import json
 import logging
-import urllib.parse
 import requests
+import urllib.parse
 
 from typing import Optional
+
 
 try:
     import splunk.rest
@@ -26,14 +29,14 @@ sys.path.insert(0, os.path.dirname(__file__))
 
 import flare_constants as const
 
+from flare_sdk_client import create_flare_client
 from flareio import FlareApiClient
 from flareio.exceptions import TokenError
-from flare_sdk_client import create_flare_client
-from splunk_storage import get_all_storage_values
 from ingestion_config import get_proxy_settings
+from splunk_storage import get_all_storage_values
 
-logger = logging.getLogger('flare_cron_job')
 
+logger = logging.getLogger("flare_cron_job")
 
 
 # API Request Wrappers (For Cron Job)
@@ -87,14 +90,17 @@ def enrich_event_with_full_details(
             "Enrichment API returned HTTP %s for UID %s. Response body: %s",
             e.response.status_code if e.response is not None else "Unknown",
             uid,
-            e.response.text if e.response is not None else "No response body"
+            e.response.text if e.response is not None else "No response body",
         )
         if e.response is not None and e.response.status_code == 400:
             error_body = e.response.json() if e.response.text else {}
-            if isinstance(error_body, dict) and error_body.get("error", {}).get("code") == "UNSUPPORTED":
+            if (
+                isinstance(error_body, dict)
+                and error_body.get("error", {}).get("code") == "UNSUPPORTED"
+            ):
                 logger.warning(
                     "Event UID %s is flagged as UNSUPPORTED by the enrichment API. Proceeding with base event data.",
-                    uid
+                    uid,
                 )
                 return event
 
@@ -107,7 +113,6 @@ def enrich_event_with_full_details(
     return event
 
 
-
 # Internal Helpers (REST handler context only)
 
 
@@ -118,13 +123,16 @@ def _get_api_key_from_payload(request: dict) -> str:
         raise Exception("API Key is required")
     return params["apiKey"][0]
 
+
 def _get_proxy_settings_from_session(session_key: str) -> Optional[dict]:
     if not session_key:
         return None
     try:
         _, content = splunk.rest.simpleRequest(
             f"/servicesNS/nobody/{const.APP_NAME}/storage/passwords",
-            sessionKey=session_key, method="GET", getargs={"output_mode": "json"}
+            sessionKey=session_key,
+            method="GET",
+            getargs={"output_mode": "json"},
         )
         data = json.loads(content)
         return get_proxy_settings(get_all_storage_values(data.get("entry", [])))
@@ -157,6 +165,7 @@ def setup_onetime_auth_client(request_obj: dict, sessionKey: str) -> FlareApiCli
 
     return create_flare_client(api_key=api_key, proxies=proxies, ssl_verify=True)
 
+
 def normalize_response(response_json: dict, key: str) -> dict:
     mapped = {}
     if isinstance(response_json, list):
@@ -175,6 +184,7 @@ def normalize_response(response_json: dict, key: str) -> dict:
     else:
         mapped[key] = []
     return mapped
+
 
 def _classify_error(e: Exception) -> dict:
     """Classify an exception into a structured error response with type information."""
@@ -209,6 +219,7 @@ def _classify_error(e: Exception) -> dict:
 
 class FlareValidateApiKey(splunk.rest.BaseRestHandler):
     """Lightweight endpoint that validates the API key by generating a JWT token."""
+
     def handle_POST(self) -> None:
         try:
             client = setup_onetime_auth_client(self.request, self.sessionKey)
@@ -225,6 +236,7 @@ class FlareValidateApiKey(splunk.rest.BaseRestHandler):
             else:
                 self.response.setStatus(500)
             self.response.write(json.dumps(error_info))
+
 
 class FlareUserTenants(splunk.rest.BaseRestHandler):
     def handle_POST(self) -> None:
@@ -244,6 +256,7 @@ class FlareUserTenants(splunk.rest.BaseRestHandler):
                 self.response.setStatus(500)
             self.response.write(json.dumps(error_info))
 
+
 class FlareSeverityFilters(splunk.rest.BaseRestHandler):
     def handle_POST(self) -> None:
         try:
@@ -262,6 +275,7 @@ class FlareSeverityFilters(splunk.rest.BaseRestHandler):
                 self.response.setStatus(500)
             self.response.write(json.dumps(error_info))
 
+
 class FlareSourceTypeFilters(splunk.rest.BaseRestHandler):
     def handle_POST(self) -> None:
         try:
@@ -279,6 +293,7 @@ class FlareSourceTypeFilters(splunk.rest.BaseRestHandler):
             else:
                 self.response.setStatus(500)
             self.response.write(json.dumps(error_info))
+
 
 class FlareSearchEvents(splunk.rest.BaseRestHandler):
     def handle_POST(self) -> None:
@@ -305,7 +320,9 @@ class FlareSearchEvents(splunk.rest.BaseRestHandler):
             if params.get("type"):
                 filters["type"] = params["type"][0].split(",")
             if params.get("estimated_created_at_gte"):
-                filters["estimated_created_at"] = {"gte": params["estimated_created_at_gte"][0]}
+                filters["estimated_created_at"] = {
+                    "gte": params["estimated_created_at_gte"][0]
+                }
             if filters:
                 search_body["filters"] = filters
 

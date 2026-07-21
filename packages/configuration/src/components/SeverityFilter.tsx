@@ -36,7 +36,15 @@ export function SeverityFilter({
             help="Select the severity levels to include."
         >
             <div>
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 8, marginBottom: 8 }}>
+                <div
+                    style={{
+                        display: 'flex',
+                        gap: 8,
+                        flexWrap: 'wrap',
+                        marginTop: 8,
+                        marginBottom: 8,
+                    }}
+                >
                     {severities.map((severity) => (
                         <button
                             type="button"
@@ -49,7 +57,9 @@ export function SeverityFilter({
                                 height: 28,
                                 borderRadius: '50%',
                                 backgroundColor: severity.color || '#666',
-                                border: isSeveritySelected(severity) ? '2px solid #fff' : '2px solid transparent',
+                                border: isSeveritySelected(severity)
+                                    ? '2px solid #fff'
+                                    : '2px solid transparent',
                                 cursor: isApiKeyValidated ? 'pointer' : 'not-allowed',
                                 outline: 'none',
                                 opacity: isSeveritySelected(severity) ? 1 : 0.6,

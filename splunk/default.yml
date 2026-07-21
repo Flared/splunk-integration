@@ -1,17 +1,17 @@
 splunk:
-  launch:
-    FLARE_ENV: "dev"
-  conf:
-    - key: web
-      value:
-        directory: /opt/splunk/etc/system/local
-        content:
-          settings:
-            cacheEntriesLimit: 0
-            cacheBytesLimit: 0
-    - key: server
-      value:
-        directory: /opt/splunk/etc/system/local
-        content:
-          kvstore:
-            disabled: true
+    launch:
+        FLARE_ENV: 'dev'
+    conf:
+        - key: web
+          value:
+              directory: /opt/splunk/etc/system/local
+              content:
+                  settings:
+                      cacheEntriesLimit: 0
+                      cacheBytesLimit: 0
+        - key: server
+          value:
+              directory: /opt/splunk/etc/system/local
+              content:
+                  kvstore:
+                      disabled: true
