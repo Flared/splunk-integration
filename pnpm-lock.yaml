@@ -211,6 +211,12 @@ importers:
       '@splunk/webpack-configs':
         specifier: ^7.0.3
         version: 7.0.3(@babel/core@7.29.7(supports-color@5.5.0))(@splunk/dashboard-extension-webpack-plugin@3.0.1(webpack@5.107.2))(babel-loader@8.4.1(@babel/core@7.29.7(supports-color@5.5.0))(webpack@5.107.2))(postcss@8.5.15)(supports-color@5.5.0)(webpack@5.107.2)
+      '@types/react':
+        specifier: ^18.2.0
+        version: 18.3.30
+      '@types/styled-components':
+        specifier: ^5.1.0
+        version: 5.1.36
       '@typescript-eslint/eslint-plugin':
         specifier: ^8.29.1
         version: 8.60.1(@typescript-eslint/parser@8.60.1(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)

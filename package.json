@@ -2,6 +2,7 @@
   "name": "@splunk/splunk-create-monorepo",
   "license": "UNLICENSED",
   "private": true,
+  "packageManager": "pnpm@11.8.0",
   "scripts": {
     "build": "pnpm -r build",
     "format": "pnpm format:python && pnpm format:prettier",
