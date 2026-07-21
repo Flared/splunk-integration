@@ -26,7 +26,7 @@ const runCommands = {
     },
     nix: {
         build: () => shell.exec('export NODE_ENV=production && ./node_modules/.bin/webpack --mode=production'),
-        link: () => shell.exec('ln -s $PWD/stage $SPLUNK_HOME/etc/apps/flare'),
+        link: () => shell.exec('ln -s $PWD/stage $SPLUNK_HOME/etc/apps/flare_splunk_app'),
     },
 };
 

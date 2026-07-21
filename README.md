@@ -40,7 +40,7 @@ $ cd packages/flare
 $ pnpm run link:app
 
 # check that the link is set (optional)
-$ ls -l $SPLUNK_HOME/etc/apps/flare
+$ ls -l $SPLUNK_HOME/etc/apps/flare_splunk_app
 
 # restart Splunk (will start Splunk if not already started)
 $ splunk restart

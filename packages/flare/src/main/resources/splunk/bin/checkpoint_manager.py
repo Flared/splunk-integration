@@ -11,7 +11,7 @@ def _get_checkpoint_path() -> str:
     splunk_home = os.environ.get("SPLUNK_HOME", "")
     if splunk_home:
         checkpoint_dir = os.path.join(
-            splunk_home, "var", "lib", "splunk", "modinputs", "flare"
+            splunk_home, "var", "lib", "splunk", "modinputs", "flare_splunk_app"
         )
     else:
         checkpoint_dir = os.path.dirname(os.path.abspath(__file__))

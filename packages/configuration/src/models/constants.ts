@@ -1,6 +1,7 @@
 import { ApplicationNamespace } from './splunk';
 
-export const APP_NAME = 'flare';
+export const APP_NAME = 'flare_splunk_app';
+export const DEFAULT_INDEX_NAME = 'flare';
 export const STORAGE_REALM = 'flare_v2_integration_realm';
 export const APPLICATION_NAMESPACE: ApplicationNamespace = {
     owner: 'nobody',

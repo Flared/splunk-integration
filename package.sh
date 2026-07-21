@@ -19,7 +19,7 @@ mkdir -p $PACKAGE_DIR
 
 # Identification
 COMMIT_ID=$(git rev-parse --short=6 HEAD 2>/dev/null || echo "local")
-APP_FOLDER="flare"
+APP_FOLDER="flare_splunk_app"
 REAL_SRC_DIR=$SCRIPT_DIR/packages/flare/src/main/resources/splunk
 SRC_DIR=$SCRIPT_DIR/packages/flare/stage
 FULLAPP_DIR=$PACKAGE_DIR/$APP_FOLDER

@@ -1,7 +1,7 @@
 """Shared constants for the Flare Splunk integration."""
 
 # Note: FLARE_API_BASE_URL and token generation are managed by the flareio SDK.
-APP_NAME = "flare"
+APP_NAME = "flare_splunk_app"
 HOST = "localhost"
 SPLUNK_PORT = 8089
 STORAGE_REALM = "flare_v2_integration_realm"

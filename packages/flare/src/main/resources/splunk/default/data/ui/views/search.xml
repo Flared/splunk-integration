@@ -75,13 +75,13 @@
                     }
                 </style>
                 <div class="saved-search-grid">
-                    <a href="/app/search/report?s=%2FservicesNS%2Fnobody%2Fflare%2Fsaved%2Fsearches%2FFlare%20-%20All%20Unique%20Events" target="_blank">All Unique Events</a>
-                    <a href="/app/search/report?s=%2FservicesNS%2Fnobody%2Fflare%2Fsaved%2Fsearches%2FFlare%20-%20Critical%20and%20High%20Severity%20Events" target="_blank">Critical &amp; High Severity</a>
-                    <a href="/app/search/report?s=%2FservicesNS%2Fnobody%2Fflare%2Fsaved%2Fsearches%2FFlare%20-%20Leaked%20Credentials%20Report" target="_blank">Leaked Credentials</a>
-                    <a href="/app/search/report?s=%2FservicesNS%2Fnobody%2Fflare%2Fsaved%2Fsearches%2FFlare%20-%20Daily%20Event%20Volume%20Trend" target="_blank">Daily Volume Trend</a>
-                    <a href="/app/search/report?s=%2FservicesNS%2Fnobody%2Fflare%2Fsaved%2Fsearches%2FFlare%20-%20Severity%20Distribution" target="_blank">Severity Distribution</a>
-                    <a href="/app/search/report?s=%2FservicesNS%2Fnobody%2Fflare%2Fsaved%2Fsearches%2FFlare%20-%20Ingestion%20Health%20Check" target="_blank">Ingestion Health</a>
-                    <a href="/app/search/report?s=%2FservicesNS%2Fnobody%2Fflare%2Fsaved%2Fsearches%2FFlare%20-%20Ingestion%20Errors" target="_blank">Ingestion Errors</a>
+                    <a href="/app/search/report?s=%2FservicesNS%2Fnobody%2Fflare_splunk_app%2Fsaved%2Fsearches%2FFlare%20-%20All%20Unique%20Events" target="_blank">All Unique Events</a>
+                    <a href="/app/search/report?s=%2FservicesNS%2Fnobody%2Fflare_splunk_app%2Fsaved%2Fsearches%2FFlare%20-%20Critical%20and%20High%20Severity%20Events" target="_blank">Critical &amp; High Severity</a>
+                    <a href="/app/search/report?s=%2FservicesNS%2Fnobody%2Fflare_splunk_app%2Fsaved%2Fsearches%2FFlare%20-%20Leaked%20Credentials%20Report" target="_blank">Leaked Credentials</a>
+                    <a href="/app/search/report?s=%2FservicesNS%2Fnobody%2Fflare_splunk_app%2Fsaved%2Fsearches%2FFlare%20-%20Daily%20Event%20Volume%20Trend" target="_blank">Daily Volume Trend</a>
+                    <a href="/app/search/report?s=%2FservicesNS%2Fnobody%2Fflare_splunk_app%2Fsaved%2Fsearches%2FFlare%20-%20Severity%20Distribution" target="_blank">Severity Distribution</a>
+                    <a href="/app/search/report?s=%2FservicesNS%2Fnobody%2Fflare_splunk_app%2Fsaved%2Fsearches%2FFlare%20-%20Ingestion%20Health%20Check" target="_blank">Ingestion Health</a>
+                    <a href="/app/search/report?s=%2FservicesNS%2Fnobody%2Fflare_splunk_app%2Fsaved%2Fsearches%2FFlare%20-%20Ingestion%20Errors" target="_blank">Ingestion Errors</a>
                 </div>
             </html>
         </panel>

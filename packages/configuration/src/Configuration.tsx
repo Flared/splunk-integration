@@ -11,7 +11,7 @@ import WaitSpinner from '@splunk/react-ui/WaitSpinner';
 import { SplunkThemeProvider } from '@splunk/themes';
 
 import { Severity, SourceType, SourceTypeCategory, Tenant } from './models/flare';
-import { LOG_LEVEL_OPTIONS } from './models/constants';
+import { DEFAULT_INDEX_NAME, LOG_LEVEL_OPTIONS } from './models/constants';
 import {
     fetchApiKey,
     fetchIngestionInterval,
@@ -216,8 +216,8 @@ const Configuration = () => {
                     setApiKey(savedApiKey);
                     prevApiKeyRef.current = savedApiKey;
                     setIndexNames(availableIndexNames);
-                    setIndexName(currentIndex || 'flare');
-                    setInitialIndexName(currentIndex || 'flare');
+                    setIndexName(currentIndex || DEFAULT_INDEX_NAME);
+                    setInitialIndexName(currentIndex || DEFAULT_INDEX_NAME);
                     setSelectedTenantIds(savedTenantIds);
                     setIsIngestingFullEventData(ingestFullEvent);
                     setNumberOfDaysToBackfill(backfillDays || '5');

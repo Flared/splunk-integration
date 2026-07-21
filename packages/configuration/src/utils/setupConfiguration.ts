@@ -1,6 +1,7 @@
 import {
     APPLICATION_NAMESPACE,
     APP_NAME,
+    DEFAULT_INDEX_NAME,
     FLARE_SAVED_SEARCH_NAME,
     PasswordKeys,
     STORAGE_REALM,
@@ -438,8 +439,8 @@ async function createFlareIndex(): Promise<void> {
     const isFirstConfiguration = await fetchIsFirstConfiguration();
     if (isFirstConfiguration) {
         const currentIndexNames = await fetchAvailableIndexNames();
-        if (!currentIndexNames.find((indexName) => indexName === APP_NAME)) {
-            await service.indexes().create(APP_NAME, {});
+        if (!currentIndexNames.find((indexName) => indexName === DEFAULT_INDEX_NAME)) {
+            await service.indexes().create(DEFAULT_INDEX_NAME, {});
         }
     }
 }
