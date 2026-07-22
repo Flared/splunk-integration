@@ -1,26 +1,31 @@
 name: Publish Splunk Application to Splunkbase
 
 on:
-  release:
-    types: [published]
+    release:
+        types: [published]
+
+permissions:
+    contents: read
 
 jobs:
-  publish:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout codebase
-        uses: actions/checkout@v4
+    publish:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout codebase
+              uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-            python-version: '3.9'
+            - name: Set up Python
+              uses: actions/setup-python@v5
+              with:
+                  python-version: '3.9'
 
-      - name: Install Application Dependencies
-        run: |
-          make build
+            - name: Install pnpm
+              uses: pnpm/action-setup@v4
 
-      - name: Package and Publish
-        run: |
-          make package
-          SPLUNKBASE_CREDS='${{ secrets.SPLUNKBASE_CREDS }}' make publish
+            - name: Build and package
+              run: |
+                  make package
+
+            - name: Publish to Splunkbase
+              run: |
+                  SPLUNKBASE_CREDS='${{ secrets.SPLUNKBASE_CREDS }}' make publish

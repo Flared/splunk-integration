@@ -1,63 +1,62 @@
-.PHONY: build
-build:
-	$(MAKE) clean
-	$(MAKE) venv
-	$(MAKE) setup-web
+# ─── Variables ───────────────────────────────────────────────────────────────
+PYTHON      ?= python
+STAGE       := packages/flare/stage
+DIST        := dist
+APP_BIN_LIB := packages/flare/src/main/resources/splunk/bin/lib
 
-.PHONY: setup-web
-setup-web: venv yarn.lock
-	yarn run setup
+# Splunk versions declared to Splunkbase on publish. Override per release:
+#   make publish SPLUNK_VERSIONS=9.3,...
+SPLUNK_VERSIONS ?= 9.3,9.4,10.0,10.1,10.2,10.3,10.4,10.5
 
-venv: requirements.txt
-	python -m venv venv
-	venv/bin/pip install --upgrade pip
-	venv/bin/pip install --target packages/flare/bin/vendor -r requirements.txt
-	@find packages/flare/bin/vendor -type d -name "*.dist-info" -exec rm -r {} +
-	@find packages/flare/bin -type d -name "__pycache__" -exec rm -r {} +
-	@rm -rf packages/flare/bin/vendor/bin
-	@rm -rf packages/flare/bin/vendor/packaging
-	@rm -rf packages/flare/bin/vendor/*-stubs
-	@find packages/flare/bin/vendor -type f -name "*x86_64-linux-gnu.so" -delete
+# ─── Aggregate pipeline (mirrors CI: produce then verify) ────────────────────
+.PHONY: ci
+ci: package venv-tools lint validate test
 
-venv-tools: requirements.tools.txt venv
+# ─── Dependencies ────────────────────────────────────────────────────────────
+# JS deps. File target so `pnpm install` only runs when manifests change.
+node_modules: package.json pnpm-lock.yaml
+	pnpm install
+	@touch node_modules
+
+# Python tooling venv (pytest / mypy / ruff / splunk-appinspect).
+venv-tools: requirements.tools.txt
 	rm -rf venv-tools
-	python -m venv venv-tools
+	$(PYTHON) -m venv venv-tools
 	venv-tools/bin/pip install --upgrade pip
 	venv-tools/bin/pip install -r requirements.tools.txt
 
-.PHONY: clean
-clean:
-	@echo "Removing venv and venv-tools."
-	rm -rf venv
-	rm -rf venv-tools
-	rm -rf packages/flare/bin/vendor
-	@find . -type d -name "node_modules" -exec rm -rf {} +
-	rm -rf output/flare
-	@rm -f output/flare.tar.gz
-	@echo "Done."
+# ─── Build & package ─────────────────────────────────────────────────────────
+# Compile the frontend into packages/flare/stage (webpack also copies the
+# Splunk app skeleton from src/main/resources/splunk into stage).
+.PHONY: build
+build: node_modules
+	pnpm -r build
 
+# Vendor the Python runtime deps into stage/bin/lib and emit dist/*.tgz.
 .PHONY: package
-package: packages/flare/bin/vendor
-	-@rm -f output/flare.tar.gz
-	@find output/flare/bin -type d -name "__pycache__" -exec rm -r {} +
-	COPYFILE_DISABLE=1 tar \
-		--exclude='output/flare/local' \
-		--exclude='output/flare/metadata/local.meta' \
-		--format ustar \
-		-C output \
-		-cvzf \
-		"output/flare.tar.gz" \
-		"flare"
+package: build
+	./package.sh
 
+# ─── Distribution ────────────────────────────────────────────────────────────
 .PHONY: publish
-publish: output/flare.tar.gz
-	curl -u $$SPLUNKBASE_CREDS --request POST https://splunkbase.splunk.com/api/v1/app/7602/new_release/ -F "files[]=@./output/flare.tar.gz" -F "filename=flare.tar.gz" -F "splunk_versions=9.3,9.4" -F "visibility=true"
+publish:
+	@pkg=$$(ls -t $(DIST)/*.tgz 2>/dev/null | head -1); \
+	if [ -z "$$pkg" ]; then echo "No package found in $(DIST)/. Run 'make package' first."; exit 1; fi; \
+	echo "Publishing $$pkg to Splunkbase..."; \
+	curl -u $$SPLUNKBASE_CREDS --request POST \
+		https://splunkbase.splunk.com/api/v1/app/7602/new_release/ \
+		-F "files[]=@$$pkg" \
+		-F "filename=flare.tgz" \
+		-F "splunk_versions=$(SPLUNK_VERSIONS)" \
+		-F "visibility=true"
 
 .PHONY: validate
 validate: venv-tools
 	@echo "Running Splunk AppInspect..."
 	@echo "If you get an error about \"libmagic\", run \"brew install libmagic\""
-	@venv-tools/bin/splunk-appinspect inspect --ci "output/flare" ; \
+	@pkg=$$(ls -t $(DIST)/*.tgz 2>/dev/null | head -1); \
+	if [ -z "$$pkg" ]; then echo "No package found in $(DIST)/. Run 'make package' first."; exit 1; fi; \
+	venv-tools/bin/splunk-appinspect inspect --ci "$$pkg" ; \
 	status=$$? ; \
 	if [ "$$status" -eq 0 ] || [ "$$status" -eq 102 ] || [ "$$status" -eq 103 ] ; then \
 		exit 0 ; \
@@ -68,41 +67,55 @@ validate: venv-tools
 # This is helpful for identifying tags that are emitting warnings
 TAGS = advanced_xml alert_actions_conf ast bias cloud csv custom_search_commands custom_search_commands_v2 custom_visualizations custom_workflow_actions deprecated_feature developer_guidance django_bindings future java jquery manual markdown migration_victoria modular_inputs offensive packaging_standards private_app private_classic private_victoria pura python3_version removed_feature restmap_config savedsearches security spec splunk_5_0 splunk_6_0 splunk_6_1 splunk_6_2 splunk_6_3 splunk_6_4 splunk_6_5 splunk_6_6 splunk_7_0 splunk_7_1 splunk_7_2 splunk_7_3 splunk_8_0 splunk_9_0 splunk_appinspect web_conf windows
 .PHONY: inspect-tags
-inspect-tags:
-	@for TAG in $(TAGS); do \
+inspect-tags: venv-tools
+	@pkg=$$(ls -t $(DIST)/*.tgz 2>/dev/null | head -1); \
+	if [ -z "$$pkg" ]; then echo "No package found in $(DIST)/. Run 'make package' first."; exit 1; fi; \
+	for TAG in $(TAGS); do \
 		echo "Tag: $$TAG" ; \
-		venv-tools/bin/splunk-appinspect inspect --ci --included-tags $$TAG "output/flare" ; \
+		venv-tools/bin/splunk-appinspect inspect --ci --included-tags $$TAG "$$pkg" ; \
 	done
 
+# ─── Quality ─────────────────────────────────────────────────────────────────
 .PHONY: test
-test: venv-tools
-	venv-tools/bin/pytest ./packages/flare/tests/**/*.py -vv ;
-	yarn run test:ci
-
-.PHONY: format setup-web
-format: venv-tools
-	venv-tools/bin/ruff check --fix --unsafe-fixes
-	venv-tools/bin/ruff format
-	yarn run format
-
-.PHONY: format-check
-format-check: venv-tools
-	venv-tools/bin/ruff check
-	venv-tools/bin/ruff format --check
-	yarn run format:verify
+test: node_modules
+	pnpm -r test
 
 .PHONY: lint
-lint: setup-web venv-tools mypy format-check
-	yarn run lint
+lint: node_modules venv-tools mypy format-check
+	pnpm -r lint
 
 .PHONY: mypy
 mypy: venv-tools
 	venv-tools/bin/mypy --config-file mypy.ini packages/flare
 
+.PHONY: format
+format: venv-tools node_modules
+	pnpm run format
+
+.PHONY: format-check
+format-check: venv-tools node_modules
+	pnpm run format:verify
+
+# ─── Local development ───────────────────────────────────────────────────────
 .PHONY: sl
 sl: splunk-local
 
+# Assemble a runnable app in stage/ (frontend + vendored Python), then run it in
+# a local Splunk container (compose mounts packages/flare/stage) with a watcher.
 .PHONY: splunk-local
-splunk-local: venv setup-web
+splunk-local: build
+	SKIP_TARBALL=1 ./package.sh
 	docker compose up -d
-	yarn run start
+	pnpm run start
+
+# ─── Housekeeping ────────────────────────────────────────────────────────────
+.PHONY: clean
+clean:
+	@echo "Cleaning build artifacts..."
+	rm -rf venv-tools
+	rm -rf $(DIST)
+	rm -rf $(STAGE)
+	rm -rf $(APP_BIN_LIB)
+	@find . -type d -name "node_modules" -exec rm -rf {} +
+	@find . -type d -name "__pycache__" -exec rm -rf {} +
+	@echo "Done."

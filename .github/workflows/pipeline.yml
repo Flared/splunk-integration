@@ -2,55 +2,65 @@ name: Splunk Integration Build
 
 on: [push]
 
+permissions:
+    contents: read
+
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout codebase
-        uses: actions/checkout@v4
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout codebase
+              uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-            python-version: '3.9'
+            - name: Set up Python
+              uses: actions/setup-python@v5
+              with:
+                  python-version: '3.9'
 
-      - name: Install Application Dependencies
-        run: |
-          make build
-          make venv-tools
+            - name: Install pnpm
+              uses: pnpm/action-setup@v4
 
-      # SEE https://github.com/actions/upload-artifact?tab=readme-ov-file#permission-loss
-      - name: Tar files (only way to preserve perms)
-        run: tar -cvf artifact.tar .
+            - name: Build, package, and install tooling
+              run: |
+                  make package
+                  make venv-tools
 
-      - name: Store Build Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: splunk-app
-          path: artifact.tar
+            # SEE https://github.com/actions/upload-artifact?tab=readme-ov-file#permission-loss
+            - name: Tar files (only way to preserve perms)
+              run: tar -cvf artifact.tar .
 
-  test:
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-            python-version: '3.9'
+            - name: Store Build Artifact
+              uses: actions/upload-artifact@v4
+              with:
+                  name: splunk-app
+                  path: artifact.tar
 
-      - name: Download Build Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: splunk-app
+    test:
+        runs-on: ubuntu-latest
+        needs: build
+        steps:
+            - name: Set up Python
+              uses: actions/setup-python@v5
+              with:
+                  python-version: '3.9'
 
-      - name: Unpack Tar Artifact
-        run: tar -xvf artifact.tar
+            - name: Download Build Artifact
+              uses: actions/download-artifact@v4
+              with:
+                  name: splunk-app
 
-      - name: Lint
-        run: make lint
+            - name: Unpack Tar Artifact
+              run: tar -xvf artifact.tar
 
-      - name: Splunk AppInspect
-        run: make validate
+            # After unpacking so action-setup can read packageManager from package.json
+            - name: Install pnpm
+              uses: pnpm/action-setup@v4
 
-      - name: Test
-        run: make test
+            - name: Lint
+              run: make lint
+
+            - name: Splunk AppInspect
+              run: make validate
+
+            - name: Test
+              run: make test

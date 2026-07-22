@@ -1,25 +1,25 @@
 {
-  "name": "@splunk/flare",
-  "license": "Apache 2.0",
+  "name": "@splunk/splunk-create-monorepo",
+  "license": "UNLICENSED",
   "private": true,
+  "packageManager": "pnpm@11.8.0",
   "scripts": {
-    "build": "lerna run build",
-    "format": "git ls-files | grep -E \"\\.(jsx|css|tsx?)$\" | xargs prettier --write",
-    "format:verify": "git ls-files | grep -E \"\\.(jsx|css|tsx?)$\" | xargs prettier --list-different",
-    "lint": "lerna run lint --no-sort",
-    "setup": "yarn && lerna run build",
-    "start": "lerna run start --stream --no-sort --concurrency 100",
-    "test": "cd packages/react-components && yarn run test",
-    "test:ci": "cd packages/react-components && yarn run test:ci"
+    "build": "pnpm -r build",
+    "format": "pnpm format:python && pnpm format:prettier",
+    "format:verify": "pnpm format:python:verify && pnpm format:prettier:verify",
+    "format:prettier": "prettier --write .",
+    "format:prettier:verify": "prettier --check .",
+    "format:python": "node scripts/format-python.cjs",
+    "format:python:verify": "node scripts/format-python.cjs --check",
+    "lint": "pnpm -r lint",
+    "setup": "pnpm install && pnpm run build",
+    "test": "pnpm -r test",
+    "start": "pnpm --filter @splunk/flare run start"
   },
   "devDependencies": {
-    "lerna": "^2.9.0",
-    "prettier": "^2.0.5"
+    "prettier": "^3.6.2"
   },
-  "workspaces": [
-    "packages/*"
-  ],
   "engines": {
-    "node": ">=14"
+    "node": ">=22"
   }
 }

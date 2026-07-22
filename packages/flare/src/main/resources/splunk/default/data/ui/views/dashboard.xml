@@ -1,0 +1,306 @@
+<?xml version="1.0"?>
+<dashboard version="1.1" theme="light">
+    <label>Flare Dashboard</label>
+    <description>Flare Security Overview</description>
+
+    <!-- Base Search for all panels to significantly improve performance -->
+    <search id="base_search_flare">
+        <query>`flare_index` sourcetype=flare_json $identifier_filter$
+| spath path=metadata.uid output=uid
+| spath path=metadata.severity output=sev
+| spath path=metadata.type output=etype
+| spath path=metadata.flare_url output=flare_url
+| spath path=tenant_name
+| spath path=tenant_id
+| eval Tenant = coalesce(tenant_name, tenant_id)
+| dedup uid
+| fields uid, sev, etype, flare_url, tenant_name, Tenant, _time</query>
+        <earliest>$global_time.earliest$</earliest>
+        <latest>$global_time.latest$</latest>
+    </search>
+
+    <fieldset submitButton="false">
+        <input type="time" token="global_time">
+            <label>Time Range</label>
+            <default>
+                <earliest>-30d@d</earliest>
+                <latest>now</latest>
+            </default>
+        </input>
+        <input type="dropdown" token="identifier_filter" searchWhenChanged="true">
+            <label>Identifiers</label>
+            <choice value="*">All</choice>
+            <default>*</default>
+            <search>
+                <query>`flare_index` sourcetype=flare_json
+| spath path="identifiers{}.name" output=identifier
+| mvexpand identifier
+| dedup identifier
+| sort identifier
+| eval search_value="\"" . identifier . "\""
+| table identifier search_value</query>
+                <earliest>$global_time.earliest$</earliest>
+                <latest>$global_time.latest$</latest>
+            </search>
+            <fieldForLabel>identifier</fieldForLabel>
+            <fieldForValue>search_value</fieldForValue>
+        </input>
+    </fieldset>
+
+    <!-- ROW 1: KPI Single-Value Panels -->
+    <row>
+        <panel>
+            <title>Total Events</title>
+            <single>
+                <search base="base_search_flare">
+                    <query>| stats count</query>
+                </search>
+                <option name="colorMode">block</option>
+                <option name="rangeColors">["0x000000","0x000000"]</option>
+                <option name="rangeValues">[0]</option>
+                <option name="useColors">1</option>
+            </single>
+        </panel>
+        <panel>
+            <title>Critical Events</title>
+            <single>
+                <search base="base_search_flare">
+                    <query>| search sev="critical" | stats count</query>
+                </search>
+                <option name="colorMode">block</option>
+                <option name="rangeColors">["#ff0040","#ff0040"]</option>
+                <option name="rangeValues">[0]</option>
+                <option name="useColors">1</option>
+            </single>
+        </panel>
+        <panel>
+            <title>High Events</title>
+            <single>
+                <search base="base_search_flare">
+                    <query>| search sev="high" | stats count</query>
+                </search>
+                <option name="colorMode">block</option>
+                <option name="rangeColors">["#ff8629","#ff8629"]</option>
+                <option name="rangeValues">[0]</option>
+                <option name="useColors">1</option>
+            </single>
+        </panel>
+        <panel>
+            <title>Medium Events</title>
+            <single>
+                <search base="base_search_flare">
+                    <query>| search sev="medium" | stats count</query>
+                </search>
+                <option name="colorMode">block</option>
+                <option name="rangeColors">["#ffae00","#ffae00"]</option>
+                <option name="rangeValues">[0]</option>
+                <option name="useColors">1</option>
+            </single>
+        </panel>
+        <panel>
+            <title>Low Events</title>
+            <single>
+                <search base="base_search_flare">
+                    <query>| search sev="low" | stats count</query>
+                </search>
+                <option name="colorMode">block</option>
+                <option name="rangeColors">["#fde82b","#fde82b"]</option>
+                <option name="rangeValues">[0]</option>
+                <option name="useColors">1</option>
+            </single>
+        </panel>
+        <panel>
+            <title>Info Events</title>
+            <single>
+                <search base="base_search_flare">
+                    <query>| search sev="info" | stats count</query>
+                </search>
+                <option name="colorMode">block</option>
+                <option name="rangeColors">["#8594ea","#8594ea"]</option>
+                <option name="rangeValues">[0]</option>
+                <option name="useColors">1</option>
+            </single>
+        </panel>
+    </row>
+
+    <!-- ROW 2: Event Category KPIs -->
+    <row>
+        <panel>
+            <title>Illicit Networks</title>
+            <single>
+                <search base="base_search_flare">
+                    <query>| search etype IN("illicit_networks", "listing", "forum_post", "blog_post", "profile", "chat_message", "ransomleak", "infected_devices", "financial_data","bot") | stats count</query>
+                </search>
+                <option name="colorMode">block</option>
+                <option name="rangeColors">["#fb6f7f","#fb6f7f"]</option>
+                <option name="rangeValues">[0]</option>
+                <option name="useColors">1</option>
+            </single>
+        </panel>
+        <panel>
+            <title>Open Web</title>
+            <single>
+                <search base="base_search_flare">
+                    <query>| search etype IN("open_web", "paste", "social_media", "source_code", "google", "service", "buckets","driller") | stats count</query>
+                </search>
+                <option name="colorMode">block</option>
+                <option name="rangeColors">["#f6df8e","#f6df8e"]</option>
+                <option name="rangeValues">[0]</option>
+                <option name="useColors">1</option>
+            </single>
+        </panel>
+        <panel>
+            <title>Look-alike Domains</title>
+            <single>
+                <search base="base_search_flare">
+                    <query>| search etype IN("domains", "domain") | stats count</query>
+                </search>
+                <option name="colorMode">block</option>
+                <option name="rangeColors">["#bc4eb1","#bc4eb1"]</option>
+                <option name="rangeValues">[0]</option>
+                <option name="useColors">1</option>
+            </single>
+        </panel>
+        <panel>
+            <title>Leaked Credentials</title>
+            <single>
+                <search base="base_search_flare">
+                    <query>| search etype IN("leaked_credential", "leak", "leaks") | stats count</query>
+                </search>
+                <option name="colorMode">block</option>
+                <option name="rangeColors">["#b8ead3","#b8ead3"]</option>
+                <option name="rangeValues">[0]</option>
+                <option name="useColors">1</option>
+            </single>
+        </panel>
+    </row>
+
+    <!-- ROW 3: Event Distribution (Monthly) -->
+    <row>
+        <panel>
+            <title>Event Distribution by Category</title>
+            <chart>
+                <search base="base_search_flare">
+                    <query>| eval Category = case(
+    etype IN("open_web", "paste", "social_media", "source_code", "google", "service", "buckets","driller"), "Open Web",
+    etype IN("illicit_networks", "listing", "forum_post", "blog_post", "profile", "chat_message", "ransomleak", "infected_devices", "financial_data","bot"), "Illicit Networks",
+    etype IN("domains", "domain"), "Look-alike Domains",
+    etype IN("leaked_credential", "leak", "leaks"), "Leaked Credentials",
+    1=1, "Other"
+)
+| timechart span=1mon count by Category</query>
+                </search>
+                <option name="charting.chart">column</option>
+                <option name="charting.chart.stackMode">stacked</option>
+                <option name="charting.chart.showDataLabels">all</option>
+                <option name="charting.axisTitleX.text">Month</option>
+                <option name="charting.axisTitleY.text"># of Events</option>
+                <option name="charting.legend.placement">bottom</option>
+                <option name="charting.fieldColors">{"Open Web": "#f6df8e", "Illicit Networks": "#fb6f7f", "Look-alike Domains": "#bc4eb1", "Leaked Credentials": "#b8ead3"}</option>
+                <drilldown>
+                    <set token="selected_category">$click.name2$</set>
+                </drilldown>
+            </chart>
+        </panel>
+        <panel>
+            <title>Event Distribution by Severity</title>
+            <chart>
+                <search base="base_search_flare">
+                    <query>| timechart span=1mon count by sev</query>
+                </search>
+                <option name="charting.chart">column</option>
+                <option name="charting.chart.stackMode">stacked</option>
+                <option name="charting.chart.showDataLabels">all</option>
+                <option name="charting.axisTitleX.text">Month</option>
+                <option name="charting.axisTitleY.text"># of Events</option>
+                <option name="charting.legend.placement">bottom</option>
+                <option name="charting.fieldColors">{"critical": "#ff0040", "high": "#ff8629", "medium": "#ffae00", "low": "#fde82b", "info": "#8594ea"}</option>
+                <drilldown>
+                    <set token="selected_severity">$click.name2$</set>
+                </drilldown>
+            </chart>
+        </panel>
+    </row>
+
+    <!-- ROW 4: Events by Tenant -->
+    <row>
+        <panel>
+            <title>Events by Tenant</title>
+            <chart>
+                <search base="base_search_flare">
+                    <query>| stats count by Tenant | sort -count</query>
+                </search>
+                <option name="charting.chart">pie</option>
+                <drilldown>
+                    <condition>
+                        <!-- Disable drilldown: do not navigate to search page on click -->
+                    </condition>
+                </drilldown>
+            </chart>
+        </panel>
+    </row>
+
+    <!-- ROW 5: Drilldown Detail Table (visible only when severity is selected) -->
+    <row depends="$selected_severity$">
+        <panel>
+            <title>Events for Severity: $selected_severity$</title>
+            <table>
+                <search base="base_search_flare">
+                    <query>| search sev="$selected_severity$"
+| eval Time = strftime(_time, "%Y-%m-%d %H:%M:%S")
+| eval tenant_name = mvindex(tenant_name, 0)
+| table Time etype sev tenant_name flare_url
+| rename etype as "Category", sev as "Severity", tenant_name as "Tenant", flare_url as "Flare_URL"
+| sort -Time</query>
+                </search>
+                <option name="count">10</option>
+                <option name="drilldown">cell</option>
+                <option name="wrap">true</option>
+                <drilldown>
+                    <condition field="Flare_URL">
+                        <link target="_blank">$row.Flare_URL|n$</link>
+                    </condition>
+                    <condition field="*">
+                        <!-- Do nothing for all other columns -->
+                    </condition>
+                </drilldown>
+            </table>
+        </panel>
+    </row>
+
+    <!-- ROW 6: Drilldown Detail Table (visible only when category is selected) -->
+    <row depends="$selected_category$">
+        <panel>
+            <title>Events for Category: $selected_category$</title>
+            <table>
+                <search base="base_search_flare">
+                    <query>| eval Category = case(
+    etype IN("open_web", "paste", "social_media", "source_code", "google", "service", "buckets", "driller"), "Open Web",
+    etype IN("illicit_networks", "listing", "forum_post", "blog_post", "profile", "chat_message", "ransomleak", "infected_devices", "financial_data", "bot"), "Illicit Networks",
+    etype IN("domains", "domain"), "Look-alike Domains",
+    etype IN("leaked_credential", "leak", "leaks"), "Leaked Credentials",
+    1=1, "Other"
+)
+| search Category="$selected_category$"
+| eval Time = strftime(_time, "%Y-%m-%d %H:%M:%S")
+| eval tenant_name = mvindex(tenant_name, 0)
+| table Time etype sev tenant_name flare_url
+| rename etype as "Raw_Type", sev as "Severity", tenant_name as "Tenant", flare_url as "Flare_URL"
+| sort -Time</query>
+                </search>
+                <option name="count">10</option>
+                <option name="drilldown">cell</option>
+                <option name="wrap">true</option>
+                <drilldown>
+                    <condition field="Flare_URL">
+                        <link target="_blank">$row.Flare_URL|n$</link>
+                    </condition>
+                    <condition field="*">
+                        <!-- Do nothing for all other columns -->
+                    </condition>
+                </drilldown>
+            </table>
+        </panel>
+    </row>
+
+</dashboard>

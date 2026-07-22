@@ -1,24 +1,34 @@
-*.DS_Store
-flare.tar.gz
-venv
-venv-tools
-packages/flare/local
-packages/flare/metadata/local.meta
-__pycache__/
-.vscode/
-
-packages/flare/bin/vendor/*
 .DS_Store
 .idea/
-lerna-debug.log
 node_modules
 npm-debug.log
 test-reports
 coverage_report
-yarn-error.log
+pnpm-debug.log
 licenses.json
 functional-temp
 splunktional-temp
 
-output/
-logs/
+# Build output
+dist/
+build/
+venv-tools/
+packages/flare/stage/
+
+# OS files
+desktop.ini
+
+# Python / Splunk
+__pycache__/
+.mypy_cache/
+.pytest_cache/
+*.py[cod]
+local/
+*local.meta
+*.log
+packages/flare/src/main/resources/splunk/bin/lib
+
+# Environment variables
+.env
+.env.local
+
