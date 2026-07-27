@@ -1,8 +1,8 @@
 # ─── Variables ───────────────────────────────────────────────────────────────
 PYTHON      ?= python
-STAGE       := packages/flare/stage
+STAGE       := packages/flare_splunk_app/stage
 DIST        := dist
-APP_BIN_LIB := packages/flare/src/main/resources/splunk/bin/lib
+APP_BIN_LIB := packages/flare_splunk_app src/main/resources/splunk/bin/lib
 
 # Splunk versions declared to Splunkbase on publish. Override per release:
 #   make publish SPLUNK_VERSIONS=9.3,...
@@ -26,7 +26,7 @@ venv-tools: requirements.tools.txt
 	venv-tools/bin/pip install -r requirements.tools.txt
 
 # ─── Build & package ─────────────────────────────────────────────────────────
-# Compile the frontend into packages/flare/stage (webpack also copies the
+# Compile the frontend into packages/flare_splunk_app/stage (webpack also copies the
 # Splunk app skeleton from src/main/resources/splunk into stage).
 .PHONY: build
 build: node_modules
@@ -101,7 +101,7 @@ format-check: venv-tools node_modules
 sl: splunk-local
 
 # Assemble a runnable app in stage/ (frontend + vendored Python), then run it in
-# a local Splunk container (compose mounts packages/flare/stage) with a watcher.
+# a local Splunk container (compose mounts packages/flare_splunk_app/stage) with a watcher.
 .PHONY: splunk-local
 splunk-local: build
 	SKIP_TARBALL=1 ./package.sh

@@ -12,6 +12,6 @@ services:
             - SPLUNK_PASSWORD=a_password
             - SPLUNK_GENERAL_TERMS=--accept-sgt-current-at-splunk-com
         volumes:
-            - ./packages/flare/stage:/opt/splunk/etc/apps/flare_splunk_app
+            - ./packages/flare_splunk_app/stage:/opt/splunk/etc/apps/flare_splunk_app
             - ./splunk/default.yml:/tmp/defaults/default.yml
             - ./logs:/opt/splunk/var/log/splunk
