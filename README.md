@@ -74,7 +74,7 @@ and locally. `package.sh` is the single packaging tool; `make` orchestrates it.
 | Command         | What it does                                                                                 |
 | --------------- | -------------------------------------------------------------------------------------------- |
 | `make ci`       | Full pipeline (what CI runs): build → package → tooling → lint → validate → test.            |
-| `make build`    | Compile the frontend into `packages/flare_splunk_app/stage/`.                                           |
+| `make build`    | Compile the frontend into `packages/flare_splunk_app/stage/`.                                |
 | `make package`  | Vendor the Python runtime deps and produce the installable app at `dist/*.tgz`.              |
 | `make validate` | Run Splunk AppInspect against the packaged `dist/*.tgz`.                                     |
 | `make lint`     | ESLint + Stylelint + mypy + Prettier check.                                                  |
