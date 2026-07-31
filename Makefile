@@ -44,9 +44,9 @@ publish:
 	if [ -z "$$pkg" ]; then echo "No package found in $(DIST)/. Run 'make package' first."; exit 1; fi; \
 	echo "Publishing $$pkg to Splunkbase..."; \
 	curl -u $$SPLUNKBASE_CREDS --request POST \
-		https://splunkbase.splunk.com/api/v1/app/7602/new_release/ \
+		https://splunkbase.splunk.com/api/v1/app/9219/new_release/ \
 		-F "files[]=@$$pkg" \
-		-F "filename=flare.tgz" \
+		-F "filename=flare_splunk_app.tgz" \
 		-F "splunk_versions=$(SPLUNK_VERSIONS)" \
 		-F "visibility=true"
 
@@ -101,7 +101,7 @@ format-check: venv-tools node_modules
 sl: splunk-local
 
 # Assemble a runnable app in stage/ (frontend + vendored Python), then run it in
-# a local Splunk container (compose mounts packages/flare_splunk_app/stage) with a watcher.
+# a local Splunk container (compose mounts packages/flare/stage) with a watcher.
 .PHONY: splunk-local
 splunk-local: build
 	SKIP_TARBALL=1 ./package.sh
