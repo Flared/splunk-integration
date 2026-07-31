@@ -26,7 +26,7 @@ $ pnpm run setup
 You’ll have two main directories, one for the created React page and one for the created Splunk app.
 
 - `packages/configuration`
-- `packages/flare`
+- `packages/flare_splunk_app`
 
 ## Splunk demo
 
@@ -34,7 +34,7 @@ Splunk demo will allow you to view your new app inside your local Splunk instanc
 
 ```bash
 # navigate to your app folder
-$ cd packages/flare
+$ cd packages/flare_splunk_app
 
 # link the app to your local Splunk instance
 $ pnpm run link:app

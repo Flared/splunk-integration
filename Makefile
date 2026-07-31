@@ -86,7 +86,7 @@ lint: node_modules venv-tools mypy format-check
 
 .PHONY: mypy
 mypy: venv-tools
-	venv-tools/bin/mypy --config-file mypy.ini packages/flare
+	venv-tools/bin/mypy --config-file mypy.ini packages/flare_splunk_app
 
 .PHONY: format
 format: venv-tools node_modules
@@ -101,7 +101,7 @@ format-check: venv-tools node_modules
 sl: splunk-local
 
 # Assemble a runnable app in stage/ (frontend + vendored Python), then run it in
-# a local Splunk container (compose mounts packages/flare/stage) with a watcher.
+# a local Splunk container (compose mounts packages/flare_splunk_app/stage) with a watcher.
 .PHONY: splunk-local
 splunk-local: build
 	SKIP_TARBALL=1 ./package.sh
