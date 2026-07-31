@@ -80,10 +80,26 @@ and locally. `package.sh` is the single packaging tool; `make` orchestrates it.
 | `make lint`     | ESLint + Stylelint + mypy + Prettier check.                                                  |
 | `make format`   | Auto-format (Prettier + Ruff).                                                               |
 | `make test`     | Run the workspace test suites.                                                               |
+| `make release`  | Bump the version in `app.conf` and open the prefilled GitHub release page.                   |
 | `make clean`    | Remove build artifacts (`dist/`, `stage/`, `venv-tools/`, vendored `lib/`, `node_modules/`). |
 
 Prerequisites for `make`: Node.js `>= 22`, `pnpm` `9.x`, Python `3.9`, and Docker
 (for `make splunk-local`). AppInspect needs `libmagic` (`brew install libmagic` on macOS).
+
+### Releasing
+
+```bash
+$ make release              # patch bump, e.g. 1.0.0 → 1.0.1
+$ make release VERSION=2.0.0
+```
+
+This bumps the version and build number in
+`packages/flare_splunk_app/src/main/resources/splunk/default/app.conf`, leaves the edit
+uncommitted for review, and opens the GitHub release page with `vX.Y.Z` prefilled as both
+the tag and the title. Commit and push the bump before publishing the release — publishing
+it triggers `.github/workflows/publish.yml`, which packages `main` and uploads to
+Splunkbase, so the tag has to point at the bumped commit. The command refuses to run on a
+branch other than `main`, on a dirty working tree, or when the tag already exists.
 
 ### Local Splunk via Docker
 

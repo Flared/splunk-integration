@@ -38,6 +38,14 @@ package: build
 	./package.sh
 
 # ─── Distribution ────────────────────────────────────────────────────────────
+# Bump the version in app.conf and open the GitHub "new release" page with the
+# tag prefilled. Publishing that release triggers .github/workflows/publish.yml,
+# which packages main and ships it to Splunkbase. Override the computed version:
+#   make release VERSION=2.0.0
+.PHONY: release
+release:
+	@VERSION="$(VERSION)" ./scripts/release.sh
+
 .PHONY: publish
 publish:
 	@pkg=$$(ls -t $(DIST)/*.tgz 2>/dev/null | head -1); \
