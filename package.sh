@@ -20,8 +20,8 @@ mkdir -p $PACKAGE_DIR
 # Identification
 COMMIT_ID=$(git rev-parse --short=6 HEAD 2>/dev/null || echo "local")
 APP_FOLDER="flare_splunk_app"
-REAL_SRC_DIR=$SCRIPT_DIR/packages/flare/src/main/resources/splunk
-SRC_DIR=$SCRIPT_DIR/packages/flare/stage
+REAL_SRC_DIR=$SCRIPT_DIR/packages/flare_splunk_app/src/main/resources/splunk
+SRC_DIR=$SCRIPT_DIR/packages/flare_splunk_app/stage
 FULLAPP_DIR=$PACKAGE_DIR/$APP_FOLDER
 
 echo "Building package for $APP_FOLDER (Commit: $COMMIT_ID)..."
@@ -31,8 +31,10 @@ mkdir -p $FULLAPP_DIR
 # ─── SYNC src → stage ────────────────────────────────────────────────────────
 # Always sync the real source into stage before packaging.
 echo "Syncing src → stage..."
-# Delete old backend folders to prevent stale files, but preserve appserver/ which holds compiled frontend assets
-rm -rf "$SRC_DIR/bin" "$SRC_DIR/default" "$SRC_DIR/metadata" "$SRC_DIR/lookups"
+# Delete folders that come from src to prevent stale files, but preserve
+# appserver/static which holds the compiled frontend assets webpack emits.
+rm -rf "$SRC_DIR/bin" "$SRC_DIR/default" "$SRC_DIR/metadata" "$SRC_DIR/lookups" \
+       "$SRC_DIR/appserver/templates" "$SRC_DIR/README"
 cp -R "$REAL_SRC_DIR"/. "$SRC_DIR/"
 # Remove Python bytecode artifacts that shouldn't be packaged
 find "$SRC_DIR" -name '__pycache__' -type d -exec rm -rf {} + 2>/dev/null || true

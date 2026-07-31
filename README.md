@@ -26,7 +26,7 @@ $ pnpm run setup
 You’ll have two main directories, one for the created React page and one for the created Splunk app.
 
 - `packages/configuration`
-- `packages/flare`
+- `packages/flare_splunk_app`
 
 ## Splunk demo
 
@@ -34,7 +34,7 @@ Splunk demo will allow you to view your new app inside your local Splunk instanc
 
 ```bash
 # navigate to your app folder
-$ cd packages/flare
+$ cd packages/flare_splunk_app
 
 # link the app to your local Splunk instance
 $ pnpm run link:app
@@ -74,7 +74,7 @@ and locally. `package.sh` is the single packaging tool; `make` orchestrates it.
 | Command         | What it does                                                                                 |
 | --------------- | -------------------------------------------------------------------------------------------- |
 | `make ci`       | Full pipeline (what CI runs): build → package → tooling → lint → validate → test.            |
-| `make build`    | Compile the frontend into `packages/flare/stage/`.                                           |
+| `make build`    | Compile the frontend into `packages/flare_splunk_app/stage/`.                                |
 | `make package`  | Vendor the Python runtime deps and produce the installable app at `dist/*.tgz`.              |
 | `make validate` | Run Splunk AppInspect against the packaged `dist/*.tgz`.                                     |
 | `make lint`     | ESLint + Stylelint + mypy + Prettier check.                                                  |
@@ -91,8 +91,8 @@ Prerequisites for `make`: Node.js `>= 22`, `pnpm` `9.x`, Python `3.9`, and Docke
 $ make splunk-local
 ```
 
-This builds the app, vendors the Python dependencies into `packages/flare/stage`,
-starts a Splunk container (compose mounts `packages/flare/stage` as the app), and
+This builds the app, vendors the Python dependencies into `packages/flare_splunk_app/stage`,
+starts a Splunk container (compose mounts `packages/flare_splunk_app/stage` as the app), and
 runs the webpack watcher. Open `https://localhost:8000` to view the app. This is
 an alternative to the `pnpm run link:app` symlink flow above and does not require
 a local Splunk installation.

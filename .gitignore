@@ -13,7 +13,7 @@ splunktional-temp
 dist/
 build/
 venv-tools/
-packages/flare/stage/
+packages/flare_splunk_app/stage/
 
 # OS files
 desktop.ini
@@ -26,7 +26,7 @@ __pycache__/
 local/
 *local.meta
 *.log
-packages/flare/src/main/resources/splunk/bin/lib
+packages/flare_splunk_app/src/main/resources/splunk/bin/lib
 
 # Environment variables
 .env

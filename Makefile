@@ -1,8 +1,8 @@
 # ─── Variables ───────────────────────────────────────────────────────────────
 PYTHON      ?= python
-STAGE       := packages/flare/stage
+STAGE       := packages/flare_splunk_app/stage
 DIST        := dist
-APP_BIN_LIB := packages/flare/src/main/resources/splunk/bin/lib
+APP_BIN_LIB := packages/flare_splunk_app src/main/resources/splunk/bin/lib
 
 # Splunk versions declared to Splunkbase on publish. Override per release:
 #   make publish SPLUNK_VERSIONS=9.3,...
@@ -26,7 +26,7 @@ venv-tools: requirements.tools.txt
 	venv-tools/bin/pip install -r requirements.tools.txt
 
 # ─── Build & package ─────────────────────────────────────────────────────────
-# Compile the frontend into packages/flare/stage (webpack also copies the
+# Compile the frontend into packages/flare_splunk_app/stage (webpack also copies the
 # Splunk app skeleton from src/main/resources/splunk into stage).
 .PHONY: build
 build: node_modules
@@ -44,9 +44,9 @@ publish:
 	if [ -z "$$pkg" ]; then echo "No package found in $(DIST)/. Run 'make package' first."; exit 1; fi; \
 	echo "Publishing $$pkg to Splunkbase..."; \
 	curl -u $$SPLUNKBASE_CREDS --request POST \
-		https://splunkbase.splunk.com/api/v1/app/7602/new_release/ \
+		https://splunkbase.splunk.com/api/v1/app/9219/new_release/ \
 		-F "files[]=@$$pkg" \
-		-F "filename=flare.tgz" \
+		-F "filename=flare_splunk_app.tgz" \
 		-F "splunk_versions=$(SPLUNK_VERSIONS)" \
 		-F "visibility=true"
 
@@ -86,7 +86,7 @@ lint: node_modules venv-tools mypy format-check
 
 .PHONY: mypy
 mypy: venv-tools
-	venv-tools/bin/mypy --config-file mypy.ini packages/flare
+	venv-tools/bin/mypy --config-file mypy.ini packages/flare_splunk_app
 
 .PHONY: format
 format: venv-tools node_modules
@@ -101,7 +101,7 @@ format-check: venv-tools node_modules
 sl: splunk-local
 
 # Assemble a runnable app in stage/ (frontend + vendored Python), then run it in
-# a local Splunk container (compose mounts packages/flare/stage) with a watcher.
+# a local Splunk container (compose mounts packages/flare_splunk_app/stage) with a watcher.
 .PHONY: splunk-local
 splunk-local: build
 	SKIP_TARBALL=1 ./package.sh
