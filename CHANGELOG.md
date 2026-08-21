@@ -1,5 +1,10 @@
 # Change Log
 
+## 1.0.1 – 2026‑08‑21
+
+- Restore `passAuth` on save so the scheduled ingest job receives a Splunk session token.
+- Update SSL handling for compatibility with current Splunk Python runtimes.
+
 ## 1.0.0 – 2026‑05‑28
 
 - Added **tenant filter** support in the Search UI.
