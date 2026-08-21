@@ -1,14 +1,3 @@
-"""TLS helpers for requests sessions that skip certificate verification.
-
-Passing ``verify=False`` to requests leaves urllib3's SSLContext unset, and
-urllib3 then falls back to ``SSLContext.load_default_certs()``. On Windows that
-reads the OS certificate store, so a single malformed entry aborts the handshake
-with "[ASN1: NOT_ENOUGH_DATA]" even though verification was meant to be off.
-Splunk's bundled Python 3.9 rejects that entry while 3.13 parses it, which is
-why the failure only surfaces in the scheduled input. Supplying an explicit
-context keeps verification disabled without ever reading the OS store.
-"""
-
 import ssl
 
 from requests.adapters import HTTPAdapter
@@ -31,8 +20,8 @@ class UnverifiedHTTPAdapter(HTTPAdapter):
 
     def init_poolmanager(self, *args: Any, **kwargs: Any) -> Any:
         kwargs["ssl_context"] = build_unverified_ssl_context()
-        return super().init_poolmanager(*args, **kwargs)
+        return super().init_poolmanager(*args, **kwargs)  # type: ignore[no-untyped-call, unused-ignore]
 
     def proxy_manager_for(self, *args: Any, **kwargs: Any) -> Any:
         kwargs["ssl_context"] = build_unverified_ssl_context()
-        return super().proxy_manager_for(*args, **kwargs)
+        return super().proxy_manager_for(*args, **kwargs)  # type: ignore[no-untyped-call, unused-ignore]
