@@ -45,12 +45,29 @@ def main() -> None:
     )
 
     #   1: Authenticate with Splunk
+    logger.info(
+        "[DIAG] runtime: python=%s, cwd=%s, script_dir=%s, SPLUNK_HOME=%s, "
+        "host=%s, port=%s, app=%s",
+        sys.version.split()[0],
+        os.getcwd(),
+        os.path.dirname(__file__),
+        os.environ.get("SPLUNK_HOME", "<unset>"),
+        const.HOST,
+        const.SPLUNK_PORT,
+        const.APP_NAME,
+    )
+
     splunk_session_token = get_session_token_from_stdin()
 
     if not splunk_session_token:
         logger.critical(
             "We couldn't securely identify this session. "
             "Please make sure the app is fully configured."
+        )
+        logger.info(
+            "[DIAG] Empty session token. This usually means 'passAuth' is not set "
+            "to a valid Splunk user on the scripted input, or Splunk did not pass "
+            "a session key on stdin for this run."
         )
         return
 
@@ -60,12 +77,26 @@ def main() -> None:
             "We couldn't find your saved app configuration. "
             "Please visit the setup page to save your credentials."
         )
+        logger.info(
+            "[DIAG] storage/passwords returned no entries. If the [DIAG] lines "
+            "above show an SSL/connection error, this is a REST/transport failure "
+            "(NOT missing config). If the call succeeded with 0 entries, the "
+            "setup page was never saved under realm '%s'.",
+            const.STORAGE_REALM,
+        )
         return
 
     #   2: Parse all config in one go
     config = get_all_storage_values(storage_passwords)
     ingestion_cfg = parse_ingestion_config(config)
     if ingestion_cfg is None:
+        logger.info(
+            "[DIAG] parse_ingestion_config returned None. Recovered config keys=%s "
+            "(api_key present=%s, tenant_ids present=%s).",
+            sorted(config.keys()),
+            bool(config.get(const.KEY_API_KEY)),
+            bool(config.get(const.KEY_TENANT_IDS)),
+        )
         return  # parse_ingestion_config already logged the reason
 
     api_key = ingestion_cfg["api_key"]

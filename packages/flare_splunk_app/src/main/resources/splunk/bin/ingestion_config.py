@@ -44,6 +44,11 @@ def parse_ingestion_config(config: dict) -> Optional[dict]:
     or None if a critical field (api_key, tenant_ids) is missing.
     """
 
+    # DIAGNOSTIC: show every key we received (keys only, no secret values).
+    logger.info(
+        "[DIAG] parse_ingestion_config received keys=%s", sorted(config.keys())
+    )
+
     #  Critical: API Key
     api_key = config.get(const.KEY_API_KEY)
     if not api_key:
@@ -51,21 +56,45 @@ def parse_ingestion_config(config: dict) -> Optional[dict]:
             "Configuration has been removed or API key is missing. "
             "Data ingestion is stopped."
         )
+        logger.info(
+            "[DIAG] api_key missing/empty. key='%s' present_in_config=%s. "
+            "Available keys=%s",
+            const.KEY_API_KEY,
+            const.KEY_API_KEY in config,
+            sorted(config.keys()),
+        )
         return None
 
     #  Critical: Tenant IDs
     tenant_ids: list = []
     tenant_ids_str = config.get(const.KEY_TENANT_IDS)
+    logger.info(
+        "[DIAG] tenant_ids raw present=%s, raw_len=%d",
+        bool(tenant_ids_str),
+        len(tenant_ids_str or ""),
+    )
     if tenant_ids_str:
         try:
             tenant_ids = json.loads(tenant_ids_str)
-        except Exception:
+        except Exception as e:
             logger.warning("We had trouble reading the Tenant IDs from the config.")
+            logger.info(
+                "[DIAG] tenant_ids JSON parse failed: error_type=%s, error=%s, "
+                "raw='%s'",
+                type(e).__name__,
+                e,
+                tenant_ids_str,
+            )
 
     if not tenant_ids:
         logger.error(
             "No Tenant IDs were found. We don't know which environments "
             "to fetch data for."
+        )
+        logger.info(
+            "[DIAG] tenant_ids empty after parse. parsed_type=%s, value=%r",
+            type(tenant_ids).__name__,
+            tenant_ids,
         )
         return None
 
@@ -145,6 +174,25 @@ def parse_ingestion_config(config: dict) -> Optional[dict]:
         backfill_days,
         ingest_full_event_data,
         " (Proxy on)" if proxies else "",
+    )
+    logger.info(
+        "[DIAG] parsed config: api_key_present=%s, api_key_len=%d, "
+        "tenant_count=%d, tenant_name_count=%d, index=%r, "
+        "full_event_data=%s, severity_filter_count=%d, "
+        "source_type_filter_count=%d, backfill_days=%d, proxy_enabled=%s, "
+        "ssl_verify=%s, log_level=%s",
+        bool(api_key),
+        len(api_key),
+        len(tenant_ids),
+        len(tenant_names_map),
+        index_name,
+        ingest_full_event_data,
+        len(severities_filter),
+        len(source_types_filter),
+        backfill_days,
+        bool(proxies),
+        ssl_verify,
+        log_level_str,
     )
 
     return {

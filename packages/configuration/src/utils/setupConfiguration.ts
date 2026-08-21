@@ -42,6 +42,11 @@ function createService(): Service {
     return service;
 }
 
+async function fetchCurrentUsername(service: Service): Promise<string> {
+    const user = await promisify(service.currentUser)();
+    return user.name;
+}
+
 export interface ProxyValidationConfig {
     proxyEnabled?: boolean;
     proxyType?: string;
@@ -236,6 +241,28 @@ async function saveConfiguration(
     await savePassword(storagePasswords, PasswordKeys.SSL_VERIFY, `${sslVerify}`);
     await savePassword(storagePasswords, PasswordKeys.INDEX_NAME, indexName);
 
+    const currentUsername = await fetchCurrentUsername(service);
+    console.info('[Flare setup] Saved configuration', {
+        apiKeyPresent: apiKey.trim().length > 0,
+        apiKeyLength: apiKey.length,
+        tenantCount: tenantIds.length,
+        tenantNameCount: Object.keys(tenantNamesMap).length,
+        indexName,
+        ingestionInterval: ingestionInterval ?? '',
+        numberOfDaysToBackfill: numberOfDaysToBackfill ?? '',
+        logLevel: logLevel ?? 'INFO',
+        ingestFullEventData: isIngestingFullEventData,
+        severityFilterCount: severitiesFilter.length,
+        sourceTypeFilterCount: sourceTypesFilter.length,
+        proxyEnabled: proxyEnabled ?? false,
+        proxyHostPresent: Boolean(proxyHost),
+        proxyPortPresent: Boolean(proxyPort),
+        proxyUsernamePresent: Boolean(proxyUsername),
+        proxyPasswordPresent: Boolean(proxyPassword),
+        sslVerify,
+        passAuth: currentUsername,
+    });
+
     await fetchIsFirstConfiguration();
     const activeInterval =
         ingestionInterval && ingestionInterval.trim().length > 0 ? ingestionInterval : '60';
@@ -264,11 +291,19 @@ async function saveConfiguration(
         'disabled',
         'true',
     );
+    const currentPassAuth = await getConfigurationStanzaValue(
+        service,
+        'inputs',
+        inputsStanza,
+        'passAuth',
+        '',
+    );
 
     const inputsNeedUpdate =
         currentIndex !== indexName ||
         currentInterval !== activeInterval ||
-        currentDisabled !== 'false';
+        currentDisabled !== 'false' ||
+        currentPassAuth !== currentUsername;
 
     if (inputsNeedUpdate) {
         // Single batched write to inputs.conf — one reload instead of four
@@ -276,6 +311,7 @@ async function saveConfiguration(
             index: indexName,
             interval: activeInterval,
             disabled: 'false',
+            passAuth: currentUsername,
         });
 
         try {
@@ -297,9 +333,8 @@ async function saveConfiguration(
     }
 }
 
-// updateEventIngestionCronJobInterval and updatePassAuthUsername
-// have been consolidated into the batched inputs.conf update inside
-// saveConfiguration() to prevent burst-spawning of script processes.
+// Inputs settings, including passAuth for the current Splunk user, are consolidated
+// into the batched inputs.conf update inside saveConfiguration().
 
 export async function fetchSslVerify(): Promise<boolean> {
     const service = createService();

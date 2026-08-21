@@ -22,6 +22,7 @@ if _LIB_DIR not in sys.path:
 
 import requests
 
+from flare_ssl import UnverifiedHTTPAdapter
 from flareio import FlareApiClient
 from requests.adapters import HTTPAdapter
 from typing import Optional
@@ -58,7 +59,12 @@ def _build_session(
     if hasattr(retry, "backoff_max"):
         retry.backoff_max = 15
 
-    session.mount("https://", HTTPAdapter(max_retries=retry))
+    adapter = (
+        HTTPAdapter(max_retries=retry)
+        if ssl_verify
+        else UnverifiedHTTPAdapter(max_retries=retry)
+    )
+    session.mount("https://", adapter)
 
     return session
 

@@ -1,9 +1,23 @@
 import flare_constants as const
 import logging
+
 import requests as http_requests
+
+from flare_ssl import UnverifiedHTTPAdapter
 
 
 logger = logging.getLogger("flare_cron_job")
+
+
+def _local_splunk_session() -> http_requests.Session:
+    """Build a session for local splunkd REST calls with a pinned TLS context.
+
+    Verification is disabled because splunkd presents a self-signed certificate
+    on the loopback management port.
+    """
+    session = http_requests.Session()
+    session.mount("https://", UnverifiedHTTPAdapter())
+    return session
 
 
 def get_session_token_from_stdin() -> str:
@@ -11,35 +25,104 @@ def get_session_token_from_stdin() -> str:
     import sys
 
     session_key = ""
+    line_count = 0
     for line in sys.stdin:
+        line_count += 1
         session_key = line
 
     raw_token_line = session_key.strip()
+
+    # DIAGNOSTIC: show what Splunk handed us on stdin without leaking the token.
+    logger.info(
+        "[DIAG] stdin session token: lines_read=%d, raw_len=%d, "
+        "has_sessionKey_prefix=%s",
+        line_count,
+        len(raw_token_line),
+        raw_token_line.startswith("sessionKey="),
+    )
+
     if raw_token_line.startswith("sessionKey="):
-        return raw_token_line.split("=", 1)[1]
-    return raw_token_line
+        token = raw_token_line.split("=", 1)[1]
+    else:
+        token = raw_token_line
+
+    logger.info(
+        "[DIAG] parsed session token present=%s, token_len=%d",
+        bool(token),
+        len(token),
+    )
+    return token
 
 
 def get_storage_passwords(token: str) -> list:
     """Fetch storage/passwords from the local Splunk REST API."""
     headers = {"Authorization": f"Splunk {token}"}
+    url = (
+        f"https://{const.HOST}:{const.SPLUNK_PORT}/servicesNS/nobody/"
+        f"{const.APP_NAME}/storage/passwords?output_mode=json"
+    )
+
+    # DIAGNOSTIC: capture exactly which library/endpoint we are using at runtime.
+    logger.info(
+        "[DIAG] storage/passwords GET url=%s | requests=%s (%s) | urllib3=%s | "
+        "token_present=%s token_len=%d",
+        url,
+        getattr(http_requests, "__version__", "?"),
+        getattr(http_requests, "__file__", "?"),
+        _urllib3_version(),
+        bool(token),
+        len(token or ""),
+    )
+
     try:
-        logger.debug("Fetching storage passwords from Splunk REST API")
-        response = http_requests.get(
-            f"https://{const.HOST}:{const.SPLUNK_PORT}/servicesNS/nobody/"
-            f"{const.APP_NAME}/storage/passwords?output_mode=json",
+        response = _local_splunk_session().get(
+            url,
             headers=headers,
             verify=False,
             timeout=10,
         )
+        logger.info(
+            "[DIAG] storage/passwords HTTP status=%s, elapsed=%.3fs, body_len=%d",
+            response.status_code,
+            response.elapsed.total_seconds(),
+            len(response.text or ""),
+        )
         response.raise_for_status()
         data = response.json()
         entries = data.get("entry", [])
-        logger.debug("Retrieved %d storage password entries", len(entries))
+        realms = sorted(
+            {
+                e.get("content", {}).get("realm")
+                for e in entries
+                if e.get("content", {}).get("realm")
+            }
+        )
+        logger.info(
+            "[DIAG] storage/passwords parsed entries=%d, realms=%s",
+            len(entries),
+            realms,
+        )
         return entries
     except Exception as e:
-        logger.error("Failed to fetch storage passwords: %s", e)
+        # DIAGNOSTIC: full exception type + traceback so SSL vs auth vs network
+        # failures are distinguishable from the log alone.
+        logger.error(
+            "[DIAG] Failed to fetch storage passwords. error_type=%s, error=%s",
+            type(e).__name__,
+            e,
+            exc_info=True,
+        )
         return []
+
+
+def _urllib3_version() -> str:
+    """Best-effort urllib3 version string for diagnostics."""
+    try:
+        import urllib3
+
+        return getattr(urllib3, "__version__", "?")
+    except Exception:
+        return "?"
 
 
 def save_storage_password_value(
@@ -49,10 +132,11 @@ def save_storage_password_value(
     base_url = f"https://{const.HOST}:{const.SPLUNK_PORT}/servicesNS/nobody/{const.APP_NAME}/storage/passwords"
     headers = {"Authorization": f"Splunk {splunk_session_token}"}
     password_id = f"{const.STORAGE_REALM}:{key}:"
+    session = _local_splunk_session()
 
     # Try to delete the old entry first (ignore errors if it doesn't exist)
     try:
-        http_requests.delete(
+        session.delete(
             f"{base_url}/{password_id}",
             headers=headers,
             verify=False,
@@ -64,7 +148,7 @@ def save_storage_password_value(
 
     # Create the new entry
     try:
-        http_requests.post(
+        session.post(
             base_url,
             headers=headers,
             data={"name": key, "realm": const.STORAGE_REALM, "password": value},
@@ -80,10 +164,23 @@ def save_storage_password_value(
 def get_all_storage_values(entries: list) -> dict:
     """Extract all Flare config values from storage passwords in a single pass."""
     values: dict = {}
+    matched_realm = 0
     for entry in entries:
         content = entry.get("content", {})
         if content.get("realm") == const.STORAGE_REALM:
+            matched_realm += 1
             key = content.get("username")
             if key:
                 values[key] = content.get("clear_password")
+
+    # DIAGNOSTIC: show what matched our realm and which config keys we recovered
+    # (keys only, never the secret values).
+    logger.info(
+        "[DIAG] storage values: total_entries=%d, matched_realm(%s)=%d, "
+        "keys_found=%s",
+        len(entries),
+        const.STORAGE_REALM,
+        matched_realm,
+        sorted(values.keys()),
+    )
     return values
