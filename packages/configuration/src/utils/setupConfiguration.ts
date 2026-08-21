@@ -242,26 +242,6 @@ async function saveConfiguration(
     await savePassword(storagePasswords, PasswordKeys.INDEX_NAME, indexName);
 
     const currentUsername = await fetchCurrentUsername(service);
-    console.info('[Flare setup] Saved configuration', {
-        apiKeyPresent: apiKey.trim().length > 0,
-        apiKeyLength: apiKey.length,
-        tenantCount: tenantIds.length,
-        tenantNameCount: Object.keys(tenantNamesMap).length,
-        indexName,
-        ingestionInterval: ingestionInterval ?? '',
-        numberOfDaysToBackfill: numberOfDaysToBackfill ?? '',
-        logLevel: logLevel ?? 'INFO',
-        ingestFullEventData: isIngestingFullEventData,
-        severityFilterCount: severitiesFilter.length,
-        sourceTypeFilterCount: sourceTypesFilter.length,
-        proxyEnabled: proxyEnabled ?? false,
-        proxyHostPresent: Boolean(proxyHost),
-        proxyPortPresent: Boolean(proxyPort),
-        proxyUsernamePresent: Boolean(proxyUsername),
-        proxyPasswordPresent: Boolean(proxyPassword),
-        sslVerify,
-        passAuth: currentUsername,
-    });
 
     await fetchIsFirstConfiguration();
     const activeInterval =

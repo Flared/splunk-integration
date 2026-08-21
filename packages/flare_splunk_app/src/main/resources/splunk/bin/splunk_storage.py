@@ -25,33 +25,13 @@ def get_session_token_from_stdin() -> str:
     import sys
 
     session_key = ""
-    line_count = 0
     for line in sys.stdin:
-        line_count += 1
         session_key = line
 
     raw_token_line = session_key.strip()
-
-    # DIAGNOSTIC: show what Splunk handed us on stdin without leaking the token.
-    logger.info(
-        "[DIAG] stdin session token: lines_read=%d, raw_len=%d, "
-        "has_sessionKey_prefix=%s",
-        line_count,
-        len(raw_token_line),
-        raw_token_line.startswith("sessionKey="),
-    )
-
     if raw_token_line.startswith("sessionKey="):
-        token = raw_token_line.split("=", 1)[1]
-    else:
-        token = raw_token_line
-
-    logger.info(
-        "[DIAG] parsed session token present=%s, token_len=%d",
-        bool(token),
-        len(token),
-    )
-    return token
+        return raw_token_line.split("=", 1)[1]
+    return raw_token_line
 
 
 def get_storage_passwords(token: str) -> list:
@@ -62,18 +42,6 @@ def get_storage_passwords(token: str) -> list:
         f"{const.APP_NAME}/storage/passwords?output_mode=json"
     )
 
-    # DIAGNOSTIC: capture exactly which library/endpoint we are using at runtime.
-    logger.info(
-        "[DIAG] storage/passwords GET url=%s | requests=%s (%s) | urllib3=%s | "
-        "token_present=%s token_len=%d",
-        url,
-        getattr(http_requests, "__version__", "?"),
-        getattr(http_requests, "__file__", "?"),
-        _urllib3_version(),
-        bool(token),
-        len(token or ""),
-    )
-
     try:
         response = _local_splunk_session().get(
             url,
@@ -81,48 +49,13 @@ def get_storage_passwords(token: str) -> list:
             verify=False,
             timeout=10,
         )
-        logger.info(
-            "[DIAG] storage/passwords HTTP status=%s, elapsed=%.3fs, body_len=%d",
-            response.status_code,
-            response.elapsed.total_seconds(),
-            len(response.text or ""),
-        )
         response.raise_for_status()
         data = response.json()
         entries = data.get("entry", [])
-        realms = sorted(
-            {
-                e.get("content", {}).get("realm")
-                for e in entries
-                if e.get("content", {}).get("realm")
-            }
-        )
-        logger.info(
-            "[DIAG] storage/passwords parsed entries=%d, realms=%s",
-            len(entries),
-            realms,
-        )
         return entries
     except Exception as e:
-        # DIAGNOSTIC: full exception type + traceback so SSL vs auth vs network
-        # failures are distinguishable from the log alone.
-        logger.error(
-            "[DIAG] Failed to fetch storage passwords. error_type=%s, error=%s",
-            type(e).__name__,
-            e,
-            exc_info=True,
-        )
+        logger.error("Failed to fetch storage passwords: %s", e)
         return []
-
-
-def _urllib3_version() -> str:
-    """Best-effort urllib3 version string for diagnostics."""
-    try:
-        import urllib3
-
-        return getattr(urllib3, "__version__", "?")
-    except Exception:
-        return "?"
 
 
 def save_storage_password_value(
@@ -164,23 +97,10 @@ def save_storage_password_value(
 def get_all_storage_values(entries: list) -> dict:
     """Extract all Flare config values from storage passwords in a single pass."""
     values: dict = {}
-    matched_realm = 0
     for entry in entries:
         content = entry.get("content", {})
         if content.get("realm") == const.STORAGE_REALM:
-            matched_realm += 1
             key = content.get("username")
             if key:
                 values[key] = content.get("clear_password")
-
-    # DIAGNOSTIC: show what matched our realm and which config keys we recovered
-    # (keys only, never the secret values).
-    logger.info(
-        "[DIAG] storage values: total_entries=%d, matched_realm(%s)=%d, "
-        "keys_found=%s",
-        len(entries),
-        const.STORAGE_REALM,
-        matched_realm,
-        sorted(values.keys()),
-    )
     return values
