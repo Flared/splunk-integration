@@ -146,7 +146,6 @@ def parse_ingestion_config(config: dict) -> Optional[dict]:
         ingest_full_event_data,
         " (Proxy on)" if proxies else "",
     )
-
     return {
         "api_key": api_key,
         "tenant_ids": tenant_ids,

@@ -22,7 +22,7 @@ if (!commands.includes(arg)) {
 const runCommands = {
     win32: {
         build: () => shell.exec('set NODE_ENV=production&&.\\node_modules\\.bin\\webpack --mode=production'),
-        link: () => shell.exec('mklink /D "%SPLUNK_HOME%\\etc\\apps\\flare" "%cd%\\stage"'),
+        link: () => shell.exec('mklink /D "%SPLUNK_HOME%\\etc\\apps\\flare_splunk_app" "%cd%\\stage"'),
     },
     nix: {
         build: () => shell.exec('export NODE_ENV=production && ./node_modules/.bin/webpack --mode=production'),

@@ -2,8 +2,21 @@ import flare_constants as const
 import logging
 import requests as http_requests
 
+from flare_ssl import UnverifiedHTTPAdapter
+
 
 logger = logging.getLogger("flare_cron_job")
+
+
+def _local_splunk_session() -> http_requests.Session:
+    """Build a session for local splunkd REST calls with a pinned TLS context.
+
+    Verification is disabled because splunkd presents a self-signed certificate
+    on the loopback management port.
+    """
+    session = http_requests.Session()
+    session.mount("https://", UnverifiedHTTPAdapter())
+    return session
 
 
 def get_session_token_from_stdin() -> str:
@@ -23,11 +36,14 @@ def get_session_token_from_stdin() -> str:
 def get_storage_passwords(token: str) -> list:
     """Fetch storage/passwords from the local Splunk REST API."""
     headers = {"Authorization": f"Splunk {token}"}
+    url = (
+        f"https://{const.HOST}:{const.SPLUNK_PORT}/servicesNS/nobody/"
+        f"{const.APP_NAME}/storage/passwords?output_mode=json"
+    )
+
     try:
-        logger.debug("Fetching storage passwords from Splunk REST API")
-        response = http_requests.get(
-            f"https://{const.HOST}:{const.SPLUNK_PORT}/servicesNS/nobody/"
-            f"{const.APP_NAME}/storage/passwords?output_mode=json",
+        response = _local_splunk_session().get(
+            url,
             headers=headers,
             verify=False,
             timeout=10,
@@ -35,7 +51,6 @@ def get_storage_passwords(token: str) -> list:
         response.raise_for_status()
         data = response.json()
         entries = data.get("entry", [])
-        logger.debug("Retrieved %d storage password entries", len(entries))
         return entries
     except Exception as e:
         logger.error("Failed to fetch storage passwords: %s", e)
@@ -49,10 +64,11 @@ def save_storage_password_value(
     base_url = f"https://{const.HOST}:{const.SPLUNK_PORT}/servicesNS/nobody/{const.APP_NAME}/storage/passwords"
     headers = {"Authorization": f"Splunk {splunk_session_token}"}
     password_id = f"{const.STORAGE_REALM}:{key}:"
+    session = _local_splunk_session()
 
     # Try to delete the old entry first (ignore errors if it doesn't exist)
     try:
-        http_requests.delete(
+        session.delete(
             f"{base_url}/{password_id}",
             headers=headers,
             verify=False,
@@ -64,7 +80,7 @@ def save_storage_password_value(
 
     # Create the new entry
     try:
-        http_requests.post(
+        session.post(
             base_url,
             headers=headers,
             data={"name": key, "realm": const.STORAGE_REALM, "password": value},

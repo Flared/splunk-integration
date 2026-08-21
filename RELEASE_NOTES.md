@@ -1,6 +1,13 @@
 # Flare
 
-## 1.3.4
+## 1.3.5
+
+- Restore `passAuth` on save so the scheduled ingest job receives a Splunk session token.
+- Update SSL handling for compatibility with current Splunk Python runtimes.
+
+    1.3.4
+
+---
 
 - Update the minimum version of the Flare SDK.
 
