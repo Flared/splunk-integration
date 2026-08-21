@@ -1,6 +1,5 @@
 import flare_constants as const
 import logging
-
 import requests as http_requests
 
 from flare_ssl import UnverifiedHTTPAdapter

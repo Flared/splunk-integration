@@ -20,8 +20,12 @@ class UnverifiedHTTPAdapter(HTTPAdapter):
 
     def init_poolmanager(self, *args: Any, **kwargs: Any) -> Any:
         kwargs["ssl_context"] = build_unverified_ssl_context()
-        return super().init_poolmanager(*args, **kwargs)  # type: ignore[no-untyped-call, unused-ignore]
+        return super().init_poolmanager(  # type: ignore[no-untyped-call, unused-ignore]
+            *args, **kwargs
+        )
 
     def proxy_manager_for(self, *args: Any, **kwargs: Any) -> Any:
         kwargs["ssl_context"] = build_unverified_ssl_context()
-        return super().proxy_manager_for(*args, **kwargs)  # type: ignore[no-untyped-call, unused-ignore]
+        return super().proxy_manager_for(  # type: ignore[no-untyped-call, unused-ignore]
+            *args, **kwargs
+        )
