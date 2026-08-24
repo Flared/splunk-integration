@@ -132,7 +132,8 @@ def _get_proxy_settings_from_session(session_key: str) -> Optional[dict]:
             f"/servicesNS/nobody/{const.APP_NAME}/storage/passwords",
             sessionKey=session_key,
             method="GET",
-            getargs={"output_mode": "json"},
+            # count=0 disables pagination
+            getargs={"output_mode": "json", "count": "0"},
         )
         data = json.loads(content)
         return get_proxy_settings(get_all_storage_values(data.get("entry", [])))

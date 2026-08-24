@@ -36,9 +36,10 @@ def get_session_token_from_stdin() -> str:
 def get_storage_passwords(token: str) -> list:
     """Fetch storage/passwords from the local Splunk REST API."""
     headers = {"Authorization": f"Splunk {token}"}
+    # count=0 disables pagination
     url = (
         f"https://{const.HOST}:{const.SPLUNK_PORT}/servicesNS/nobody/"
-        f"{const.APP_NAME}/storage/passwords?output_mode=json"
+        f"{const.APP_NAME}/storage/passwords?output_mode=json&count=0"
     )
 
     try:
