@@ -51,13 +51,13 @@ def fetch_events_by_paginating(
     start_date: Optional[str] = None,
 ) -> dict:
     """Fetch a page of events using the official SDK. JWT refresh is handled automatically."""
-    search_body: dict = {"size": size}
+    search_body: dict = {"size": size, "order": "asc"}
     if from_token:
         search_body["from"] = from_token
 
     filters: dict = {}
     if start_date:
-        filters["estimated_created_at"] = {"gte": start_date}
+        filters["matched_at"] = {"gte": start_date}
     if severities:
         filters["severity"] = severities
     if source_types:
