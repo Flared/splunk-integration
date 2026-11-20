@@ -9,7 +9,6 @@
 | spath path=metadata.uid output=uid
 | spath path=metadata.severity output=sev
 | spath path=metadata.type output=etype
-| spath path=metadata.flare_url output=flare_url
 | spath path=tenant_name
 | spath path=tenant_id
 | eval Tenant = coalesce(tenant_name, tenant_id)
@@ -250,15 +249,15 @@
 | eval Time = strftime(_time, "%Y-%m-%d %H:%M:%S")
 | eval tenant_name = mvindex(tenant_name, 0)
 | table Time etype sev tenant_name flare_url
-| rename etype as "Category", sev as "Severity", tenant_name as "Tenant", flare_url as "Flare_URL"
+| rename etype as "Category", sev as "Severity", tenant_name as "Tenant", flare_url as "Flare URL (Tenant)"
 | sort -Time</query>
                 </search>
                 <option name="count">10</option>
                 <option name="drilldown">cell</option>
                 <option name="wrap">true</option>
                 <drilldown>
-                    <condition field="Flare_URL">
-                        <link target="_blank">$row.Flare_URL|n$</link>
+                    <condition field="Flare URL (Tenant)">
+                        <link target="_blank">$row.Flare URL (Tenant)|n$</link>
                     </condition>
                     <condition field="*">
                         <!-- Do nothing for all other columns -->
@@ -285,15 +284,15 @@
 | eval Time = strftime(_time, "%Y-%m-%d %H:%M:%S")
 | eval tenant_name = mvindex(tenant_name, 0)
 | table Time etype sev tenant_name flare_url
-| rename etype as "Raw_Type", sev as "Severity", tenant_name as "Tenant", flare_url as "Flare_URL"
+| rename etype as "Raw_Type", sev as "Severity", tenant_name as "Tenant", flare_url as "Flare URL (Tenant)"
 | sort -Time</query>
                 </search>
                 <option name="count">10</option>
                 <option name="drilldown">cell</option>
                 <option name="wrap">true</option>
                 <drilldown>
-                    <condition field="Flare_URL">
-                        <link target="_blank">$row.Flare_URL|n$</link>
+                    <condition field="Flare URL (Tenant)">
+                        <link target="_blank">$row.Flare URL (Tenant)|n$</link>
                     </condition>
                     <condition field="*">
                         <!-- Do nothing for all other columns -->

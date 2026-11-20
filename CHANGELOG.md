@@ -1,5 +1,10 @@
 # Change Log
 
+## Unreleased
+
+- Added a tenant-specific Flare link on each event. The link is the original Flare URL with `?tenant_id=<id>` added, so it opens in the correct tenant.
+- Shown in the Dashboard drilldown table, the Search results table, and the **flare_url** field when you expand an event in Search. The raw event is unchanged and still shows the original Flare URL.
+
 ## 1.0.1 – 2026‑08‑21
 
 - Restore `passAuth` on save so the scheduled ingest job receives a Splunk session token.
