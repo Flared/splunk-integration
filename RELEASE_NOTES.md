@@ -1,9 +1,10 @@
 # Flare
 
-## Unreleased
+## 1.0.5
 
 - Adds a tenant-specific Flare link. It is the original URL with `?tenant_id=<id>` added.
-- Shown in the Dashboard drilldown table, the Search results table, and the **flare_url** field when you expand an event in Search. The raw event still shows the original Flare URL.
+- Raw event / raw log still shows the original Flare URL from Flare.
+- Dashboard and Search views show the reconstructed URL in the **Flare URL (Tenant)** column, and in the **flare_url** field when you expand an event in Search.
 
 ## 1.3.5
 
