@@ -98,8 +98,8 @@
 | dedup metadata_uid
 | eval Time = strftime(_time, "%Y-%m-%d %H:%M:%S")
 | eval Tenant = mvindex(Tenant, 0)
-| table Time, event_type, metadata_severity, Tenant, metadata_flare_url
-| rename Time as "Time", event_type as "Category", metadata_severity as "Severity", Tenant as "Tenant", metadata_flare_url as "Flare URL"
+| table Time, event_type, metadata_severity, Tenant, flare_url
+| rename Time as "Time", event_type as "Category", metadata_severity as "Severity", Tenant as "Tenant", flare_url as "Flare URL (Tenant)"
 | sort -Time</query>
                     <earliest>$time_range.earliest$</earliest>
                     <latest>$time_range.latest$</latest>
@@ -109,8 +109,8 @@
                 <option name="wrap">true</option>
                 <option name="rowNumbers">true</option>
                 <drilldown>
-                    <condition field="Flare URL">
-                        <link target="_blank">$row.Flare URL|n$</link>
+                    <condition field="Flare URL (Tenant)">
+                        <link target="_blank">$row.Flare URL (Tenant)|n$</link>
                     </condition>
                     <condition field="*">
                         <!-- Do nothing for all other columns -->
